@@ -1,0 +1,74 @@
+@startuml
+' Рис. 2.4. Діаграма послідовності сценарію «Обчислити ранжування локацій»
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 11
+skinparam sequenceMessageAlign center
+skinparam sequence {
+    ArrowColor #333333
+    LifeLineBorderColor #333333
+    LifeLineBackgroundColor #f5f5f5
+    ParticipantBorderColor #333333
+    ParticipantBackgroundColor #f5f5f5
+}
+
+actor "ОПР" as User
+participant "Клієнтська\nпідсистема" as Client
+participant ":RESTController" as Ctrl
+participant ":OrchestrationService" as Orch
+participant ":FAHPCalculator" as FAHP
+participant ":TOPSISRanker" as TOP
+participant ":DataRepository" as Repo
+database "Сховище\nданих" as DB
+
+User -> Client : запуск обчислень
+activate Client
+
+Client -> Ctrl : POST /api/evaluations\n{profileId, pairwiseMatrix}
+activate Ctrl
+
+Ctrl -> Orch : executeFullCycle(profileId, matrix)
+activate Orch
+
+Orch -> Repo : findCriteriaByProfile(profileId)
+activate Repo
+Repo -> DB : SELECT критерії
+Repo --> Orch : List<Criterion>
+deactivate Repo
+
+note over Orch, FAHP : [Блок FAHP, ≈50 мс]
+
+Orch -> FAHP : computeWeights(matrix)
+activate FAHP
+FAHP --> Orch : Vector W
+deactivate FAHP
+
+Orch -> Repo : findLocationsWithMetrics()
+activate Repo
+Repo -> DB : SELECT локації\nта значення критеріїв
+Repo --> Orch : List<Location> + матриця X
+deactivate Repo
+
+note over Orch, TOP : [Блок TOPSIS, ≈10 мс]
+
+Orch -> TOP : computeRanking(X, W)
+activate TOP
+TOP --> Orch : List<RankingItem>
+deactivate TOP
+
+Orch -> Repo : saveEvaluation(run)
+activate Repo
+Repo -> DB : INSERT обчислювальний\nзапит і ранжування
+Repo --> Orch : evaluationId
+deactivate Repo
+
+Orch --> Ctrl : EvaluationRun
+deactivate Orch
+
+Ctrl --> Client : успішна відповідь\n{weights, ranking, executionTime}
+deactivate Ctrl
+
+Client --> User : відображення\nранжування
+deactivate Client
+
+@enduml

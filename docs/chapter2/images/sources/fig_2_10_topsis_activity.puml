@@ -1,0 +1,29 @@
+@startuml
+' Рис. 2.10. Діаграма активностей алгоритму TOPSIS
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 11
+skinparam activity {
+    BackgroundColor #f5f5f5
+    BorderColor #333333
+}
+
+start
+:Вхід: матриця рішень X = [x_ij]_{n×m},\nвектор ваг W = (w_1, …, w_m),\nвектор типів T ∈ {max, min}^m;
+
+:Векторна нормалізація:\nr_ij = x_ij / sqrt(Σ_k x_kj^2)\nза (1.10);
+
+:Зважена нормалізована\nматриця:\nv_ij = w_j · r_ij\nза (1.11);
+
+:Визначити ідеальне A^+\nта антиідеальне A^-\nрішення за (1.12):\nякщо t_j = max:\n  v_j^+ = max_i v_ij,\n  v_j^- = min_i v_ij;\nякщо t_j = min: навпаки;
+
+:Обчислити відстані:\nS_i^+ = sqrt(Σ_j (v_ij − v_j^+)^2),\nS_i^- = sqrt(Σ_j (v_ij − v_j^-)^2)\nза (1.13);
+
+:Обчислити коефіцієнти близькості:\nC_i^* = S_i^- / (S_i^+ + S_i^-)\nза (1.14);
+
+:Сортувати альтернативи\nза спаданням C_i^*\nта присвоїти ранги 1..n;
+
+:Вихід: впорядкований список\nRankingItem(i, ранг,\nC_i^*, S_i^+, S_i^-);
+stop
+
+@enduml

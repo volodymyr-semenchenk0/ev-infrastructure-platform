@@ -1,0 +1,160 @@
+@startuml
+' Рис. 2.3. Діаграма класів системи
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 11
+skinparam classFontSize 11
+skinparam class {
+    BackgroundColor #f5f5f5
+    BorderColor #333333
+    BorderThickness 1.0
+    ArrowColor #333333
+}
+skinparam packageStyle rectangle
+hide circle
+
+package "Сутності домену" as DOM #fafafa {
+    class Profile {
+        + id : Integer
+        + code : String
+        + name : String
+        + description : String
+    }
+
+    class Criterion {
+        + id : Integer
+        + code : String
+        + name : String
+        + unit : String
+        + optimizationType : Enum {min, max}
+        + scale : Enum {quantitative, ordinal}
+    }
+
+    class CriterionPriority {
+        + weight : Decimal
+        + pairwiseMatrix : FuzzyMatrix
+    }
+
+    class Location {
+        + id : Integer
+        + name : String
+        + address : String
+        + district : String
+        + geometry : Point(WGS84)
+    }
+
+    class ExistingStation {
+        + id : Integer
+        + name : String
+        + powerKW : Decimal
+        + connectorType : String
+        + geometry : Point(WGS84)
+    }
+
+    class EvaluationRun {
+        + id : Integer
+        + createdAt : Timestamp
+        + status : Enum
+        + executionTimeMs : Integer
+    }
+
+    class RankingItem {
+        + rank : Integer
+        + closenessCoefficient : Decimal
+        + distanceToPositive : Decimal
+        + distanceToNegative : Decimal
+    }
+
+    class SensitivityResult {
+        + iterations : Integer
+        + perturbation : Decimal
+        + stabilityMatrix : Matrix
+        + confidenceIntervals : Map
+    }
+}
+
+package "Обчислювальні сервіси" as SVC #fff7ee {
+    class FAHPCalculator {
+        + computeWeights(matrix : FuzzyMatrix) : Vector
+        - validateConsistency(matrix) : Boolean
+        - computeFuzzyExtents(matrix) : List<TFN>
+        - degreeOfPossibility(s1, s2) : Decimal
+        - defuzzify(extents) : Vector
+        - normalize(vector) : Vector
+    }
+
+    class TOPSISRanker {
+        + computeRanking(matrix : Matrix, weights : Vector) : List<RankingItem>
+        - normalizeMatrix(matrix) : Matrix
+        - weightedNormalize(matrix, weights) : Matrix
+        - computeIdealSolutions(matrix) : Pair<Vector,Vector>
+        - computeDistances(matrix, ideals) : Pair<Vector,Vector>
+        - computeCloseness(sPos, sNeg) : Vector
+    }
+
+    class MonteCarloAnalyzer {
+        + runSensitivity(matrix : Matrix, weights : Vector, n : Integer, delta : Decimal) : SensitivityResult
+        - perturbWeights(weights, delta) : Vector
+        - aggregateStability(rankings : List) : Matrix
+        - computeConfidenceIntervals(samples) : Map
+    }
+
+    class RankingComparator {
+        + compareProfiles(r1 : List, r2 : List) : ComparisonResult
+        - spearmanCorrelation(r1, r2) : Decimal
+    }
+
+    class OrchestrationService {
+        + executeFullCycle(profileId, matrix) : EvaluationRun
+        + executeSensitivity(runId, n, delta) : SensitivityResult
+    }
+}
+
+package "Інтеграція з даними" as INT #eef7f7 {
+    interface IDataRepository {
+        + findProfile(id) : Profile
+        + findCriteriaByProfile(profileId) : List<Criterion>
+        + findLocations() : List<Location>
+        + saveEvaluation(run : EvaluationRun) : Integer
+        + findEvaluation(id) : EvaluationRun
+    }
+
+    class DataRepository {
+    }
+
+    class ExternalDataLoader {
+        + loadOSMObjects(bbox) : List<Location>
+        + loadOCMStations(bbox) : List<ExistingStation>
+        + loadStatisticsByDistrict() : Map
+    }
+
+    class ResultExporter {
+        + exportJSON(run : EvaluationRun) : Document
+        + exportCSV(run : EvaluationRun) : Document
+    }
+}
+
+Profile "1" -- "0..*" CriterionPriority
+Criterion "1" -- "0..*" CriterionPriority
+EvaluationRun "1" *-- "1" SensitivityResult
+EvaluationRun "1" -- "0..*" RankingItem
+Location "1" -- "0..*" RankingItem
+EvaluationRun "*" -- "1" Profile
+
+OrchestrationService ..> FAHPCalculator : <<uses>>
+OrchestrationService ..> TOPSISRanker : <<uses>>
+OrchestrationService ..> MonteCarloAnalyzer : <<uses>>
+OrchestrationService ..> RankingComparator : <<uses>>
+OrchestrationService ..> IDataRepository : <<uses>>
+
+MonteCarloAnalyzer ..> TOPSISRanker : <<delegates>>
+
+DataRepository ..|> IDataRepository
+ExternalDataLoader ..> IDataRepository : <<persists via>>
+
+FAHPCalculator ..> Criterion
+TOPSISRanker ..> Location
+TOPSISRanker ..> Criterion
+ResultExporter ..> EvaluationRun
+
+@enduml

@@ -1,0 +1,68 @@
+@startuml
+' Рис. 2.2. Діаграма варіантів використання системи
+left to right direction
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 12
+skinparam actorStyle awesome
+skinparam usecase {
+    BackgroundColor #f5f5f5
+    BorderColor #333333
+}
+
+actor "Муніципальний\nОПР" as MUN
+actor "Інвестор-ОПР" as INV
+actor "Адміністратор\nсистеми" as ADM
+
+rectangle "Система підтримки прийняття рішень" {
+
+    package "Налаштування сеансу" {
+        usecase "Обрати профіль ОПР" as UC1
+        usecase "Сформувати нечітку\nматрицю попарних\nпорівнянь критеріїв" as UC2
+    }
+
+    package "Обчислювальне ядро" {
+        usecase "Обчислити ваги\nкритеріїв (FAHP)" as UC3
+        usecase "Перевірити узгодженість\nматриці суджень" as UC3a
+        usecase "Обчислити ранжування\nлокацій (TOPSIS)" as UC4
+    }
+
+    package "Аналітичні операції" {
+        usecase "Переглянути\nкартографічну\nвізуалізацію" as UC5
+        usecase "Експортувати\nкарту" as UC5a
+        usecase "Виконати аналіз\nчутливості\n(Монте-Карло)" as UC6
+        usecase "Порівняти ранжування\nдвох профілів" as UC7
+        usecase "Експортувати\nрезультати" as UC8
+    }
+
+    package "Керування довідниками" {
+        usecase "Керувати реєстром\nлокацій-кандидатів" as UC9
+        usecase "Керувати словником\nкритеріїв" as UC10
+    }
+}
+
+MUN --> UC1
+MUN --> UC2
+MUN --> UC3
+MUN --> UC4
+MUN --> UC5
+MUN --> UC6
+MUN --> UC7
+MUN --> UC8
+
+INV --> UC1
+INV --> UC2
+INV --> UC3
+INV --> UC4
+INV --> UC5
+INV --> UC6
+INV --> UC7
+INV --> UC8
+
+ADM --> UC9
+ADM --> UC10
+
+UC3 ..> UC3a : <<include>>
+UC5 <.. UC5a : <<extend>>
+
+@enduml

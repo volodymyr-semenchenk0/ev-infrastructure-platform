@@ -1,0 +1,41 @@
+@startuml
+' Рис. 2.11. Діаграма активностей алгоритму Монте-Карло-аналізу чутливості
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 11
+skinparam activity {
+    BackgroundColor #f5f5f5
+    BorderColor #333333
+}
+
+start
+:Вхід: матриця рішень X,\nбазовий вектор ваг W,\nN = 10000, δ = 0.15, K_max = 5;
+
+partition "Ініціалізація" {
+    :P ← матриця нулів\nрозміру n × K_max;
+    :collectors[i] ← []  (для i = 1..n);
+    :t ← 1;
+}
+
+partition "Стохастичний цикл" {
+    while (t ≤ N?) is (так)
+        :Згенерувати ε_j ~ U(−δ, +δ)\nдля j = 1..m;
+        :Обчислити збурений вектор:\nw̃_j = w_j · (1 + ε_j)\nза (1.15);
+        :Ренормалізувати:\nw̃_j ← w̃_j / Σ_k w̃_k\nза (1.16);
+        :Викликати Алгоритм 2.2\nTOPSIS(X, W̃) → ranking_t;
+        :Для всіх i ∈ {1..n}:\n  додати ranking_t[i].C*\nдо collectors[i];
+        :Для всіх i, k:\n  якщо ranking_t[i].rank ≤ k\n  то P[i][k] ← P[i][k] + 1;
+        :t ← t + 1;
+    endwhile (ні)
+}
+
+partition "Агрегація" {
+    :Усереднити:\np_i(k) = P[i][k] / N\nза (1.17);
+    :Знайти трьох локацій\nз найбільшими\nmean(collectors[i]);
+    :Для топ-3 обчислити\n95%-ві довірчі інтервали:\n[Q_0.025, Q_0.975]\n(percentile bootstrap);
+}
+
+:Вихід: матриця стабільності\nP = [p_i(k)]_{n × K_max},\nдовірчі інтервали для топ-3;
+stop
+
+@enduml
