@@ -60,8 +60,11 @@ When the user proposes putting "обґрунтування вибору FastAPI"
 3. **Introduction has 5 elements**, not 6 — мета, завдання, предмет, об'єкт, методи. "Актуальність" is not a separately-titled element (can be a brief opening paragraph without a heading).
 4. **Conclusions have 3 mandatory points**, not 5 — перелік результатів, можливості продукту, ефективність. The MDR-style "обмеження + напрямки подальших досліджень" is not required.
 5. **Appendix forbidden letters** (specific to coursework methodology): Є, С, З, Ї, Е, І, Й, О, Ч, Ь. Allowed sequence: **А, Б, В, Г, Д, Ж, К, Л, М, Н, П, Р, Т, У, Ф, Х, Ш, Щ, Ю, Я**. Note: this differs from the MDR list — pay attention.
-6. **Each main section starts on a new page.**
-7. **Listing of all source code goes into Appendices, not into the main text.** Section 3.1 may include short code fragments only.
+6. **Every subsection starts on a new page.** The coursework methodology explicitly states: «Кожен підрозділ ПЗ починається з нового листа» (Chemerys, 2024, p. 9). This means 1.1, 1.2, 1.3, 2.1, 2.2, 2.3, 3.1, 3.2 — each on its own new page. This differs from the MDR convention where only chapters break.
+7. **Listing of all source code goes into Appendices, not into the main text.** Section 3.1 may include short code fragments only (10–25 lines).
+8. **Section numbers carry a period** that separates them from the title: `1. ТЕОРЕТИЧНИЙ АНАЛІЗ ПРОБЛЕМИ`, `1.1. Аналіз напрямків...`, `1.2.3. Параметри методу TOPSIS`. The methodology says: «Номер розділу і підрозділу ставлять перед найменуванням і відокремлюють його крапкою». This differs from MDR which omits the trailing period after the number.
+9. **Volume limit is hard**: 40–50 pages of body text (without appendices). Exceeding 50 is treated as inability to write concisely and is penalized.
+10. **3 credits ECTS** — the coursework is graded as a separate discipline.
 
 ## Section-by-section guidance
 

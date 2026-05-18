@@ -36,9 +36,12 @@ These parameters apply to the entire main text:
 | Heading alignment (subsection) | Justified, with 1.25 cm indent |
 | Distance: heading → next text | 24 pt |
 | Distance: previous text → subsection heading | 36 pt |
-| Total volume | 40–50 pages without appendices |
+| New page rule | **Every subsection** starts on a new page (1.1, 1.2, ..., 3.2) |
+| Total volume | 40–50 pages without appendices (hard limit, exceeding penalized) |
 | Page numbering | Continuous, top-right corner, no period; title page counts but shows no number |
 | Quote marks | Кутові: «текст» |
+| Borrowed data / citations | Every quote or numerical datum from a printed source MUST have a citation to the primary source |
+| Measurement units | SI only (per ГОСТ 19.781-90) |
 
 Non-default differences from generic ДСТУ:
 - The font specifically is **Times New Roman Cyr**, not just "Times New Roman".
@@ -57,7 +60,7 @@ Non-default differences from generic ДСТУ:
 
 ## Headings
 
-Six rules:
+Eight rules (note rules #5 and #7 are the most commonly violated):
 
 1. Top-level structural parts without numbering — printed in **UPPERCASE**, centered, no period at end:
    - ВСТУП
@@ -83,9 +86,13 @@ Six rules:
    1.2.4. Математичний апарат методу Fuzzy AHP
    ```
 
-5. Each chapter starts on a new page.
+5. **Every subsection starts on a new page.** Not just chapters — every 1.1, 1.2, 1.3, 2.1, ..., 3.2 starts on its own new page. The methodology: «Кожен підрозділ ПЗ починається з нового листа» (Chemerys, 2024, p. 9). This is **stricter than МДР**, where only top-level chapters force a new page.
 
 6. Word breaks (hyphenation) in headings are forbidden. A heading must not sit on the last line of a page — at least two lines of body text must follow it.
+
+7. **Section numbers carry a trailing period** that separates them from the title: `1. ТЕОРЕТИЧНИЙ АНАЛІЗ ПРОБЛЕМИ`, `1.1. Аналіз напрямків...`, `1.2.3. Параметри методу TOPSIS`. The methodology: «Номер розділу і підрозділу ставлять перед найменуванням і відокремлюють його крапкою» (Chemerys, 2024, p. 9). This **differs from МДР**, which omits the trailing period after the number.
+
+8. **Bold for chapter/subsection headings is NOT required** by the coursework methodology (unlike МДР, which mandates bold for all headings). The methodology specifies uppercase + centered for chapters and lowercase (first cap) + justified + 1.25 indent for subsections, but does not prescribe weight. Bold is acceptable but not required.
 
 ## Figures, tables, formulas, lists, references — see references
 
@@ -157,11 +164,37 @@ The methodology references these standards. Cite them only when relevant:
 
 ## Defense logistics
 
-- Submit to supervisor at least 3 days before defense.
-- Plagiarism check: PDF without appendices uploaded to Google Classroom (Unicheck) before defense.
+Deadlines (Chemerys, 2024, p. 4–13):
+- Topic + assignment approval: within the first 3 weeks of the semester.
+- Coursework must be completed and ready for defense: **no later than 2 weeks before defense day**.
+- Submission to supervisor with final formatted Note (ПЗ): **no later than 3 days before defense**.
+- Defense date/place is announced **5 days before defense**.
+- Plagiarism check (Unicheck): upload PDF **without appendices** to Google Classroom before defense.
+
+Defense logistics:
 - Presentation: PPTX or PDF.
-- Defense talk: English, 5–7 minutes.
-- Defense panel: 2–3 lecturers + supervisor.
+- Defense talk: **English**, 5–7 minutes.
+- Defense panel: 2–3 lecturers selected by the department + the coursework supervisor.
+- Public — students of the academic group are present.
+
+Defense procedure (6 steps):
+1. Student presents the work and its implementation.
+2. Commission and audience ask questions.
+3. Student answers the questions.
+4. Commission gives remarks.
+5. Student responds to the remarks (with brief justification if disagreeing).
+6. Commission gives the verdict on the grade.
+
+Qualitative grading scale (Chemerys, 2024, p. 15):
+- **Відмінно** — creative thinking, full understanding, can lead discussion, self-corrects nuances, complete + high-quality calculations / graphics / software.
+- **Добре** — minor non-essential issues: insufficient clarity, small calculation/documentation errors, untidy formatting, incomplete testing.
+- **Задовільно** — substantial issues that the student could not self-correct.
+- **Незадовільно** — lack of understanding, gross errors, inability to answer commission questions.
+
+After defense:
+- Student bind the work in a binder, hands it to the supervisor for the department archive.
+- Positive grade is entered into the grade book with the supervisor's signature.
+- In case of "незадовільно" — new coursework assignment is issued for repeated execution.
 
 ## Grading anchor (for prioritization)
 
