@@ -168,7 +168,8 @@ for name in CH2:
     fp = os.path.join(DOCS, "chapter2", f"{name}.md")
     if not os.path.exists(fp): continue
     txt = read_md(fp)
-    txt = re.sub(r"^#\s+2\..*?\n", "", txt, count=1, flags=re.MULTILINE)
+    txt = re.sub(r"^#\s+2\.[^\n]*\n", "", txt, count=1, flags=re.MULTILINE)
+    txt = re.sub(r"^##\s+2\.\d+\.[^\n]*\n", "", txt, count=1, flags=re.MULTILINE)
     txt = re.sub(r"^##\s+(\d+\.\d+\.\d+\.)\s", r"### \1 ", txt, flags=re.MULTILINE)
     txt = strip_plantuml(txt)
     parts.append(txt.strip() + "\n")
