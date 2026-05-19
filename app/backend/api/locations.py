@@ -15,8 +15,13 @@ router = APIRouter(prefix="/api/locations", tags=["locations"])
 async def list_locations(
     repo: LocationRepository = Depends(get_location_repository),
 ) -> list[LocationRead]:
-    locations = await repo.list_ordered()
-    return [LocationRead.model_validate(loc) for loc in locations]
+    pairs = await repo.list_ordered_with_criteria_values()
+    result = []
+    for loc, cv in pairs:
+        read = LocationRead.model_validate(loc)
+        read.criteria_values = cv or None
+        result.append(read)
+    return result
 
 
 @router.post(

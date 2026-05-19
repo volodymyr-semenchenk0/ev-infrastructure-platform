@@ -59,6 +59,28 @@ class TestLocations:
         assert data["latitude"] == pytest.approx(50.45, abs=1e-4)
         assert data["longitude"] == pytest.approx(30.52, abs=1e-4)
 
+    async def test_list_locations_includes_criteria_values(self, api_client: AsyncClient) -> None:
+        """GET /api/locations items include criteriaValues: dict[str, float].
+
+        Each seeded location has 10 criterion values (Pop_dens, Traffic, …).
+        Reference: plan partitioned-kindling-cosmos.md — Etap 6.0.
+        """
+        resp = await api_client.get("/api/locations")
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 12
+
+        for loc in data:
+            cv = loc.get("criteriaValues")
+            assert cv is not None, f"location id={loc['id']} missing criteriaValues"
+            assert len(cv) == 10, f"expected 10 criteria, got {len(cv)} for id={loc['id']}"
+            for code, val in cv.items():
+                assert isinstance(code, str) and len(code) > 0
+                assert isinstance(val, float) and val >= 0, (
+                    f"invalid value {val!r} for criterion {code!r} in location id={loc['id']}"
+                )
+
     async def test_create_location_rejects_out_of_ukraine_coords(
         self, api_client: AsyncClient
     ) -> None:
