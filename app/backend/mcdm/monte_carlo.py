@@ -14,7 +14,7 @@ def sensitivity_analysis(
     scorer: Callable[[np.ndarray, np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]],
     *,
     n_simulations: int = 10_000,
-    sigma: float = 0.05,
+    delta: float = 0.15,
     seed: int | None = 42,
 ) -> dict[str, np.ndarray]:
     """Монте-Карло аналіз стабільності рейтингу альтернатив.
@@ -25,7 +25,7 @@ def sensitivity_analysis(
         types: Типи критеріїв (1 – max, -1 – min).
         scorer: Функція-рейтингувальник, напр. topsis().
         n_simulations: Кількість ітерацій Монте-Карло.
-        sigma: Стандартне відхилення нормального збурення ваг.
+        delta: Амплітуда рівномірного збурення ваг (ε ~ U(-delta, +delta)).
         seed: Зерно генератора псевдовипадкових чисел для відтворюваності.
 
     Returns:
@@ -34,5 +34,5 @@ def sensitivity_analysis(
             "scores_std"  – стандартне відхилення Ci;
             "rank_freq"   – матриця частот рангів (m × m).
     """
-    # TODO: нормальне збурення ваг → нормалізація → запуск scorer → агрегація
+    # TODO: uniform perturbation U(-delta, +delta) → renormalize → scorer → aggregate
     raise NotImplementedError

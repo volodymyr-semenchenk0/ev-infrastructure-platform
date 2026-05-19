@@ -1,0 +1,5 @@
+{
+  "venvPath": "app/backend",
+  "venv": ".venv",
+  "reportUnusedVariable": "none"
+}
