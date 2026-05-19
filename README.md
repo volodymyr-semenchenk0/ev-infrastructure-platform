@@ -19,27 +19,27 @@ docker compose up --build
 | Frontend | http://localhost:5173 |
 | PostgreSQL | localhost:5432 |
 
+## Після клонування
+
+```bash
+make install          # pip + npm + pre-commit hooks
+make install-skills   # Claude Code skills (з skills-lock.json)
+```
+
 ## Без Docker
 
 ```bash
-# Backend
-cd app/backend
-pip install -e ".[dev]"
-uvicorn main:app --reload
-
-# Frontend
-cd app/frontend
-npm install
-npm run dev
+make dev-backend   # uvicorn main:app --reload  →  :8000
+make dev-frontend  # npm run dev                →  :5173
 ```
 
 ## Тести
 
 ```bash
-cd app/backend
-pytest -v               # 1 fail очікуваний – mcdm/topsis.py не реалізовано
-ruff check .            # лінтер
-mypy mcdm/ --strict     # type check math-ядра
+make all           # lint + typecheck + pytest
+make test          # pytest -v
+make lint          # ruff check
+make typecheck     # mypy mcdm/ --strict
 ```
 
 ## Структура проекту
@@ -57,8 +57,8 @@ app/
 docs/              # документація курсової роботи (Розділи 1–3)
 ```
 
-## Engineering Skills для Claude Code
+## Claude Code Skills
 
-Офіційні Anthropic engineering skills (архітектура, code review, тестування тощо)
-встановлюються через Claude Code після їх виходу у публічний реєстр.
-Плейсхолдери розміщено в `.claude/skills/`.
+Skills не зберігаються в репо (аналог `node_modules`).
+Відновити після клонування: `make install-skills`
+Список і версії зафіксовано в `skills-lock.json`.

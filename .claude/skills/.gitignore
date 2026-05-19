@@ -1,0 +1,4 @@
+# Symlinks генеруються npx skills – відновлюються через: make install-skills
+*
+!engineering-*/
+!.gitignore
