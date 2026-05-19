@@ -1,8 +1,18 @@
-.PHONY: install install-skills dev-backend dev-frontend test lint typecheck all
+.PHONY: install install-skills dev-backend dev-frontend test lint typecheck all db-up db-down migrate seed
+
+# ─── Venv paths (Makefile uses absolute venv binaries; no activate needed) ───
+VENV     := app/backend/.venv
+PY       := $(VENV)/bin/python
+PIP      := $(VENV)/bin/pip
+RUFF     := $(VENV)/bin/ruff
+MYPY     := $(VENV)/bin/mypy
+PYTEST   := $(VENV)/bin/pytest
+ALEMBIC  := $(VENV)/bin/alembic
+UVICORN  := $(VENV)/bin/uvicorn
 
 # ─── Залежності ───────────────────────────────────────────────
 install:
-	cd app/backend && pip install -e ".[dev]"
+	$(PIP) install -e "app/backend[dev]"
 	cd app/frontend && npm install
 	pre-commit install
 
@@ -29,19 +39,32 @@ install-skills:
 
 # ─── Розробка ─────────────────────────────────────────────────
 dev-backend:
-	cd app/backend && uvicorn main:app --reload
+	cd app/backend && ../../$(UVICORN) main:app --reload
 
 dev-frontend:
 	cd app/frontend && npm run dev
 
 # ─── Якість коду ──────────────────────────────────────────────
 test:
-	cd app/backend && pytest -v
+	cd app/backend && ../../$(PYTEST) -v
 
 lint:
-	cd app/backend && ruff check .
+	cd app/backend && ../../$(RUFF) check .
 
 typecheck:
-	cd app/backend && mypy mcdm/ --strict
+	cd app/backend && ../../$(MYPY) mcdm/ --strict
 
 all: lint typecheck test
+
+# ─── База даних ───────────────────────────────────────────────
+db-up:
+	docker compose up -d db
+
+db-down:
+	docker compose down
+
+migrate:
+	cd app/backend && ../../$(ALEMBIC) upgrade head
+
+seed:
+	cd app/backend && ../../$(PY) -m db.seed_cli
