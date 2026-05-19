@@ -1,20 +1,21 @@
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts'
+import { ResponsiveBar } from '@nivo/bar'
+
+import { getNivoTheme } from '@/lib/nivo-theme'
 
 interface WeightsBarChartProps {
   weights: Record<string, number>
   criteriaNames?: Record<string, string>
 }
 
+interface WeightDatum {
+  code: string
+  weight: number
+  name: string
+  [key: string]: string | number
+}
+
 export function WeightsBarChart({ weights, criteriaNames }: WeightsBarChartProps) {
-  const data = Object.entries(weights)
+  const data: WeightDatum[] = Object.entries(weights)
     .map(([code, weight]) => ({
       code,
       weight,
@@ -23,35 +24,45 @@ export function WeightsBarChart({ weights, criteriaNames }: WeightsBarChartProps
     .sort((a, b) => b.weight - a.weight)
 
   return (
-    <ResponsiveContainer width="100%" height={360}>
-      <BarChart
+    <div style={{ height: 360 }}>
+      <ResponsiveBar
         data={data}
-        layout="vertical"
-        margin={{ top: 8, right: 16, bottom: 8, left: 80 }}
-      >
-        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-        <XAxis
-          type="number"
-          domain={[0, 'dataMax']}
-          tickFormatter={(v: number) => v.toFixed(2)}
-          fontSize={12}
-        />
-        <YAxis
-          dataKey="code"
-          type="category"
-          width={75}
-          fontSize={12}
-          tick={{ fill: 'currentColor' }}
-        />
-        <Tooltip
-          formatter={(value: number) => value.toFixed(4)}
-          labelFormatter={(label: string) => {
-            const row = data.find((d) => d.code === label)
-            return row?.name ?? label
-          }}
-        />
-        <Bar dataKey="weight" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-      </BarChart>
-    </ResponsiveContainer>
+        keys={['weight']}
+        indexBy="code"
+        layout="horizontal"
+        margin={{ top: 8, right: 24, bottom: 32, left: 80 }}
+        padding={0.25}
+        valueFormat={(v) => Number(v).toFixed(4)}
+        colors={['hsl(var(--primary))']}
+        borderRadius={4}
+        enableLabel={false}
+        axisBottom={{
+          tickSize: 0,
+          tickPadding: 8,
+          format: (v) => Number(v).toFixed(2),
+        }}
+        axisLeft={{ tickSize: 0, tickPadding: 8 }}
+        theme={getNivoTheme()}
+        tooltip={({ indexValue, value }) => {
+          const row = data.find((d) => d.code === indexValue)
+          return (
+            <div
+              style={{
+                background: 'hsl(var(--background))',
+                color: 'hsl(var(--foreground))',
+                border: '1px solid hsl(var(--border))',
+                borderRadius: 6,
+                padding: '6px 10px',
+                fontSize: 12,
+              }}
+            >
+              <strong>{row?.name ?? indexValue}</strong>
+              <div>w = {Number(value).toFixed(4)}</div>
+            </div>
+          )
+        }}
+        ariaLabel="Ваги критеріїв"
+      />
+    </div>
   )
 }

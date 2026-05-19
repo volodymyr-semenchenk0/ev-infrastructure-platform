@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, MapIcon } from 'lucide-react'
+import { Activity, ArrowLeft, MapIcon } from 'lucide-react'
 
 interface ResultsHeaderProps {
   evaluationId: number
@@ -31,6 +31,12 @@ export function ResultsHeader({
           <Link to={`/map?evaluationId=${evaluationId}`}>
             <MapIcon className="mr-2 h-4 w-4" />
             Показати на карті
+          </Link>
+        </Button>
+        <Button asChild variant="default" size="sm">
+          <Link to={`/sensitivity/${evaluationId}`}>
+            <Activity className="mr-2 h-4 w-4" />
+            Аналіз чутливості
           </Link>
         </Button>
         <Button asChild variant="outline" size="sm">
