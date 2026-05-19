@@ -1,0 +1,174 @@
+"""Integration tests for the seed_reference_data function (spec 2.2.2, 3.1).
+
+seed_reference_data(session) is defined in db/seed.py (Task #5).
+These tests constitute the red phase: they fail with ImportError / AttributeError
+until Task #5 is complete.
+
+All tests use a live PostGIS container (db_session fixture from conftest.py).
+No mocks are used.
+"""
+
+from __future__ import annotations
+
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from db.models import Criterion, Location, Profile
+from db.seed import seed_reference_data  # does not exist yet — red phase
+
+# ---------------------------------------------------------------------------
+# Expected reference constants (source: master.md Table 3.1, Table 3.3)
+# ---------------------------------------------------------------------------
+
+EXPECTED_PROFILE_CODES = {"municipal", "investor"}
+
+EXPECTED_CRITERION_CODES = {
+    "Pop_dens",
+    "Traffic",
+    "Grid_cap",
+    "Dist_sub",
+    "Revenue",
+    "Land_cost",
+    "Parking",
+    "Income",
+    "Green",
+    "Env_qual",
+}
+
+# Троєщина: lon=30.5689, lat=50.5234, district=Деснянський
+TROIESHCHYNA_LON = 30.5689
+TROIESHCHYNA_LAT = 50.5234
+TROIESHCHYNA_DISTRICT = "Деснянський"
+
+
+class TestSeedReferenceData:
+    """Tests for db/seed.py::seed_reference_data.
+
+    Reference: spec 2.2.2 seed requirements; master.md Table 3.1 (profiles),
+    Table 3.3 (criteria codes), Appendix A (location coordinates).
+    """
+
+    async def test_seed_creates_two_profiles(self, db_session: AsyncSession) -> None:
+        """seed_reference_data must insert exactly 2 profiles: 'municipal' and 'investor'.
+
+        Reference: master.md Table 3.1 — два профілі прийняття рішень.
+        """
+        await seed_reference_data(db_session)
+        await db_session.flush()
+
+        result = await db_session.execute(select(Profile))
+        profiles = result.scalars().all()
+
+        assert len(profiles) == 2, (
+            f"Expected 2 profiles, got {len(profiles)}: {[p.code for p in profiles]}"
+        )
+        actual_codes = {p.code for p in profiles}
+        assert actual_codes == EXPECTED_PROFILE_CODES, (
+            f"Profile codes mismatch. Expected {EXPECTED_PROFILE_CODES}, got {actual_codes}"
+        )
+        await db_session.rollback()
+
+    async def test_seed_creates_ten_criteria(self, db_session: AsyncSession) -> None:
+        """seed_reference_data must insert exactly 10 criteria with the expected codes.
+
+        Reference: master.md Table 3.3 — 10 критеріїв оцінювання локацій.
+        """
+        await seed_reference_data(db_session)
+        await db_session.flush()
+
+        result = await db_session.execute(select(Criterion))
+        criteria = result.scalars().all()
+
+        assert len(criteria) == 10, (
+            f"Expected 10 criteria, got {len(criteria)}: {[c.code for c in criteria]}"
+        )
+        actual_codes = {c.code for c in criteria}
+        assert actual_codes == EXPECTED_CRITERION_CODES, (
+            f"Criterion codes mismatch.\n"
+            f"  Missing : {EXPECTED_CRITERION_CODES - actual_codes}\n"
+            f"  Extra   : {actual_codes - EXPECTED_CRITERION_CODES}"
+        )
+        await db_session.rollback()
+
+    async def test_seed_creates_twelve_kyiv_locations(self, db_session: AsyncSession) -> None:
+        """seed_reference_data must insert 12 Kyiv locations including Троєщина.
+
+        Троєщина must have:
+          - lon = 30.5689 ± 1e-4
+          - lat = 50.5234 ± 1e-4
+          - district = 'Деснянський'
+
+        Reference: master.md Appendix A — координати 12 локацій Києва.
+        """
+        await seed_reference_data(db_session)
+        await db_session.flush()
+
+        result = await db_session.execute(select(Location))
+        locations = result.scalars().all()
+
+        assert len(locations) == 12, (
+            f"Expected 12 locations, got {len(locations)}: {[l.name for l in locations]}"
+        )
+
+        troieshchyna = next((loc for loc in locations if "Троєщина" in loc.name), None)
+        assert troieshchyna is not None, (
+            "Location named 'Троєщина' not found among seeded locations: "
+            f"{[l.name for l in locations]}"
+        )
+        assert troieshchyna.district == TROIESHCHYNA_DISTRICT, (
+            f"Троєщина district: expected '{TROIESHCHYNA_DISTRICT}', got '{troieshchyna.district}'"
+        )
+
+        # Verify stored coordinates via PostGIS functions
+        from sqlalchemy import text
+
+        row = await db_session.execute(
+            text(
+                "SELECT ST_X(geom::geometry) AS lon, ST_Y(geom::geometry) AS lat "
+                "FROM locations WHERE id = :id"
+            ).bindparams(id=troieshchyna.id)
+        )
+        coords = row.one()
+        assert abs(coords.lon - TROIESHCHYNA_LON) < 1e-4, (
+            f"Троєщина longitude: expected {TROIESHCHYNA_LON}, got {coords.lon}"
+        )
+        assert abs(coords.lat - TROIESHCHYNA_LAT) < 1e-4, (
+            f"Троєщина latitude: expected {TROIESHCHYNA_LAT}, got {coords.lat}"
+        )
+        await db_session.rollback()
+
+    async def test_seed_is_idempotent(self, db_session: AsyncSession) -> None:
+        """Calling seed_reference_data twice must not duplicate rows.
+
+        After two calls the counts must still be 2 profiles, 10 criteria,
+        12 locations — not 4 / 20 / 24.
+
+        Reference: spec 2.2.2 — seed must be safe to re-run (INSERT … ON CONFLICT DO NOTHING
+        or equivalent upsert pattern).
+        """
+        await seed_reference_data(db_session)
+        await db_session.flush()
+        await seed_reference_data(db_session)
+        await db_session.flush()
+
+        profile_count = (
+            await db_session.execute(select(func.count()).select_from(Profile))
+        ).scalar_one()
+        criterion_count = (
+            await db_session.execute(select(func.count()).select_from(Criterion))
+        ).scalar_one()
+        location_count = (
+            await db_session.execute(select(func.count()).select_from(Location))
+        ).scalar_one()
+
+        assert profile_count == 2, (
+            f"Idempotency broken: {profile_count} profiles after 2 seed calls"
+        )
+        assert criterion_count == 10, (
+            f"Idempotency broken: {criterion_count} criteria after 2 seed calls"
+        )
+        assert location_count == 12, (
+            f"Idempotency broken: {location_count} locations after 2 seed calls"
+        )
+
+        await db_session.rollback()
