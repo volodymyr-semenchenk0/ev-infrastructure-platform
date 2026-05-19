@@ -15,6 +15,7 @@ dependencies = [
     "geoalchemy2>=0.15",
     "asyncpg>=0.29",
     "alembic>=1.13",
+    "shapely>=2.0",
     "pymcdm>=1.1",
     "numpy>=1.26",
     "pandas>=2.2",
@@ -57,9 +58,20 @@ known-first-party = ["core", "api", "db", "schemas", "services", "mcdm"]
 "db/migrations/env.py" = ["ANN401"]
 # E741: l/m/u are canonical TFN parameter names from Chang (1996) — keep as-is.
 "db/models/profile.py" = ["E741"]
+"schemas/evaluation.py" = ["E741"]
+# ANN401: Pydantic v2 model_validator(mode="before") receives Any by design.
+"schemas/location.py" = ["ANN401"]
 
 [tool.mypy]
 python_version = "3.11"
 strict = true
 ignore_missing_imports = true
 mypy_path = "."
+
+# Strict mode applies to mcdm/ (canonical contract).
+# schemas/ uses non-strict because Pydantic v2 generics produce opaque types
+# that strict mypy cannot follow without large amounts of explicit annotation.
+[[tool.mypy.overrides]]
+module = "schemas.*"
+strict = false
+disallow_untyped_defs = true
