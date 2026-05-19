@@ -1,4 +1,5 @@
 @startuml
+allowmixing
 ' Рис. 2.5. Діаграма комунікації для сценарію «Обчислити ранжування локацій»
 skinparam shadowing false
 skinparam defaultFontName "Times New Roman"

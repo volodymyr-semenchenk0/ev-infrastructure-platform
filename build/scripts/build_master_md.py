@@ -59,7 +59,7 @@ def fix_image(m):
         if os.path.isfile(candidate):
             return f"![{alt}]({candidate})"
     fn = os.path.basename(rel)
-    return f"\n***[ПЛЕЙСХОЛДЕР: {fn} — рисунок підготувати окремо]***\n"
+    return f"\n***[ПЛЕЙСХОЛДЕР: {fn} – рисунок підготувати окремо]***\n"
 
 def strip_plantuml(text):
     return re.sub(r"```plantuml\s*\n.*?\n```\s*\n?", "", text, flags=re.DOTALL)
@@ -132,6 +132,8 @@ CH1 = ["1_1_1","1_1_2","1_1_3","1_1_4","1_1_5",
 CH2 = ["2_1_1","2_1_2","2_1_3","2_1_4","2_1_5","2_1_6",
        "2_2_1","2_2_2","2_2_3",
        "2_3_1","2_3_2","2_3_3","2_3_4","2_3_5"]
+CH3 = ["3_1_1","3_1_2","3_1_3","3_1_4","3_1_5","3_1_6","3_1_7",
+       "3_2_1","3_2_2","3_2_3","3_2_4","3_2_5","3_2_6","3_2_7"]
 SUB_HEADERS_1 = {
     "1_1_1": "## 1.1. Аналіз напрямків (перспектив) використання досліджуваних процесів",
     "1_2_1": "## 1.2. Математичний алгоритм, моделі та методи прийняття рішень",
@@ -140,6 +142,10 @@ SUB_HEADERS_2 = {
     "2_1_1": "## 2.1. Структура системи, що проектується",
     "2_2_1": "## 2.2. Опис інформаційного забезпечення",
     "2_3_1": "## 2.3. Розробка алгоритмів функціонування системи",
+}
+SUB_HEADERS_3 = {
+    "3_1_1": "## 3.1. Реалізація інтерфейсу та функцій програмного продукту",
+    "3_2_1": "## 3.2. Тестування та аналіз результатів роботи системи",
 }
 
 def read_md(path):
@@ -157,7 +163,7 @@ parts.append("\n\n# 1. ТЕОРЕТИЧНИЙ АНАЛІЗ ПРОБЛЕМИ\n")
 for name in CH1:
     if name in SUB_HEADERS_1: parts.append("\n" + SUB_HEADERS_1[name] + "\n")
     txt = read_md(os.path.join(DOCS, "chapter1", f"{name}.md"))
-    txt = re.sub(r"^##\s+(\d+\.\d+\.\d+\.)\s", r"### \1 ", txt, flags=re.MULTILINE)
+    txt = re.sub(r"^##\s+(\d+\.\d+\.\d+)\.?\s", r"### \1. ", txt, flags=re.MULTILINE)
     txt = fix_citations(txt, name)
     parts.append(txt.strip() + "\n")
 
@@ -170,9 +176,33 @@ for name in CH2:
     txt = read_md(fp)
     txt = re.sub(r"^#\s+2\.[^\n]*\n", "", txt, count=1, flags=re.MULTILINE)
     txt = re.sub(r"^##\s+2\.\d+\.[^\n]*\n", "", txt, count=1, flags=re.MULTILINE)
-    txt = re.sub(r"^##\s+(\d+\.\d+\.\d+\.)\s", r"### \1 ", txt, flags=re.MULTILINE)
+    txt = re.sub(r"^##\s+(\d+\.\d+\.\d+)\.?\s", r"### \1. ", txt, flags=re.MULTILINE)
     txt = strip_plantuml(txt)
     parts.append(txt.strip() + "\n")
+
+# Розділ 3
+parts.append("\n\n# 3. РЕАЛІЗАЦІЯ СИСТЕМИ ЗА ТЕМОЮ КУРСОВОЇ РОБОТИ\n")
+for name in CH3:
+    if name in SUB_HEADERS_3: parts.append("\n" + SUB_HEADERS_3[name] + "\n")
+    fp = os.path.join(DOCS, "chapter3", f"{name}.md")
+    if not os.path.exists(fp): continue
+    txt = read_md(fp)
+    # strip top-level "# 3. ..." and "## 3.X. ..." since we emit those ourselves
+    txt = re.sub(r"^#\s+3\.[^\n]*\n", "", txt, count=1, flags=re.MULTILINE)
+    txt = re.sub(r"^##\s+3\.\d+\.[^\n]*\n", "", txt, count=1, flags=re.MULTILINE)
+    # demote "### 3.X.Y." to keep them as level-3 headings
+    txt = re.sub(r"^##\s+(\d+\.\d+\.\d+)\.?\s", r"### \1. ", txt, flags=re.MULTILINE)
+    txt = fix_citations(txt, name)
+    txt = strip_plantuml(txt)
+    parts.append(txt.strip() + "\n")
+
+# ВИСНОВКИ
+vysnovky_path = os.path.join(DOCS, "висновки.md")
+if os.path.isfile(vysnovky_path):
+    vy = read_md(vysnovky_path)
+    vy = re.sub(r"^##\s*ВИСНОВКИ\s*\n", "", vy, count=1, flags=re.MULTILINE)
+    vy = re.sub(r"^#\s*ВИСНОВКИ\s*\n", "", vy, count=1, flags=re.MULTILINE)
+    parts.append("\n\n# ВИСНОВКИ\n\n" + vy.strip() + "\n")
 
 # СПИСОК ВИКОРИСТАНИХ ДЖЕРЕЛ
 parts.append("\n\n# СПИСОК ВИКОРИСТАНИХ ДЖЕРЕЛ\n\n")
