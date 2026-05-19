@@ -201,9 +201,10 @@ Tooling: ruff, mypy --strict, pytest + pytest-asyncio, httpx, pre-commit, ESLint
 
 ## Поточний стан проєкту (станом на 2026-05-19)
 
-- `mcdm/`: каркас + 4 модулі (fahp.py, topsis.py, monte_carlo.py, normalize.py), 4 тестових файли
-- `api/`, `schemas/`, `services/`: порожні (тільки `__init__.py`)
-- `db/`: налаштовано Alembic, базова сесія
+- `mcdm/`: 4 модулі (fahp.py, topsis.py, monte_carlo.py, normalize.py) реалізовано, 11 юніт-тестів зелені
+- `db/`: 8 ORM-моделей (Profile, Criterion, PairwiseMatrixEntry, Location, ExistingStation, EvaluationRun, RankingItem, SensitivityRecord), Alembic-міграція 0001 з PostGIS, seed для 2/10/12. Деталі — `app/backend/db/README.md`
+- `api/`, `schemas/`, `services/`: порожні (тільки `__init__.py`); наступні етапи roadmap
+- Тести: 26 passed (11 mcdm + 11 db_models + 4 seed); інтеграційні через testcontainers PostGIS
 - `frontend/`: скелет (App, pages, features, components, lib, types)
 - Текст курсової: chapter1 (1.1.1–1.1.5, 1.2.1–1.2.7, 1.3), chapter2 (2.1–2.3), chapter3 (3.1–3.2), вступ, висновки, Додаток Ж
 - ADR: каталог `docs/adr/` ще не створено; перший ADR – через `engineering-architecture`
