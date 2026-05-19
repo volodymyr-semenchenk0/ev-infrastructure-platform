@@ -61,6 +61,8 @@ known-first-party = ["core", "api", "db", "schemas", "services", "mcdm"]
 "schemas/evaluation.py" = ["E741"]
 # ANN401: Pydantic v2 model_validator(mode="before") receives Any by design.
 "schemas/location.py" = ["ANN401"]
+# ANN401: comparison.compare() ducktype-accepts ORM EvaluationRun and SimpleNamespace.
+"services/comparison_service.py" = ["ANN401"]
 # B008: Depends() in argument defaults is the canonical FastAPI dependency pattern.
 "api/*.py" = ["B008"]
 
