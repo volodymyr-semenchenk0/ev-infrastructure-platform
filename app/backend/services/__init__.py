@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from services.comparison_service import ComparisonService
 from services.evaluation_service import EvaluationService
 from services.repository import (
     CriterionRepository,
@@ -14,6 +15,7 @@ from services.repository import (
 from services.sensitivity_service import SensitivityService
 
 __all__ = [
+    "ComparisonService",
     "CriterionRepository",
     "DecisionMatrixRepository",
     "EvaluationRepository",
