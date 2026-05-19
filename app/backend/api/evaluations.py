@@ -63,8 +63,11 @@ async def get_evaluation(
 async def run_sensitivity(
     evaluation_id: int,
     payload: SensitivityRequest,
+    repo: EvaluationRepository = Depends(get_evaluation_repository),
     service: SensitivityService = Depends(get_sensitivity_service),
 ) -> SensitivityRead:
+    if await repo.get_with_ranking(evaluation_id) is None:
+        raise HTTPException(status_code=404, detail=f"Evaluation {evaluation_id} not found")
     return await service.run(
         evaluation_id=evaluation_id,
         iterations=payload.iterations,
