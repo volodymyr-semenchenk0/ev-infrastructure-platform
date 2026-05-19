@@ -331,14 +331,15 @@ class TestSensitivity:
     Reference: spec 2.1.6 §8 — Monte-Carlo sensitivity analysis endpoint.
     """
 
-    async def test_post_sensitivity_returns_200_with_top3_cis(
+    async def test_post_sensitivity_returns_200_with_full_cis(
         self, api_client: AsyncClient
     ) -> None:
         """POST /api/evaluations/{id}/sensitivity must return 200 with MC results.
 
         Response must contain:
           - stabilityMatrix: dict with one entry per location (12 keys)
-          - confidenceIntervals: list of ≥3 items, each with locationId, low, high
+          - confidenceIntervals: list with one item per location (12 items),
+            each with locationId, low, high
 
         Runs 200 iterations to keep test duration short while still exercising
         the full Monte-Carlo pipeline.
@@ -372,12 +373,47 @@ class TestSensitivity:
         )
 
         cis = data.get("confidenceIntervals", [])
-        assert len(cis) >= 3, (
-            f"Expected at least 3 confidenceIntervals (top-3 locations), got {len(cis)}"
-        )
+        assert len(cis) == 12, f"Expected confidenceIntervals for all 12 locations, got {len(cis)}"
         first_ci = cis[0]
         expected_ci_keys = {"locationId", "low", "high"}
         assert expected_ci_keys.issubset(first_ci.keys()), (
             f"Missing keys in CI item. "
             f"Expected subset {expected_ci_keys}, got {set(first_ci.keys())}"
         )
+
+    async def test_post_sensitivity_ci_sorted_by_mean_score_desc(
+        self, api_client: AsyncClient
+    ) -> None:
+        """confidenceIntervals must be ordered by mean closeness C* descending.
+
+        The frontend bar chart shows all locations sorted from best to worst;
+        the API contract guarantees this ordering so the client does not need
+        to re-sort. Since C*_mean = (low + high) / 2, we assert the midpoint
+        of each subsequent interval is ≤ the previous one.
+        """
+        profiles_resp = await api_client.get("/api/profiles")
+        profiles = profiles_resp.json()
+        municipal_id = next(p for p in profiles if p["code"] == "municipal")["id"]
+
+        create_resp = await api_client.post(
+            "/api/evaluations",
+            json={
+                "profileId": municipal_id,
+                "pairwiseMatrix": _identity_pairwise_matrix(10),
+            },
+        )
+        evaluation_id = create_resp.json()["evaluationId"]
+
+        sens_resp = await api_client.post(
+            f"/api/evaluations/{evaluation_id}/sensitivity",
+            json={"iterations": 200, "perturbation": 0.1},
+        )
+        assert sens_resp.status_code == 200
+
+        cis = sens_resp.json()["confidenceIntervals"]
+        midpoints = [(ci["low"] + ci["high"]) / 2 for ci in cis]
+        for i in range(len(midpoints) - 1):
+            assert midpoints[i] >= midpoints[i + 1], (
+                f"CI list not sorted desc: midpoint[{i}]={midpoints[i]:.4f} "
+                f"< midpoint[{i + 1}]={midpoints[i + 1]:.4f}"
+            )

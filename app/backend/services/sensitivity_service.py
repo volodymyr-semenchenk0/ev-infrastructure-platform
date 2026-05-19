@@ -72,16 +72,15 @@ class SensitivityService:
             probs = [float(rank_freq[k, alt_idx]) / iterations for k in range(n_alt)]
             stability_matrix[loc.name] = probs
 
-        # CI for top-3 by mean closeness.
-        order_desc = np.argsort(scores_mean)[::-1]
-        top3 = order_desc[: min(3, n_alt)].tolist()
+        # 95% CI for all locations, ordered by mean closeness C* descending.
+        order_desc = np.argsort(scores_mean)[::-1].tolist()
         cis = [
             ConfidenceInterval(
                 location_id=location_ids[i],
                 low=float(scores_mean[i] - CI_Z_SCORE_95 * scores_std[i]),
                 high=float(scores_mean[i] + CI_Z_SCORE_95 * scores_std[i]),
             )
-            for i in top3
+            for i in order_desc
         ]
 
         # Persist (idempotent overwrite if a record already exists).

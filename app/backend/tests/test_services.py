@@ -406,13 +406,14 @@ class TestSensitivityService:
         )
         return profile.id, result.evaluation_id
 
-    async def test_sensitivity_service_persists_record_with_confidence_intervals_for_top3(
+    async def test_sensitivity_service_persists_record_with_full_confidence_intervals(
         self, db_session: AsyncSession
     ) -> None:
         """SensitivityService.run must persist a SensitivityRecord and return SensitivityRead.
 
-        The result must contain confidence_intervals for at least the top-3 locations.
-        The DB record must have iterations == requested count.
+        The result must contain confidence_intervals for every location (one CI per
+        alternative), ordered by mean closeness C* descending. The DB record must
+        have iterations == requested count.
 
         Reference: spec 2.1.6 §8 — Monte-Carlo outputs: stability_matrix + CIs.
         """
@@ -422,8 +423,12 @@ class TestSensitivityService:
         result = await sens.run(evaluation_id=eval_id, iterations=200, perturbation=0.1)
 
         assert isinstance(result, SensitivityRead), f"Expected SensitivityRead, got {type(result)}"
-        assert len(result.confidence_intervals) >= 3, (
-            f"Expected CIs for at least 3 locations, got {len(result.confidence_intervals)}"
+        assert len(result.confidence_intervals) == 12, (
+            f"Expected CIs for all 12 locations, got {len(result.confidence_intervals)}"
+        )
+        midpoints = [(ci.low + ci.high) / 2 for ci in result.confidence_intervals]
+        assert midpoints == sorted(midpoints, reverse=True), (
+            "Confidence intervals must be ordered by mean C* descending"
         )
 
         rec = await db_session.scalar(
