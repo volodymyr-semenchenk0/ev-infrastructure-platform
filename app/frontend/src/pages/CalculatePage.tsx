@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useProfileStore } from '@/store/profile-store'
+import { useEvaluationsHistory } from '@/store/evaluations-history'
 import { useCriteria } from '@/features/calculate/useCriteria'
 import { AhpMatrix } from '@/features/calculate/AhpMatrix'
 import { ConsistencyBadge } from '@/features/calculate/ConsistencyBadge'
@@ -43,6 +44,12 @@ export function CalculatePage() {
       },
       {
         onSuccess: (data) => {
+          useEvaluationsHistory.getState().pushEvaluation({
+            id: data.evaluationId,
+            profileName: activeProfile.name,
+            profileCode: activeProfile.code,
+            createdAt: new Date().toISOString(),
+          })
           navigate(`/results/${data.evaluationId}`)
         },
         onError: (error) => {
