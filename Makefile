@@ -1,4 +1,5 @@
-.PHONY: install install-skills dev-backend dev-frontend test lint typecheck all db-up db-down migrate seed
+.PHONY: install install-skills dev-backend dev-frontend test lint typecheck all db-up db-down migrate seed \
+        frontend-install frontend-test frontend-lint frontend-typecheck frontend-build frontend-types
 
 # ─── Venv paths (Makefile uses absolute venv binaries; no activate needed) ───
 VENV     := app/backend/.venv
@@ -57,7 +58,26 @@ typecheck:
 	cd app/backend && ../../$(MYPY) services/
 	cd app/backend && ../../$(MYPY) api/
 
-all: lint typecheck test
+all: lint typecheck test frontend-lint frontend-typecheck frontend-test
+
+# ─── Frontend ────────────────────────────────────────────────
+frontend-install:
+	cd app/frontend && npm install
+
+frontend-test:
+	cd app/frontend && npm test
+
+frontend-lint:
+	cd app/frontend && npm run lint
+
+frontend-typecheck:
+	cd app/frontend && npm run typecheck
+
+frontend-build:
+	cd app/frontend && npm run build
+
+frontend-types:
+	cd app/frontend && npm run types:generate
 
 # ─── База даних ───────────────────────────────────────────────
 db-up:

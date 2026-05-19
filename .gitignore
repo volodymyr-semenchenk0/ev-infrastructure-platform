@@ -67,6 +67,8 @@ venv/
 # ─────────────────────────────────────────────
 node_modules/
 app/frontend/dist/
+app/frontend/*.tsbuildinfo
+app/backend/.coverage
 
 # ─────────────────────────────────────────────
 # Секрети – ніколи не комітити
