@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Activity, ArrowLeft, MapIcon } from 'lucide-react'
 
+import { ExportButtons } from '@/features/export/ExportButtons'
+
 interface ResultsHeaderProps {
   evaluationId: number
   profileName?: string
@@ -39,6 +41,7 @@ export function ResultsHeader({
             Аналіз чутливості
           </Link>
         </Button>
+        <ExportButtons evaluationId={evaluationId} />
         <Button asChild variant="outline" size="sm">
           <Link to="/results">
             <ArrowLeft className="mr-2 h-4 w-4" />

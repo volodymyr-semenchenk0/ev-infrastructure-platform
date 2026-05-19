@@ -14,10 +14,10 @@ export class ValidationError extends Error {
   }
 }
 
-const baseURL = import.meta.env.VITE_API_BASE_URL ?? '/api'
+export const API_BASE_URL: string = import.meta.env.VITE_API_BASE_URL ?? '/api'
 
 export const api: AxiosInstance = axios.create({
-  baseURL,
+  baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
   timeout: 60_000,
 })
