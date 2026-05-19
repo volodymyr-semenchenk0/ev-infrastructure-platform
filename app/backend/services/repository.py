@@ -52,6 +52,27 @@ class LocationRepository:
         result = await self.session.execute(select(Location).order_by(Location.id))
         return list(result.scalars().all())
 
+    async def list_ordered_with_criteria_values(
+        self,
+    ) -> list[tuple[Location, dict[str, float]]]:
+        """Return locations paired with their criterion-value dicts.
+
+        Runs two queries instead of one N+1 loop: first fetches all locations,
+        then fetches all (location_id, criterion_code, value) rows in a single
+        JOIN and builds a lookup dict.  Avoids ORM relationship changes.
+        """
+        locations = await self.list_ordered()
+        stmt = select(
+            LocationCriterionValue.location_id,
+            Criterion.code,
+            LocationCriterionValue.value,
+        ).join(Criterion, LocationCriterionValue.criterion_id == Criterion.id)
+        rows = (await self.session.execute(stmt)).all()
+        criteria_map: dict[int, dict[str, float]] = {}
+        for loc_id, code, value in rows:
+            criteria_map.setdefault(loc_id, {})[code] = float(value)
+        return [(loc, criteria_map.get(loc.id, {})) for loc in locations]
+
     async def get(self, pk: int) -> Location | None:
         return await self.session.get(Location, pk)
 

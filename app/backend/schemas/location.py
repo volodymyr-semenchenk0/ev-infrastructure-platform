@@ -40,6 +40,7 @@ class LocationRead(CamelModel):
     district: str | None = None
     latitude: float
     longitude: float
+    criteria_values: dict[str, float] | None = None
 
     @model_validator(mode="before")
     @classmethod
