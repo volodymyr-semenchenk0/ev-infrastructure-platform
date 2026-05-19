@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.session import AsyncSessionLocal
 from services import (
+    ComparisonService,
     CriterionRepository,
     EvaluationRepository,
     EvaluationService,
@@ -58,3 +59,8 @@ def get_sensitivity_service(
     session: AsyncSession = Depends(get_db),
 ) -> SensitivityService:
     return SensitivityService(session)
+
+
+def get_comparison_service() -> ComparisonService:
+    """ComparisonService is stateless — no session needed."""
+    return ComparisonService()
