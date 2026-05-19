@@ -55,6 +55,7 @@ typecheck:
 	cd app/backend && ../../$(MYPY) mcdm/ --strict
 	cd app/backend && ../../$(MYPY) schemas/
 	cd app/backend && ../../$(MYPY) services/
+	cd app/backend && ../../$(MYPY) api/
 
 all: lint typecheck test
 

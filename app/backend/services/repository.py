@@ -55,6 +55,28 @@ class LocationRepository:
     async def get(self, pk: int) -> Location | None:
         return await self.session.get(Location, pk)
 
+    async def create(
+        self,
+        name: str,
+        latitude: float,
+        longitude: float,
+        address: str | None = None,
+        district: str | None = None,
+    ) -> Location:
+        loc = Location(
+            name=name,
+            address=address,
+            district=district,
+            geom=f"SRID=4326;POINT({longitude} {latitude})",
+        )
+        self.session.add(loc)
+        await self.session.flush()
+        # Refresh so geom comes back as a WKBElement (not the raw input string).
+        # LocationRead._extract_lat_lon_from_geom expects WKB/WKTElement to call
+        # geoalchemy2.shape.to_shape on it.
+        await self.session.refresh(loc)
+        return loc
+
 
 class DecisionMatrixRepository:
     def __init__(self, session: AsyncSession) -> None:

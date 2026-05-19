@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
+from api import criteria, evaluations, locations, profiles
 from core.config import settings
 
 app = FastAPI(
@@ -19,6 +21,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(ValueError)
+async def _value_error_to_422(request: Request, exc: ValueError) -> JSONResponse:
+    """Domain-level ValueError (e.g. CR > 0.10, matrix size mismatch) → HTTP 422."""
+    return JSONResponse(status_code=422, content={"detail": str(exc)})
+
+
+app.include_router(profiles.router)
+app.include_router(criteria.router)
+app.include_router(locations.router)
+app.include_router(evaluations.router)
 
 
 @app.get("/health")
