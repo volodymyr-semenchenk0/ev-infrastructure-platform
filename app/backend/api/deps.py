@@ -20,9 +20,20 @@ from services import (
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    """Async session per-request — overridable via app.dependency_overrides in tests."""
+    """Async session per-request.
+
+    Commits on success, rolls back on exception. Tests override this via
+    app.dependency_overrides so the testcontainers session can manage its
+    own transaction boundary.
+    """
     async with AsyncSessionLocal() as session:
-        yield session
+        try:
+            yield session
+        except Exception:
+            await session.rollback()
+            raise
+        else:
+            await session.commit()
 
 
 def get_profile_repository(
