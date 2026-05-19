@@ -17,7 +17,7 @@ from services.repository import (
     LocationRepository,
 )
 
-PairwiseMatrixInput = list[list[dict[str, float] | FuzzyNumber]]
+PairwiseMatrixInput = list[list[FuzzyNumber]] | list[list[dict[str, float]]]
 
 
 class EvaluationService:
