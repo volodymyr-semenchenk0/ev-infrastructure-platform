@@ -61,6 +61,8 @@ known-first-party = ["core", "api", "db", "schemas", "services", "mcdm"]
 "schemas/evaluation.py" = ["E741"]
 # ANN401: Pydantic v2 model_validator(mode="before") receives Any by design.
 "schemas/location.py" = ["ANN401"]
+# B008: Depends() in argument defaults is the canonical FastAPI dependency pattern.
+"api/*.py" = ["B008"]
 
 [tool.mypy]
 python_version = "3.11"
@@ -78,5 +80,10 @@ disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
 module = "services.*"
+strict = false
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = "api.*"
 strict = false
 disallow_untyped_defs = true
