@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, MapIcon } from 'lucide-react'
 
 interface ResultsHeaderProps {
   evaluationId: number
@@ -26,12 +26,20 @@ export function ResultsHeader({
           )}
         </p>
       </div>
-      <Button asChild variant="outline" size="sm">
-        <Link to="/results">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          До історії
-        </Link>
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button asChild variant="default" size="sm">
+          <Link to={`/map?evaluationId=${evaluationId}`}>
+            <MapIcon className="mr-2 h-4 w-4" />
+            Показати на карті
+          </Link>
+        </Button>
+        <Button asChild variant="outline" size="sm">
+          <Link to="/results">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            До історії
+          </Link>
+        </Button>
+      </div>
     </div>
   )
 }
