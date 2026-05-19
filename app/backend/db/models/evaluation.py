@@ -17,7 +17,7 @@ from sqlalchemy import (
     String,
     func,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.base import Base
 
@@ -35,6 +35,15 @@ class EvaluationRun(Base):
     status: Mapped[str] = mapped_column(String(16), nullable=False)
     weights_vector: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
     execution_time_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    ranking: Mapped[list[RankingItem]] = relationship(
+        back_populates="evaluation", cascade="all, delete-orphan"
+    )
+    sensitivity: Mapped[SensitivityRecord | None] = relationship(
+        back_populates="evaluation",
+        cascade="all, delete-orphan",
+        uselist=False,
+    )
 
 
 class RankingItem(Base):
@@ -60,6 +69,8 @@ class RankingItem(Base):
     distance_to_positive: Mapped[Decimal] = mapped_column(Numeric(8, 6), nullable=False)
     distance_to_negative: Mapped[Decimal] = mapped_column(Numeric(8, 6), nullable=False)
 
+    evaluation: Mapped[EvaluationRun] = relationship(back_populates="ranking")
+
 
 class SensitivityRecord(Base):
     """Результат Monte-Carlo аналізу чутливості для сеансу."""
@@ -72,4 +83,6 @@ class SensitivityRecord(Base):
     iterations: Mapped[int] = mapped_column(Integer, nullable=False)
     perturbation: Mapped[Decimal] = mapped_column(Numeric(4, 3), nullable=False)
     stability_matrix: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
-    confidence_intervals: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    confidence_intervals: Mapped[list[dict[str, Any]]] = mapped_column(JSON, nullable=False)
+
+    evaluation: Mapped[EvaluationRun] = relationship(back_populates="sensitivity")

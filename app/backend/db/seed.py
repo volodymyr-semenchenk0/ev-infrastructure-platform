@@ -1,4 +1,4 @@
-"""Reference-data seed: 2 profiles, 10 criteria, 12 Kyiv locations.
+"""Reference-data seed: 2 profiles, 10 criteria, 12 Kyiv locations, decision matrix.
 
 Дані відповідають таблицям 3.1, 3.3 і 3.2 курсової. Ідемпотентність забезпечена
 через INSERT ... ON CONFLICT DO NOTHING по UNIQUE-ключах.
@@ -8,13 +8,28 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import select
+import numpy as np
+from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 
-from db.models import Criterion, Location, Profile
+from db.models import Criterion, Location, LocationCriterionValue, Profile
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
+
+# Synthetic data — replace with chapter 3.2 Appendix D values when finalised.
+CRITERION_RANGES: dict[str, tuple[float, float]] = {
+    "Pop_dens": (1000.0, 8000.0),  # persons/km²
+    "Traffic": (5000.0, 60000.0),  # vehicles/day
+    "Grid_cap": (100.0, 800.0),  # kW
+    "Dist_sub": (0.1, 3.5),  # km
+    "Revenue": (3.0, 9.0),  # score 1–10
+    "Land_cost": (3.0, 9.0),  # score 1–10
+    "Parking": (5.0, 50.0),  # places
+    "Income": (3.0, 8.0),  # score 1–10
+    "Green": (5.0, 60.0),  # %
+    "Env_qual": (3.0, 8.0),  # score 1–10
+}
 
 
 # 2 profiles (master.md Table 3.1)
@@ -227,3 +242,41 @@ async def seed_reference_data(session: AsyncSession) -> None:
     ]
     if new_rows:
         await session.execute(insert(Location).values(new_rows))
+
+
+async def seed_decision_matrix(session: AsyncSession, rng_seed: int = 42) -> None:
+    """Idempotently populate location_criterion_values with synthetic data.
+
+    Generates 10 criterion values for each of the 12 candidate locations using
+    uniform sampling within per-criterion ranges.  Called after seed_reference_data
+    so that criteria and locations already exist.
+
+    rng_seed allows reproducible generation; change only when refreshing the
+    synthetic dataset intentionally.
+    """
+    existing_count: int = (
+        await session.execute(select(func.count()).select_from(LocationCriterionValue))
+    ).scalar_one()
+    if existing_count > 0:
+        # Table already populated; do nothing (idempotency guard).
+        return
+
+    criteria = (await session.execute(select(Criterion).order_by(Criterion.id))).scalars().all()
+    locations = (await session.execute(select(Location).order_by(Location.id))).scalars().all()
+
+    rng = np.random.default_rng(rng_seed)
+
+    rows: list[dict[str, object]] = []
+    for loc in locations:
+        for crit in criteria:
+            lo, hi = CRITERION_RANGES[crit.code]
+            raw = rng.uniform(lo, hi)
+            rows.append(
+                {
+                    "location_id": loc.id,
+                    "criterion_id": crit.id,
+                    "value": round(float(raw), 4),
+                }
+            )
+
+    await session.execute(insert(LocationCriterionValue).values(rows))
