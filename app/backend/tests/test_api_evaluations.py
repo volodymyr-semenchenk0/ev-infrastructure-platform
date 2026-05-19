@@ -81,6 +81,45 @@ class TestEvaluationInvariants:
 
 
 class TestEvaluationFailures:
+    async def test_post_evaluation_rejects_inconsistent_matrix_with_422(
+        self, api_client: AsyncClient
+    ) -> None:
+        """POST /api/evaluations with CR > 0.1 returns 422 (not 500).
+
+        Constructed inconsistent 10×10 matrix:
+          - crit_0 vs crit_1 → 9 (strongly prefers 0)
+          - crit_1 vs crit_2 → 9 (strongly prefers 1)
+          - crit_0 vs crit_2 → 1/9 (contradicts transitivity)
+
+        fahp.fahp_weights raises ValueError("inconsistent matrix: CR=...");
+        the endpoint must surface this as HTTP 422 with detail message.
+        Reference: mcdm/fahp.py — CR > 0.1 invariant; spec 2.1.6 §6.
+        """
+        profiles = (await api_client.get("/api/profiles")).json()
+        profile_id = profiles[0]["id"]
+
+        n = 10
+        matrix = [[{"l": 1.0, "m": 1.0, "u": 1.0} for _ in range(n)] for _ in range(n)]
+        matrix[0][1] = {"l": 8.0, "m": 9.0, "u": 9.0}
+        matrix[1][0] = {"l": 1 / 9, "m": 1 / 9, "u": 1 / 8}
+        matrix[1][2] = {"l": 8.0, "m": 9.0, "u": 9.0}
+        matrix[2][1] = {"l": 1 / 9, "m": 1 / 9, "u": 1 / 8}
+        matrix[0][2] = {"l": 1 / 9, "m": 1 / 9, "u": 1 / 8}
+        matrix[2][0] = {"l": 8.0, "m": 9.0, "u": 9.0}
+
+        resp = await api_client.post(
+            "/api/evaluations",
+            json={"profileId": profile_id, "pairwiseMatrix": matrix},
+        )
+
+        assert resp.status_code == 422, (
+            f"expected 422 for CR > 0.1, got {resp.status_code}: {resp.text}"
+        )
+        detail = resp.json().get("detail", "")
+        assert "CR" in detail or "consisten" in detail.lower(), (
+            f"422 detail must mention CR or inconsistency, got: {detail!r}"
+        )
+
     async def test_get_evaluation_404_for_missing(self, api_client: AsyncClient) -> None:
         """GET /api/evaluations/{id} returns 404 for a non-existent evaluation id.
 
