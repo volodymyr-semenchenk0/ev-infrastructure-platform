@@ -101,6 +101,6 @@ class EvaluationRead(CamelModel):
     """GET /api/evaluations/{id} — full result of one MCDM run."""
 
     evaluation_id: int = Field(validation_alias="id")
-    weights: dict[str, float]
+    weights: dict[str, float] = Field(validation_alias="weights_vector")
     ranking: list[RankingItemRead]
     execution_time_ms: int | None = None
