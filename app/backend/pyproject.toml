@@ -52,8 +52,8 @@ select = ["E", "F", "I", "N", "UP", "ANN", "B"]
 known-first-party = ["core", "api", "db", "schemas", "services", "mcdm"]
 
 [tool.ruff.lint.per-file-ignores]
-"**/tests/*.py" = ["ANN", "S101", "E501", "E741"]
-"tests/*.py" = ["ANN", "S101", "E501", "E741"]
+"**/tests/*.py" = ["ANN", "S101", "E501", "E741", "N806"]
+"tests/*.py" = ["ANN", "S101", "E501", "E741", "N806"]
 "db/migrations/versions/*.py" = ["E501", "I001", "UP"]
 "db/migrations/env.py" = ["ANN401"]
 # E741: l/m/u are canonical TFN parameter names from Chang (1996) — keep as-is.
@@ -73,5 +73,10 @@ mypy_path = "."
 # that strict mypy cannot follow without large amounts of explicit annotation.
 [[tool.mypy.overrides]]
 module = "schemas.*"
+strict = false
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = "services.*"
 strict = false
 disallow_untyped_defs = true

@@ -1,0 +1,622 @@
+"""Red-phase tests for services/ layer: repositories, EvaluationService, SensitivityService.
+
+All imports from services.* and db.seed.seed_decision_matrix will fail with
+ImportError until Tasks #11, #13, #14 are complete — that is expected and
+defines the contract these implementations must satisfy.
+
+No mocks.  All tests use a live PostGIS container via the db_session fixture
+from conftest.py.
+"""
+
+from __future__ import annotations
+
+import pytest
+from sqlalchemy import delete, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from db.models import (
+    Criterion,
+    EvaluationRun,
+    Location,
+    LocationCriterionValue,
+    Profile,
+    RankingItem,
+    SensitivityRecord,
+)
+from db.seed import seed_decision_matrix, seed_reference_data  # seed_decision_matrix: Task #11
+from schemas.evaluation import EvaluationRead
+from schemas.sensitivity import SensitivityRead
+from services.evaluation_service import EvaluationService  # Task #14
+from services.repository import (  # Task #14
+    CriterionRepository,
+    DecisionMatrixRepository,
+    EvaluationRepository,
+    LocationRepository,
+    ProfileRepository,
+)
+from services.sensitivity_service import SensitivityService  # Task #14
+
+# ---------------------------------------------------------------------------
+# Shared helpers
+# ---------------------------------------------------------------------------
+
+
+def _identity_pairwise_matrix(n: int) -> list[list[dict[str, float]]]:
+    """Identity-like FAHP matrix: all comparisons (1, 1, 1) → equal weights 1/n.
+
+    CR = 0 for any n, so fahp_weights will never raise here.
+    """
+    return [[{"l": 1.0, "m": 1.0, "u": 1.0} for _ in range(n)] for _ in range(n)]
+
+
+# ---------------------------------------------------------------------------
+# A. TestRepositories
+# ---------------------------------------------------------------------------
+
+
+class TestRepositories:
+    """Unit-level tests for the repository layer against a live DB.
+
+    These tests document the required public API of each repository class so
+    Task #14 knows exactly which method signatures to implement.
+    """
+
+    async def test_profile_repository_get_existing_returns_profile(
+        self, db_session: AsyncSession
+    ) -> None:
+        """ProfileRepository.get(id) must return the Profile with matching code.
+
+        Reference: services/repository.py spec — get(pk) → ORM object | None.
+        """
+        await seed_reference_data(db_session)
+        await seed_decision_matrix(db_session)
+        await db_session.flush()
+
+        # Resolve the PK for "municipal" first — avoids hardcoding auto-increment IDs.
+        municipal = await db_session.scalar(select(Profile).where(Profile.code == "municipal"))
+        assert municipal is not None, "seed_reference_data must create 'municipal' profile"
+
+        repo = ProfileRepository(db_session)
+        result = await repo.get(municipal.id)
+
+        assert result is not None
+        assert result.code == "municipal"
+
+    async def test_profile_repository_get_missing_returns_none(
+        self, db_session: AsyncSession
+    ) -> None:
+        """ProfileRepository.get with a non-existent PK must return None, not raise.
+
+        Reference: services/repository.py spec — standard ORM get-by-pk pattern.
+        """
+        await seed_reference_data(db_session)
+        await db_session.flush()
+
+        repo = ProfileRepository(db_session)
+        result = await repo.get(999_999)
+
+        assert result is None
+
+    async def test_criterion_repository_list_ordered_returns_10_criteria_after_seed(
+        self, db_session: AsyncSession
+    ) -> None:
+        """CriterionRepository.list_ordered() must return 10 criteria sorted by id ASC.
+
+        The first criterion code must be one of the 10 defined in master.md Table 3.3.
+        Reference: master.md Table 3.3 — 10 evaluation criteria.
+        """
+        await seed_reference_data(db_session)
+        await db_session.flush()
+
+        repo = CriterionRepository(db_session)
+        criteria = await repo.list_ordered()
+
+        assert len(criteria) == 10, f"Expected 10 criteria, got {len(criteria)}"
+
+        valid_codes = {
+            "Pop_dens",
+            "Traffic",
+            "Grid_cap",
+            "Dist_sub",
+            "Revenue",
+            "Land_cost",
+            "Parking",
+            "Income",
+            "Green",
+            "Env_qual",
+        }
+        assert criteria[0].code in valid_codes, (
+            f"First criterion code '{criteria[0].code}' not in expected set {valid_codes}"
+        )
+        # Verify ascending order by id
+        ids = [c.id for c in criteria]
+        assert ids == sorted(ids), f"Criteria not sorted ascending by id: {ids}"
+
+    async def test_decision_matrix_repository_load_returns_12x10_shape(
+        self, db_session: AsyncSession
+    ) -> None:
+        """DecisionMatrixRepository.load_matrix must return ndarray of shape (12, 10).
+
+        All values must be >= 0 (enforced by DB CHECK constraint).
+        The first cell X[0, 0] must equal the LocationCriterionValue row
+        (location_ids[0], criterion_ids[0]) seeded with rng_seed=42.
+
+        Reference: spec 2.2.2 §9 — decision matrix 12×10, all values non-negative.
+        """
+        import numpy as np
+
+        await seed_reference_data(db_session)
+        await seed_decision_matrix(db_session)
+        await db_session.flush()
+
+        crit_repo = CriterionRepository(db_session)
+        loc_repo = LocationRepository(db_session)
+
+        criterion_ids = [c.id for c in await crit_repo.list_ordered()]
+        location_ids = [loc.id for loc in await loc_repo.list_ordered()]
+
+        assert len(criterion_ids) == 10, f"Expected 10 criteria, got {len(criterion_ids)}"
+        assert len(location_ids) == 12, f"Expected 12 locations, got {len(location_ids)}"
+
+        repo = DecisionMatrixRepository(db_session)
+        X = await repo.load_matrix(criterion_ids, location_ids)
+
+        assert isinstance(X, np.ndarray), f"Expected ndarray, got {type(X)}"
+        assert X.shape == (12, 10), f"Expected shape (12, 10), got {X.shape}"
+        assert (X >= 0).all(), "Decision matrix contains negative values"
+
+        # Verify cell (0, 0) matches the seeded value for (location_ids[0], criterion_ids[0]).
+        # seed_decision_matrix uses rng_seed=42 → deterministic, so this must match.
+        db_value = await db_session.scalar(
+            select(LocationCriterionValue.value).where(
+                LocationCriterionValue.location_id == location_ids[0],
+                LocationCriterionValue.criterion_id == criterion_ids[0],
+            )
+        )
+        assert db_value is not None, "No LCV row found for (location_ids[0], criterion_ids[0])"
+        assert abs(float(X[0, 0]) - float(db_value)) < 1e-4, (
+            f"X[0, 0]={X[0, 0]} does not match seeded value {db_value}"
+        )
+
+    async def test_evaluation_repository_save_and_get_with_ranking_eagerly_loaded(
+        self, db_session: AsyncSession
+    ) -> None:
+        """EvaluationRepository must persist a run + ranking items, then load them eagerly.
+
+        get_with_ranking(eval_id) must return the EvaluationRun with .ranking already
+        populated — no additional SELECT should be needed outside the repository.
+
+        Reference: services/repository.py spec — get_with_ranking uses selectinload.
+        """
+        await seed_reference_data(db_session)
+        await db_session.flush()
+
+        # Resolve 3 locations to attach ranking items to
+        locations = (await db_session.execute(select(Location).limit(3))).scalars().all()
+        assert len(locations) == 3, (
+            "Need at least 3 seeded locations; seed_reference_data should provide 12"
+        )
+
+        profile = await db_session.scalar(select(Profile).where(Profile.code == "municipal"))
+        assert profile is not None
+
+        repo = EvaluationRepository(db_session)
+        eval_run = await repo.create(
+            profile_id=profile.id,
+            status="done",
+            weights={"Pop_dens": 0.5, "Traffic": 0.5},
+            execution_time_ms=100,
+        )
+        await db_session.flush()
+
+        for rank_pos, loc in enumerate(locations, start=1):
+            await repo.add_ranking_item(
+                evaluation_id=eval_run.id,
+                location_id=loc.id,
+                rank=rank_pos,
+                closeness_coefficient=0.5,
+                distance_to_positive=0.1,
+                distance_to_negative=0.1,
+            )
+        await db_session.flush()
+
+        # get_with_ranking must eagerly load RankingItems — no lazy load after session close
+        result = await repo.get_with_ranking(eval_run.id)
+
+        assert result is not None
+        assert len(result.ranking) == 3, f"Expected 3 ranking items, got {len(result.ranking)}"
+
+
+# ---------------------------------------------------------------------------
+# B. TestEvaluationService
+# ---------------------------------------------------------------------------
+
+
+class TestEvaluationService:
+    """Tests for EvaluationService.execute_full_cycle — the FAHP→TOPSIS pipeline.
+
+    All tests start from a clean DB seeded with reference data + decision matrix,
+    so the service always finds 10 criteria and 12 locations.
+    """
+
+    async def test_evaluation_service_full_cycle_persists_run_and_ranking_items(
+        self, db_session: AsyncSession
+    ) -> None:
+        """execute_full_cycle must return EvaluationRead and persist rows in the DB.
+
+        After the call: one EvaluationRun row + 12 RankingItem rows must exist.
+        Reference: spec 2.1.6 §6 — full FAHP+TOPSIS cycle with DB persistence.
+        """
+        await seed_reference_data(db_session)
+        await seed_decision_matrix(db_session)
+        await db_session.flush()
+
+        profile = await db_session.scalar(select(Profile).where(Profile.code == "municipal"))
+        assert profile is not None
+
+        service = EvaluationService(db_session)
+        result = await service.execute_full_cycle(
+            profile_id=profile.id,
+            pairwise_matrix=_identity_pairwise_matrix(10),
+        )
+
+        assert isinstance(result, EvaluationRead), f"Expected EvaluationRead, got {type(result)}"
+
+        run = await db_session.scalar(
+            select(EvaluationRun).where(EvaluationRun.id == result.evaluation_id)
+        )
+        assert run is not None, "EvaluationRun must be persisted in DB"
+
+        ranking_count = await db_session.scalar(
+            select(func.count()).select_from(RankingItem).where(RankingItem.evaluation_id == run.id)
+        )
+        assert ranking_count == 12, (
+            f"Expected 12 ranking items (one per location), got {ranking_count}"
+        )
+
+    async def test_evaluation_service_returns_dto_with_camel_case_fields(
+        self, db_session: AsyncSession
+    ) -> None:
+        """execute_full_cycle must return an EvaluationRead whose model_dump(by_alias=True)
+        contains camelCase keys per the JSON wire contract (spec 2.1.6 §7).
+
+        Verified keys: evaluationId, executionTimeMs, ranking[*].locationId,
+        ranking[*].closeness, ranking[*].sPlus, ranking[*].sMinus.
+        """
+        await seed_reference_data(db_session)
+        await seed_decision_matrix(db_session)
+        await db_session.flush()
+
+        profile = await db_session.scalar(select(Profile).where(Profile.code == "municipal"))
+        assert profile is not None
+
+        service = EvaluationService(db_session)
+        result = await service.execute_full_cycle(
+            profile_id=profile.id,
+            pairwise_matrix=_identity_pairwise_matrix(10),
+        )
+
+        serialized = result.model_dump(by_alias=True)
+
+        assert "evaluationId" in serialized, (
+            f"'evaluationId' not in serialized keys: {list(serialized)}"
+        )
+        assert "executionTimeMs" in serialized, (
+            f"'executionTimeMs' not in serialized keys: {list(serialized)}"
+        )
+        assert len(serialized["ranking"]) == 12
+        first_item = serialized["ranking"][0]
+        for key in ("locationId", "closeness", "sPlus", "sMinus"):
+            assert key in first_item, f"Key '{key}' missing from ranking item: {list(first_item)}"
+
+    @pytest.mark.skip(
+        reason=(
+            "CR-error path requires a test fixture with exactly 3 criteria. "
+            "The DB is seeded with 10 criteria, so a 3×3 inconsistent matrix "
+            "would fail on size validation first (covered by test 9). "
+            "CR validation itself is covered by mcdm/tests/test_fahp.py."
+        )
+    )
+    async def test_evaluation_service_propagates_cr_error(self, db_session: AsyncSession) -> None:
+        """execute_full_cycle must propagate ValueError when CR > 0.10.
+
+        Skipped: with 10 seeded criteria, a 10×10 inconsistent matrix would be
+        required.  Constructing a reciprocal 10×10 TFN matrix with CR > 0.10 is
+        non-trivial to do reliably here; the CR code path is already exercised
+        by mcdm/tests/test_fahp.py::TestFAHP::test_inconsistent_matrix_raises.
+        Task #14 implementer should add a dedicated fixture if needed.
+        """
+
+    async def test_evaluation_service_validates_matrix_size_matches_criteria_count(
+        self, db_session: AsyncSession
+    ) -> None:
+        """execute_full_cycle must raise ValueError when matrix n != criteria count.
+
+        The DB has 10 criteria after seed; passing a 5×5 matrix must fail.
+        The error message must reference the expected count (10) or the words
+        'size', 'criteria', or 'matrix'.
+
+        Reference: spec 2.1.6 §6 — matrix dimensions must match criterion count.
+        """
+        await seed_reference_data(db_session)
+        await seed_decision_matrix(db_session)
+        await db_session.flush()
+
+        profile = await db_session.scalar(select(Profile).where(Profile.code == "municipal"))
+        assert profile is not None
+
+        service = EvaluationService(db_session)
+
+        with pytest.raises(ValueError) as exc_info:
+            await service.execute_full_cycle(
+                profile_id=profile.id,
+                pairwise_matrix=_identity_pairwise_matrix(5),
+            )
+
+        error_msg = str(exc_info.value).lower()
+        assert any(token in error_msg for token in ("10", "size", "criteria", "matrix")), (
+            f"Error message does not reference the size mismatch: '{exc_info.value}'"
+        )
+
+    async def test_evaluation_service_weights_sum_to_one(self, db_session: AsyncSession) -> None:
+        """The weights dict on EvaluationRead must sum to 1.0 ± 1e-9.
+
+        Reference: fahp_weights contract — normalized output vector sums to 1.
+        """
+        await seed_reference_data(db_session)
+        await seed_decision_matrix(db_session)
+        await db_session.flush()
+
+        profile = await db_session.scalar(select(Profile).where(Profile.code == "municipal"))
+        assert profile is not None
+
+        service = EvaluationService(db_session)
+        result = await service.execute_full_cycle(
+            profile_id=profile.id,
+            pairwise_matrix=_identity_pairwise_matrix(10),
+        )
+
+        total = sum(result.weights.values())
+        assert abs(total - 1.0) < 1e-9, (
+            f"Weights do not sum to 1.0: sum={total}, weights={result.weights}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# C. TestSensitivityService
+# ---------------------------------------------------------------------------
+
+
+class TestSensitivityService:
+    """Tests for SensitivityService.run — Monte-Carlo rank-stability analysis."""
+
+    async def _create_evaluation(self, db_session: AsyncSession) -> tuple[int, int]:
+        """Seed DB and run full evaluation cycle. Returns (profile_id, evaluation_id)."""
+        await seed_reference_data(db_session)
+        await seed_decision_matrix(db_session)
+        await db_session.flush()
+
+        profile = await db_session.scalar(select(Profile).where(Profile.code == "municipal"))
+        assert profile is not None
+
+        service = EvaluationService(db_session)
+        result = await service.execute_full_cycle(
+            profile_id=profile.id,
+            pairwise_matrix=_identity_pairwise_matrix(10),
+        )
+        return profile.id, result.evaluation_id
+
+    async def test_sensitivity_service_persists_record_with_confidence_intervals_for_top3(
+        self, db_session: AsyncSession
+    ) -> None:
+        """SensitivityService.run must persist a SensitivityRecord and return SensitivityRead.
+
+        The result must contain confidence_intervals for at least the top-3 locations.
+        The DB record must have iterations == requested count.
+
+        Reference: spec 2.1.6 §8 — Monte-Carlo outputs: stability_matrix + CIs.
+        """
+        _, eval_id = await self._create_evaluation(db_session)
+
+        sens = SensitivityService(db_session)
+        result = await sens.run(evaluation_id=eval_id, iterations=200, perturbation=0.1)
+
+        assert isinstance(result, SensitivityRead), f"Expected SensitivityRead, got {type(result)}"
+        assert len(result.confidence_intervals) >= 3, (
+            f"Expected CIs for at least 3 locations, got {len(result.confidence_intervals)}"
+        )
+
+        rec = await db_session.scalar(
+            select(SensitivityRecord).where(SensitivityRecord.evaluation_id == eval_id)
+        )
+        assert rec is not None, "SensitivityRecord must be persisted in DB"
+        assert rec.iterations == 200, f"Persisted iterations={rec.iterations}, expected 200"
+
+    async def test_sensitivity_service_stability_matrix_shape_matches_n_locations(
+        self, db_session: AsyncSession
+    ) -> None:
+        """stability_matrix must have one entry per location and each entry must sum to 1.
+
+        stability_matrix[location_code] = list of K floats (probability of rank k).
+        sum(probs) ≈ 1.0 because the distribution across all rank positions is complete.
+
+        Reference: formula (1.17) — rank-frequency matrix normalised to probabilities.
+        """
+        _, eval_id = await self._create_evaluation(db_session)
+
+        sens = SensitivityService(db_session)
+        result = await sens.run(evaluation_id=eval_id, iterations=200, perturbation=0.1)
+
+        assert len(result.stability_matrix) == 12, (
+            f"Expected 12 entries in stability_matrix (one per location), "
+            f"got {len(result.stability_matrix)}"
+        )
+        for code, probs in result.stability_matrix.items():
+            total = sum(probs)
+            assert abs(total - 1.0) < 1e-6, (
+                f"Rank probabilities for location '{code}' sum to {total}, expected 1.0"
+            )
+
+    async def test_sensitivity_service_seed_42_is_reproducible(
+        self, db_session: AsyncSession
+    ) -> None:
+        """Two calls with the same parameters must produce identical stability_matrix.
+
+        SensitivityService must use np.random.default_rng(42) internally (CLAUDE.md rule),
+        or accept a seed parameter.  Because the decision matrix and weights are
+        deterministic (rng_seed=42 in seed_decision_matrix + identity FAHP matrix),
+        both runs must produce bit-identical probability matrices.
+
+        Reference: CLAUDE.md — stochastic methods via np.random.default_rng(seed).
+        """
+        _, eval_id = await self._create_evaluation(db_session)
+
+        sens = SensitivityService(db_session)
+        result1 = await sens.run(evaluation_id=eval_id, iterations=100, perturbation=0.1)
+        result2 = await sens.run(evaluation_id=eval_id, iterations=100, perturbation=0.1)
+
+        assert result1.stability_matrix == result2.stability_matrix, (
+            "stability_matrix differs between two runs with identical inputs. "
+            "SensitivityService must use a fixed seed (42) for reproducibility."
+        )
+
+
+# ---------------------------------------------------------------------------
+# D. TestEndToEndHwangYoon
+# ---------------------------------------------------------------------------
+
+
+class TestEndToEndHwangYoon:
+    """End-to-end smoke test using Hwang & Yoon (1981) reference data.
+
+    This test installs a minimal 3-criteria / 4-location scenario and
+    verifies that the service pipeline selects the expected best alternative.
+
+    The test is marked xfail because EvaluationService is expected to read
+    ALL criteria and locations from the DB.  When seeded reference data (10
+    criteria, 12 locations) coexists with the 3 ad-hoc criteria added here,
+    the service would see 13 criteria and fail on matrix-size validation with
+    the provided 3×3 pairwise matrix.
+
+    The implementer of Task #14 must decide how to scope the service
+    (e.g., accept criterion_ids/location_ids overrides, or filter by the
+    profile's associated criteria).  Once scoping is implemented, remove
+    the xfail marker and adjust the pairwise_matrix size accordingly.
+
+    Reference: Hwang & Yoon (1981), example 3.1 — 4 alternatives, 3 criteria.
+    """
+
+    @pytest.mark.xfail(
+        reason=(
+            "EvaluationService currently reads all criteria in DB. "
+            "With 10 seeded criteria + 3 ad-hoc criteria = 13 total, "
+            "the 3×3 pairwise matrix will fail size validation. "
+            "Task #14 must add scoping support (criterion_ids override or "
+            "profile-scoped criteria) before this test can pass."
+        ),
+        strict=False,
+    )
+    async def test_full_pipeline_hwang_yoon_reference(self, db_session: AsyncSession) -> None:
+        """TOPSIS with equal weights on Hwang & Yoon (1981) data must rank A2 first.
+
+        Decision matrix X (4 alternatives × 3 criteria):
+          A1: [25000, 16, 8]  — Price (min), Economy (max), Service (max)
+          A2: [20000, 20, 6]  — expected best with equal weights
+          A3: [15000, 12, 7]
+          A4: [30000, 10, 5]
+
+        With equal FAHP weights (1/3, 1/3, 1/3) and the criteria types
+        [min, max, max], TOPSIS should rank A2 first due to its dominant
+        economy and competitive service.  The exact C* value is not asserted
+        here; only the rank-1 identity is checked.
+
+        Reference: Hwang & Yoon (1981), Chapter 3 illustrative example.
+
+        Architectural question for Task #14: should EvaluationService accept
+        optional criterion_ids: list[int] | None and location_ids: list[int] | None
+        parameters to restrict the scope of a run?  This test assumes yes.
+        """
+        # Clear all reference data so the service only sees our 3 ad-hoc criteria.
+        await db_session.execute(delete(LocationCriterionValue))
+        await db_session.execute(delete(RankingItem))
+        await db_session.execute(delete(EvaluationRun))
+        await db_session.execute(delete(Location))
+        await db_session.execute(delete(Criterion))
+        await db_session.execute(delete(Profile))
+        await db_session.flush()
+
+        # Ad-hoc profile
+        profile = Profile(code="test_hy", name="Hwang-Yoon test")
+        db_session.add(profile)
+        await db_session.flush()
+
+        # 3 criteria matching Hwang & Yoon (1981) example 3.1
+        criteria = [
+            Criterion(
+                code="C1_price",
+                name="Price",
+                unit="USD",
+                optimization_type="min",
+                scale="ratio",
+            ),
+            Criterion(
+                code="C2_econ",
+                name="Economy",
+                unit="km/L",
+                optimization_type="max",
+                scale="ratio",
+            ),
+            Criterion(
+                code="C3_svc",
+                name="Service",
+                unit="score",
+                optimization_type="max",
+                scale="ratio",
+            ),
+        ]
+        db_session.add_all(criteria)
+        await db_session.flush()
+
+        # 4 alternatives
+        locations = [
+            Location(
+                name=f"A{i + 1}",
+                geom="SRID=4326;POINT(30.5 50.5)",
+            )
+            for i in range(4)
+        ]
+        db_session.add_all(locations)
+        await db_session.flush()
+
+        # Decision matrix X from Hwang & Yoon (1981) example 3.1
+        raw_x = [
+            [25000.0, 16.0, 8.0],  # A1
+            [20000.0, 20.0, 6.0],  # A2 — expected best with equal weights
+            [15000.0, 12.0, 7.0],  # A3
+            [30000.0, 10.0, 5.0],  # A4
+        ]
+        for i, loc in enumerate(locations):
+            for j, crit in enumerate(criteria):
+                db_session.add(
+                    LocationCriterionValue(
+                        location_id=loc.id,
+                        criterion_id=crit.id,
+                        value=raw_x[i][j],
+                    )
+                )
+        await db_session.flush()
+
+        # 3×3 identity FAHP matrix → equal weights (1/3, 1/3, 1/3)
+        pwm = _identity_pairwise_matrix(3)
+
+        service = EvaluationService(db_session)
+        result = await service.execute_full_cycle(
+            profile_id=profile.id,
+            pairwise_matrix=pwm,
+        )
+
+        # A2 (index 1) must be ranked first
+        assert result.ranking[0].location_id == locations[1].id, (
+            f"Expected A2 (id={locations[1].id}) at rank 1, "
+            f"got location_id={result.ranking[0].location_id}"
+        )
