@@ -10,11 +10,15 @@ def vector_normalize(matrix: np.ndarray) -> np.ndarray:
 
     Стандартний метод нормалізації в класичному TOPSIS.
     """
-    # TODO: np.linalg.norm по axis=0, захист від ділення на нуль
-    raise NotImplementedError
+    norms = np.linalg.norm(matrix, axis=0)
+    safe_norms = np.where(norms == 0.0, 1.0, norms)
+    return matrix / safe_norms
 
 
 def minmax_normalize(matrix: np.ndarray) -> np.ndarray:
     """Мін-макс нормалізація: масштабування значень до діапазону [0, 1]."""
-    # TODO: (x - min) / (max - min) по кожному стовпцю
-    raise NotImplementedError
+    col_min: np.ndarray = matrix.min(axis=0)
+    col_max: np.ndarray = matrix.max(axis=0)
+    col_range: np.ndarray = col_max - col_min
+    safe_range: np.ndarray = np.where(col_range == 0.0, 1.0, col_range)
+    return np.asarray((matrix - col_min) / safe_range)
