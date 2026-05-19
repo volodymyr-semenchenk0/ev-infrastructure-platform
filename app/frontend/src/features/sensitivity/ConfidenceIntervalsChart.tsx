@@ -59,6 +59,11 @@ export function ConfidenceIntervalsChart({
     return null
   }
 
+  // Expand y-domain so the upper whisker (`high`) fits inside the plot area;
+  // otherwise Nivo's default yScale stops at max(mean) and error bars get clipped.
+  const yMax = Math.max(...data.map((d) => d.high)) * 1.05
+  const yMin = Math.max(0, Math.min(...data.map((d) => d.low)) - 0.05)
+
   return (
     <div style={{ height: 420 }}>
       <ResponsiveBar<CiDatum>
@@ -72,6 +77,8 @@ export function ConfidenceIntervalsChart({
         colors={['hsl(var(--primary))']}
         borderRadius={2}
         enableLabel={false}
+        minValue={yMin}
+        maxValue={yMax}
         axisLeft={{
           tickSize: 0,
           tickPadding: 8,
