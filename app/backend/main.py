@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 
 from api import criteria, evaluations, locations, profiles
 from core.config import settings
@@ -33,6 +33,11 @@ app.include_router(profiles.router)
 app.include_router(criteria.router)
 app.include_router(locations.router)
 app.include_router(evaluations.router)
+
+
+@app.get("/", include_in_schema=False)
+async def root() -> RedirectResponse:
+    return RedirectResponse(url="/api/docs")
 
 
 @app.get("/health")
