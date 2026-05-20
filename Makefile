@@ -1,5 +1,6 @@
 .PHONY: install install-skills dev-backend dev-frontend test lint typecheck all db-up db-down migrate seed \
-        frontend-install frontend-test frontend-lint frontend-typecheck frontend-build frontend-types
+        frontend-install frontend-test frontend-lint frontend-typecheck frontend-build frontend-types \
+        frontend-e2e frontend-preview
 
 # ─── Venv paths (Makefile uses absolute venv binaries; no activate needed) ───
 VENV     := app/backend/.venv
@@ -78,6 +79,12 @@ frontend-build:
 
 frontend-types:
 	cd app/frontend && npm run types:generate
+
+frontend-e2e:
+	cd app/frontend && npx playwright test
+
+frontend-preview:
+	cd app/frontend && npm run preview
 
 # ─── База даних ───────────────────────────────────────────────
 db-up:
