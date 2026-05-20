@@ -71,6 +71,12 @@ app/frontend/*.tsbuildinfo
 app/backend/.coverage
 
 # ─────────────────────────────────────────────
+# Playwright e2e artifacts
+# ─────────────────────────────────────────────
+app/frontend/playwright-report/
+app/frontend/test-results/
+
+# ─────────────────────────────────────────────
 # Секрети – ніколи не комітити
 # ─────────────────────────────────────────────
 .env
