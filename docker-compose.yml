@@ -19,6 +19,9 @@ services:
     build:
       context: ./app/backend
       dockerfile: Dockerfile
+    # The image ships a production CMD (uvicorn --workers, no reload).
+    # For local development we override it with hot-reload here.
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     ports:
       - "8000:8000"
     env_file:
