@@ -1,0 +1,55 @@
+<svg viewBox="0 0 1060 740" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="arrow" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="9" refX="9" refY="3.5" orient="auto"><path d="M0,0 L9,3.5 L0,7 Z" fill="#333333"/></marker>
+<marker id="arrowP" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="9" refX="9" refY="3.5" orient="auto"><path d="M0,0 L9,3.5 L0,7 Z" fill="#6a2f9c"/></marker>
+</defs>
+<rect width="1060" height="740" fill="white"/>
+<rect x="350" y="62" width="380" height="518" rx="12" fill="#fbf9fd" stroke="#6a2f9c" stroke-width="1.7" stroke-dasharray="7,5"/>
+<text x="450.0" y="87" font-family="Times New Roman, serif" font-size="13" fill="#5b2d82" text-anchor="start"><tspan dy="0.00" font-size="13.00">Стохастичний цикл:   </tspan><tspan dy="0.00" font-size="13.00" font-style="italic">t</tspan><tspan dy="0.00" font-size="13.00"> = 1, …, </tspan><tspan dy="0.00" font-size="13.00" font-style="italic">N</tspan></text>
+<line x1="372" y1="99" x2="708" y2="99" stroke="#d8cae6" stroke-width="1"/>
+<rect x="405" y="112" width="270" height="66" rx="7" fill="#f0f0f0" stroke="#4d4d4d" stroke-width="1.4"/>
+<text x="540" y="139" font-family="Times New Roman, serif" font-size="13" fill="#1a1a1a" text-anchor="middle" font-style="normal">Генерування випадкових відхилень</text>
+<text x="470.3" y="161" font-family="Times New Roman, serif" font-size="12.5" fill="#1a1a1a" text-anchor="start"><tspan dy="0.00" font-size="12.50" font-style="italic">ε</tspan><tspan dy="3.60" font-size="9.00" font-style="italic">j</tspan><tspan dy="-3.60" font-size="12.50"> ~ U(−δ, +δ),   </tspan><tspan dy="0.00" font-size="12.50" font-style="italic">j</tspan><tspan dy="0.00" font-size="12.50"> = 1, …, </tspan><tspan dy="0.00" font-size="12.50" font-style="italic">m</tspan></text>
+<rect x="405" y="200" width="270" height="66" rx="7" fill="#f0f0f0" stroke="#4d4d4d" stroke-width="1.4"/>
+<text x="540" y="227" font-family="Times New Roman, serif" font-size="13" fill="#1a1a1a" text-anchor="middle" font-style="normal">Обчислення збурених ваг</text>
+<text x="478.5" y="249" font-family="Times New Roman, serif" font-size="12.5" fill="#1a1a1a" text-anchor="start"><tspan dy="0.00" font-size="12.50" font-style="italic">w̃</tspan><tspan dy="3.60" font-size="9.00" font-style="italic">j</tspan><tspan dy="-3.60" font-size="12.50"> = </tspan><tspan dy="0.00" font-size="12.50" font-style="italic">w</tspan><tspan dy="3.60" font-size="9.00" font-style="italic">j</tspan><tspan dy="-3.60" font-size="12.50"> (1 + </tspan><tspan dy="0.00" font-size="12.50" font-style="italic">ε</tspan><tspan dy="3.60" font-size="9.00" font-style="italic">j</tspan><tspan dy="-3.60" font-size="12.50">)</tspan><tspan dy="0.00" font-size="10.20" fill="#8a8a8a">        (1.15)</tspan></text>
+<rect x="405" y="288" width="270" height="66" rx="7" fill="#f0f0f0" stroke="#4d4d4d" stroke-width="1.4"/>
+<text x="540" y="315" font-family="Times New Roman, serif" font-size="13" fill="#1a1a1a" text-anchor="middle" font-style="normal">Ренормалізація ваг</text>
+<text x="479.2" y="337" font-family="Times New Roman, serif" font-size="12.5" fill="#1a1a1a" text-anchor="start"><tspan dy="0.00" font-size="12.50" font-style="italic">w</tspan><tspan dy="3.60" font-size="9.00" font-style="italic">j</tspan><tspan dy="-3.60" font-size="12.50"> = </tspan><tspan dy="0.00" font-size="12.50" font-style="italic">w̃</tspan><tspan dy="3.60" font-size="9.00" font-style="italic">j</tspan><tspan dy="-3.60" font-size="12.50"> / </tspan><tspan dy="0.00" font-size="12.50">Σ</tspan><tspan dy="0.00" font-size="12.50" font-style="italic"> w̃</tspan><tspan dy="3.60" font-size="9.00" font-style="italic">k</tspan><tspan dy="-3.60" font-size="10.20" fill="#8a8a8a">        (1.16)</tspan></text>
+<rect x="405" y="376" width="270" height="66" rx="7" fill="#f0f0f0" stroke="#4d4d4d" stroke-width="1.4"/>
+<text x="540" y="403" font-family="Times New Roman, serif" font-size="13" fill="#1a1a1a" text-anchor="middle" font-style="normal">Ранжування альтернатив (TOPSIS)</text>
+<text x="468.1" y="425" font-family="Times New Roman, serif" font-size="12.5" fill="#1a1a1a" text-anchor="start"><tspan dy="0.00" font-size="12.50">за формулами (1.10)–(1.14)</tspan></text>
+<rect x="405" y="464" width="270" height="66" rx="7" fill="#f0f0f0" stroke="#4d4d4d" stroke-width="1.4"/>
+<text x="540" y="491" font-family="Times New Roman, serif" font-size="13" fill="#1a1a1a" text-anchor="middle" font-style="normal">Збереження ранжування ітерації</text>
+<text x="491.4" y="513" font-family="Times New Roman, serif" font-size="12.5" fill="#1a1a1a" text-anchor="start"><tspan dy="0.00" font-size="12.50" font-style="italic">r</tspan><tspan dy="-4.40" font-size="9.00" font-style="italic">(t)</tspan><tspan dy="4.40" font-size="12.50">(</tspan><tspan dy="0.00" font-size="12.50" font-style="italic">a</tspan><tspan dy="3.60" font-size="9.00" font-style="italic">i</tspan><tspan dy="-3.60" font-size="12.50">),   </tspan><tspan dy="0.00" font-size="12.50" font-style="italic">i</tspan><tspan dy="0.00" font-size="12.50"> = 1, …, </tspan><tspan dy="0.00" font-size="12.50" font-style="italic">n</tspan></text>
+<line x1="540" y1="178" x2="540" y2="200" stroke="#333333" stroke-width="1.7" marker-end="url(#arrow)"/>
+<line x1="540" y1="266" x2="540" y2="288" stroke="#333333" stroke-width="1.7" marker-end="url(#arrow)"/>
+<line x1="540" y1="354" x2="540" y2="376" stroke="#333333" stroke-width="1.7" marker-end="url(#arrow)"/>
+<line x1="540" y1="442" x2="540" y2="464" stroke="#333333" stroke-width="1.7" marker-end="url(#arrow)"/>
+<rect x="40" y="40" width="272" height="210" rx="9" fill="#e8eef6" stroke="#1f4e79" stroke-width="1.7"/>
+<text x="176.0" y="70" font-family="Times New Roman, serif" font-size="13.5" fill="#1f4e79" text-anchor="middle" font-style="normal">Блок ініціалізації</text>
+<line x1="56" y1="80" x2="296" y2="80" stroke="#aebfd4" stroke-width="1"/>
+<circle cx="60" cy="108" r="2.6" fill="#1f4e79"/>
+<text x="72" y="112" font-family="Times New Roman, serif" font-size="11.5" fill="#1a1a1a" text-anchor="start"><tspan dy="0.00" font-size="11.50">Вектор номінальних ваг </tspan><tspan dy="0.00" font-size="11.50" font-style="italic">W</tspan><tspan dy="0.00" font-size="11.50">  (FAHP)</tspan></text>
+<circle cx="60" cy="144" r="2.6" fill="#1f4e79"/>
+<text x="72" y="148" font-family="Times New Roman, serif" font-size="11.5" fill="#1a1a1a" text-anchor="start"><tspan dy="0.00" font-size="11.50">Матриця рішень </tspan><tspan dy="0.00" font-size="11.50" font-style="italic">X</tspan></text>
+<circle cx="60" cy="180" r="2.6" fill="#1f4e79"/>
+<text x="72" y="184" font-family="Times New Roman, serif" font-size="11.5" fill="#1a1a1a" text-anchor="start"><tspan dy="0.00" font-size="11.50">Кількість ітерацій </tspan><tspan dy="0.00" font-size="11.50" font-style="italic">N</tspan><tspan dy="0.00" font-size="11.50"> = 10 000</tspan></text>
+<circle cx="60" cy="216" r="2.6" fill="#1f4e79"/>
+<text x="72" y="220" font-family="Times New Roman, serif" font-size="11.5" fill="#1a1a1a" text-anchor="start"><tspan dy="0.00" font-size="11.50">Амплітуда збурення </tspan><tspan dy="0.00" font-size="11.50" font-style="italic">δ</tspan><tspan dy="0.00" font-size="11.50"> = 0,15</tspan></text>
+<line x1="312" y1="145" x2="405" y2="145" stroke="#333333" stroke-width="1.7" marker-end="url(#arrow)"/>
+<path d="M675,497 L705,497 L705,145 L676,145" fill="none" stroke="#6a2f9c" stroke-width="1.7" marker-end="url(#arrowP)"/>
+<text x="722" y="321" font-family="Times New Roman, serif" font-size="10.5" fill="#6a2f9c" text-anchor="middle" transform="rotate(-90 722 321)">наступна ітерація     t ← t + 1</text>
+<line x1="540" y1="530" x2="540" y2="602" stroke="#333333" stroke-width="1.7" marker-end="url(#arrow)"/>
+<text x="553" y="596" font-family="Times New Roman, serif" font-size="10.5" fill="#555555" text-anchor="start">після N ітерацій</text>
+<rect x="340" y="602" width="400" height="90" rx="9" fill="#ece5f3" stroke="#6a2f9c" stroke-width="1.7"/>
+<text x="540" y="636" font-family="Times New Roman, serif" font-size="13" fill="#1a1a1a" text-anchor="middle" font-style="normal">Агрегація індексів прийнятності рангів</text>
+<text x="433.8" y="666" font-family="Times New Roman, serif" font-size="12.5" fill="#1a1a1a" text-anchor="start"><tspan dy="0.00" font-size="12.50" font-style="italic">p</tspan><tspan dy="3.60" font-size="9.00" font-style="italic">i</tspan><tspan dy="-3.60" font-size="12.50">(</tspan><tspan dy="0.00" font-size="12.50" font-style="italic">k</tspan><tspan dy="0.00" font-size="12.50">) = (1/</tspan><tspan dy="0.00" font-size="12.50" font-style="italic">N</tspan><tspan dy="0.00" font-size="12.50">) · </tspan><tspan dy="0.00" font-size="12.50">Σ</tspan><tspan dy="3.60" font-size="9.00">t=1</tspan><tspan dy="-8.00" font-size="9.00">N</tspan><tspan dy="4.40" font-size="12.50">  </tspan><tspan dy="0.00" font-size="12.50" font-weight="bold">1</tspan><tspan dy="0.00" font-size="12.50">[</tspan><tspan dy="0.00" font-size="12.50" font-style="italic">r</tspan><tspan dy="-4.40" font-size="9.00" font-style="italic">(t)</tspan><tspan dy="4.40" font-size="12.50">(</tspan><tspan dy="0.00" font-size="12.50" font-style="italic">a</tspan><tspan dy="3.60" font-size="9.00" font-style="italic">i</tspan><tspan dy="-3.60" font-size="12.50">) ≤ </tspan><tspan dy="0.00" font-size="12.50" font-style="italic">k</tspan><tspan dy="0.00" font-size="12.50">]</tspan><tspan dy="0.00" font-size="10.20" fill="#8a8a8a">        (1.17)</tspan></text>
+<rect x="778" y="587" width="256" height="120" rx="9" fill="#e5f0e8" stroke="#2e7d32" stroke-width="1.7"/>
+<text x="906.0" y="614" font-family="Times New Roman, serif" font-size="13.5" fill="#2e7d32" text-anchor="middle" font-style="normal">Вихідні дані</text>
+<line x1="794" y1="623" x2="1018" y2="623" stroke="#aacdb4" stroke-width="1"/>
+<text x="906.0" y="647" font-family="Times New Roman, serif" font-size="12.5" fill="#1a1a1a" text-anchor="middle" font-style="normal">Матриця індексів прийнятності</text>
+<text x="875.1" y="668" font-family="Times New Roman, serif" font-size="12.5" fill="#1a1a1a" text-anchor="start"><tspan dy="0.00" font-size="12.50">рангів  </tspan><tspan dy="0.00" font-size="12.50" font-style="italic">p</tspan><tspan dy="3.60" font-size="9.00" font-style="italic">i</tspan><tspan dy="-3.60" font-size="12.50">(</tspan><tspan dy="0.00" font-size="12.50" font-style="italic">k</tspan><tspan dy="0.00" font-size="12.50">)</tspan></text>
+<text x="845.8" y="690" font-family="Times New Roman, serif" font-size="12.5" fill="#1a1a1a" text-anchor="start"><tspan dy="0.00" font-size="12.50" font-style="italic">i</tspan><tspan dy="0.00" font-size="12.50"> = 1, …, </tspan><tspan dy="0.00" font-size="12.50" font-style="italic">n</tspan><tspan dy="0.00" font-size="12.50">;    </tspan><tspan dy="0.00" font-size="12.50" font-style="italic">k</tspan><tspan dy="0.00" font-size="12.50"> = 1, 3, 5</tspan></text>
+<line x1="740" y1="647.0" x2="778" y2="647.0" stroke="#333333" stroke-width="1.7" marker-end="url(#arrow)"/>
+</svg>
