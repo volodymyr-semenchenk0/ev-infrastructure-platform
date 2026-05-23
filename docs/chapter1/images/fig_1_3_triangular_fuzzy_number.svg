@@ -1,0 +1,43 @@
+<svg viewBox="0 0 560 360" xmlns="http://www.w3.org/2000/svg">
+  <rect width="560" height="360" fill="white"/>
+
+  <!-- y-axis -->
+  <line x1="80" y1="310" x2="80" y2="40" stroke="black" stroke-width="1.5"/>
+  <polygon points="80,40 75,50 85,50" fill="black"/>
+
+  <!-- x-axis -->
+  <line x1="80" y1="310" x2="510" y2="310" stroke="black" stroke-width="1.5"/>
+  <polygon points="510,310 500,305 500,315" fill="black"/>
+
+  <!-- Axis names -->
+  <text x="520" y="315" font-size="15" font-family="Times New Roman, serif" font-style="italic" fill="black">x</text>
+  <text x="55" y="35" font-size="13" font-family="Times New Roman, serif" fill="black">μ(x)</text>
+
+  <!-- y-axis: 0 at bottom, 1 tick at peak height -->
+  <text x="70" y="315" font-size="13" font-family="Arial" fill="black" text-anchor="end">0</text>
+  <line x1="75" y1="65" x2="85" y2="65" stroke="black" stroke-width="1.5"/>
+  <text x="70" y="70" font-size="13" font-family="Arial" fill="black" text-anchor="end">1</text>
+
+  <!-- Triangle:  l=150, m=310 (peak), u=470  (base at y=310, peak at y=65) -->
+  <polygon points="150,310 310,65 470,310" fill="#cfe2f3" opacity="0.65"/>
+  <line x1="150" y1="310" x2="310" y2="65" stroke="#1a4f99" stroke-width="2.2"/>
+  <line x1="310" y1="65" x2="470" y2="310" stroke="#1a4f99" stroke-width="2.2"/>
+
+  <!-- Dashed vertical from peak down to x-axis -->
+  <line x1="310" y1="65" x2="310" y2="310" stroke="#666" stroke-width="1.1" stroke-dasharray="5,4"/>
+
+  <!-- Tick marks on x-axis at l, m, u -->
+  <line x1="150" y1="305" x2="150" y2="315" stroke="black" stroke-width="1.5"/>
+  <line x1="310" y1="305" x2="310" y2="315" stroke="black" stroke-width="1.5"/>
+  <line x1="470" y1="305" x2="470" y2="315" stroke="black" stroke-width="1.5"/>
+
+  <!-- x-axis labels -->
+  <text x="150" y="334" font-size="14" font-family="Times New Roman, serif" font-style="italic" fill="black" text-anchor="middle">l</text>
+  <text x="310" y="334" font-size="14" font-family="Times New Roman, serif" font-style="italic" fill="black" text-anchor="middle">m</text>
+  <text x="470" y="334" font-size="14" font-family="Times New Roman, serif" font-style="italic" fill="black" text-anchor="middle">u</text>
+
+  <!-- Key vertices -->
+  <circle cx="150" cy="310" r="3" fill="#1a4f99"/>
+  <circle cx="310" cy="65" r="3.5" fill="#1a4f99"/>
+  <circle cx="470" cy="310" r="3" fill="#1a4f99"/>
+</svg>
