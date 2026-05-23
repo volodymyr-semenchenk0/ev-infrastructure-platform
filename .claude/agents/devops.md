@@ -81,7 +81,7 @@ curl http://localhost:5173            # повинно дати HTML
 1. `docker compose up --build` піднімається без помилок
 2. `curl http://localhost:8000/health` → 200
 3. `alembic upgrade head` пройшло
-4. `init_data.sql` seed виконано (12 локацій, 10 критеріїв, 2 профілі)
+4. ``init_data.sql` seed виконано (профілі та критерії; локації — через API або окремий скрипт)
 5. PostGIS активовано: `CREATE EXTENSION IF NOT EXISTS postgis;`
 6. GiST індекси існують на `locations.geom`, `existing_stations.geom`
 7. `.env` НЕ закомічений (`git check-ignore .env`)

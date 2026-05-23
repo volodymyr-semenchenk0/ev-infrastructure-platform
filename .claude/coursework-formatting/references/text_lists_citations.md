@@ -173,7 +173,7 @@ Font: 12 pt, single line spacing.
 
 - Decimal separator: comma (`3,14`), not period.
 - Group thousands by spaces: `1 000 000`.
-- Always non-breaking space between number and unit: `25 кВт`, `12 локацій`, `2025 р.`, `с. 45`.
+- Always non-breaking space between number and unit: `25 кВт`, `10 критеріїв`, `2025 р.`, `с. 45`.
 - All metric quantities only in SI units (per ГОСТ 19.781-90).
 
 ## Common errors to fix on sight

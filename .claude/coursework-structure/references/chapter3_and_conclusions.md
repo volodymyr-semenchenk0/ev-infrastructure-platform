@@ -67,11 +67,11 @@ Seven recommended subsections:
 
 Seven recommended subsections:
 
-- **3.2.1.** Експериментальна база. 12 candidate locations across Kyiv districts (stratified sampling: ~2 per district from 7 districts). Real coordinates, real addresses, real values for criteria sourced from OSM, OpenChargeMap, and Держстат. Present as a table with all 10 criteria values.
+- **3.2.1.** Експериментальна база. candidate locations across Kyiv districts (within city limits). Real coordinates, real addresses, real values for criteria sourced from OSM, OpenChargeMap, and Держстат. Present as a table with all 10 criteria values.
 
 - **3.2.2.** Ranking with City profile. Present:
   - Computed weights vector (radar chart or bar chart);
-  - Top-12 ranking with closeness coefficients;
+  - Full ranking with closeness coefficients;
   - Map with color-coded markers (top-3 highlighted);
   - Brief interpretation: which districts dominate.
 
@@ -108,7 +108,7 @@ Place a separate sheet with the word **ДОДАТКИ** (uppercase, centered, no
 **Recommended given the topic:**
 - Додаток В. SQL-скрипти ініціалізації БД та Alembic-міграції.
 - Додаток Г. Розширені UML-діаграми великого формату.
-- Додаток Д. Повна таблиця експериментальних даних (12 локацій × 10 критеріїв) + результати ранжувань.
+- Додаток Д. Повна таблиця експериментальних даних (локації × 10 критеріїв) + результати ранжувань.
 - Додаток Ж. Графіки аналізу чутливості Монте-Карло.
 - Додаток К. Додаткові скріншоти інтерфейсу системи.
 

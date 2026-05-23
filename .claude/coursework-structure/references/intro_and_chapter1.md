@@ -90,7 +90,7 @@ Up to 3 pages. Six required subsections, mapping to the methodology:
 
 - **1.3.5.** Структура вихідних інформаційних масивів. Tables of fields for: weights vector, ranking results (location, rank, closeness coefficient), sensitivity frequencies, comparison metrics.
 
-- **1.3.6.** Обмеження та нефункціональні вимоги. Performance (< 5s for 12×10 ranking), reliability, usability (intuitive UX), scalability (designed for migration to PostgreSQL with PostGIS — already done — and capacity for 1000+ locations in MDR phase). State explicitly what is NOT in scope: dynamic demand forecasting, grid load modeling, real-time pricing — these are deferred to MDR.
+- **1.3.6.** Обмеження та нефункціональні вимоги. Performance (< 5s for N×10 ranking (N — кількість локацій)), reliability, usability (intuitive UX), scalability (designed for migration to PostgreSQL with PostGIS — already done — and capacity for 1000+ locations in MDR phase). State explicitly what is NOT in scope: dynamic demand forecasting, grid load modeling, real-time pricing — these are deferred to MDR.
 
 ## Common errors to prevent in Chapter 1
 

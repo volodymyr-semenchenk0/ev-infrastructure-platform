@@ -36,7 +36,7 @@ Repo -> DB : SELECT критерії
 Repo --> Orch : List<Criterion>
 deactivate Repo
 
-note over Orch, FAHP : [Блок FAHP, ≈50 мс]
+note over Orch, FAHP : [Блок FAHP]
 
 Orch -> FAHP : computeWeights(matrix)
 activate FAHP
@@ -49,7 +49,7 @@ Repo -> DB : SELECT локації\nта значення критеріїв
 Repo --> Orch : List<Location> + матриця X
 deactivate Repo
 
-note over Orch, TOP : [Блок TOPSIS, ≈10 мс]
+note over Orch, TOP : [Блок TOPSIS]
 
 Orch -> TOP : computeRanking(X, W)
 activate TOP

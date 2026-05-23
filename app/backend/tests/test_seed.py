@@ -13,7 +13,7 @@ from __future__ import annotations
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db.models import Criterion, Location, Profile
+from db.models import Criterion, Profile
 from db.seed import seed_reference_data  # does not exist yet — red phase
 
 # ---------------------------------------------------------------------------
@@ -35,17 +35,12 @@ EXPECTED_CRITERION_CODES = {
     "Env_qual",
 }
 
-# Троєщина: lon=30.5689, lat=50.5234, district=Деснянський
-TROIESHCHYNA_LON = 30.5689
-TROIESHCHYNA_LAT = 50.5234
-TROIESHCHYNA_DISTRICT = "Деснянський"
-
 
 class TestSeedReferenceData:
     """Tests for db/seed.py::seed_reference_data.
 
     Reference: spec 2.2.2 seed requirements; master.md Table 3.1 (profiles),
-    Table 3.3 (criteria codes), Appendix A (location coordinates).
+    Table 3.3 (criteria codes).
     """
 
     async def test_seed_creates_two_profiles(self, db_session: AsyncSession) -> None:
@@ -90,58 +85,12 @@ class TestSeedReferenceData:
         )
         await db_session.rollback()
 
-    async def test_seed_creates_twelve_kyiv_locations(self, db_session: AsyncSession) -> None:
-        """seed_reference_data must insert 12 Kyiv locations including Троєщина.
-
-        Троєщина must have:
-          - lon = 30.5689 ± 1e-4
-          - lat = 50.5234 ± 1e-4
-          - district = 'Деснянський'
-
-        Reference: master.md Appendix A — координати 12 локацій Києва.
-        """
-        await seed_reference_data(db_session)
-        await db_session.flush()
-
-        result = await db_session.execute(select(Location))
-        locations = result.scalars().all()
-
-        assert len(locations) == 12, (
-            f"Expected 12 locations, got {len(locations)}: {[l.name for l in locations]}"
-        )
-
-        troieshchyna = next((loc for loc in locations if "Троєщина" in loc.name), None)
-        assert troieshchyna is not None, (
-            "Location named 'Троєщина' not found among seeded locations: "
-            f"{[l.name for l in locations]}"
-        )
-        assert troieshchyna.district == TROIESHCHYNA_DISTRICT, (
-            f"Троєщина district: expected '{TROIESHCHYNA_DISTRICT}', got '{troieshchyna.district}'"
-        )
-
-        # Verify stored coordinates via PostGIS functions
-        from sqlalchemy import text
-
-        row = await db_session.execute(
-            text(
-                "SELECT ST_X(geom::geometry) AS lon, ST_Y(geom::geometry) AS lat "
-                "FROM locations WHERE id = :id"
-            ).bindparams(id=troieshchyna.id)
-        )
-        coords = row.one()
-        assert abs(coords.lon - TROIESHCHYNA_LON) < 1e-4, (
-            f"Троєщина longitude: expected {TROIESHCHYNA_LON}, got {coords.lon}"
-        )
-        assert abs(coords.lat - TROIESHCHYNA_LAT) < 1e-4, (
-            f"Троєщина latitude: expected {TROIESHCHYNA_LAT}, got {coords.lat}"
-        )
-        await db_session.rollback()
-
     async def test_seed_is_idempotent(self, db_session: AsyncSession) -> None:
         """Calling seed_reference_data twice must not duplicate rows.
 
-        After two calls the counts must still be 2 profiles, 10 criteria,
-        12 locations — not 4 / 20 / 24.
+        After two calls the counts must still be 2 profiles and 10 criteria
+        — not 4 / 20.  Locations are not seeded by seed_reference_data; they
+        are added separately for each analysis within the city limits.
 
         Reference: spec 2.2.2 — seed must be safe to re-run (INSERT … ON CONFLICT DO NOTHING
         or equivalent upsert pattern).
@@ -157,18 +106,12 @@ class TestSeedReferenceData:
         criterion_count = (
             await db_session.execute(select(func.count()).select_from(Criterion))
         ).scalar_one()
-        location_count = (
-            await db_session.execute(select(func.count()).select_from(Location))
-        ).scalar_one()
 
         assert profile_count == 2, (
             f"Idempotency broken: {profile_count} profiles after 2 seed calls"
         )
         assert criterion_count == 10, (
             f"Idempotency broken: {criterion_count} criteria after 2 seed calls"
-        )
-        assert location_count == 12, (
-            f"Idempotency broken: {location_count} locations after 2 seed calls"
         )
 
         await db_session.rollback()

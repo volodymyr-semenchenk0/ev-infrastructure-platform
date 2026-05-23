@@ -25,7 +25,7 @@ class TestLocations:
 
         assert resp.status_code == 200
         data = resp.json()
-        assert len(data) == 12
+        assert len(data) > 0, "Expected at least one location within Kyiv city limits"
 
         item = data[0]
         assert "latitude" in item and "longitude" in item, (
@@ -69,7 +69,7 @@ class TestLocations:
 
         assert resp.status_code == 200
         data = resp.json()
-        assert len(data) == 12
+        assert len(data) > 0, "Expected at least one location within Kyiv city limits"
 
         for loc in data:
             cv = loc.get("criteriaValues")

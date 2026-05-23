@@ -22,8 +22,8 @@ cloud "Державна\nслужба статистики" as DSU
 
 rectangle "ETL-конвеєр" as ETL {
     rectangle "Extract:\nOverpass-запити,\nREST API,\nCSV-завантаження" as E
-    rectangle "Transform:\n— проєкція у WGS-84;\n— уніфікація форматів;\n— тематична фільтрація;\n— валідація" as T
-    rectangle "Load:\nINSERT у цільові\nтаблиці зі створенням\nGiST-індексів" as L
+    rectangle "Transform:\n– проєкція у WGS-84;\n– уніфікація форматів;\n– тематична фільтрація;\n– валідація" as T
+    rectangle "Load:\nINSERT у цільові\nтаблиці зі створенням\nпросторових індексів" as L
 }
 
 database "Реляційна СУБД\nз просторовим\nрозширенням" as DB

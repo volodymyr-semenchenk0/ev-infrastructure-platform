@@ -92,7 +92,7 @@ The following decisions are settled for this coursework — do not revisit them 
 | Frontend stack | **TypeScript** + React 18 + Vite + TanStack Query + react-leaflet + Recharts |
 | Database | **PostgreSQL 17 + PostGIS** on Supabase (free tier) |
 | Hosting | Vercel (frontend) + Railway/Render (backend) + Supabase (DB) |
-| Case study | **Kyiv** with 12 candidate locations across districts |
+| Case study | **Kyiv** (candidate locations within city limits) |
 | Number of criteria | **10 criteria** (economic, technical, social, transport, environmental) |
 | Defense format | **Live demo** of web app + 5–7 min English presentation |
 | This coursework feeds into | Master's thesis (МДР) next year — architecture must be МДР-ready |

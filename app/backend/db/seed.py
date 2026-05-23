@@ -1,6 +1,7 @@
-"""Reference-data seed: 2 profiles, 10 criteria, 12 Kyiv locations, decision matrix.
+"""Reference-data seed: 2 profiles, 10 criteria, decision matrix.
 
-Дані відповідають таблицям 3.1, 3.3 і 3.2 курсової. Ідемпотентність забезпечена
+Дані відповідають таблицям 3.1 і 3.3 курсової. Локації вносяться через API або
+окремим скриптом для конкретного аналізу в межах міста. Ідемпотентність забезпечена
 через INSERT ... ON CONFLICT DO NOTHING по UNIQUE-ключах.
 """
 
@@ -125,100 +126,13 @@ CRITERIA: list[dict[str, str]] = [
     },
 ]
 
-# 12 Kyiv candidate locations (master.md Table 3.2)
-LOCATIONS: list[dict[str, str | float]] = [
-    {
-        "name": "Шулявка",
-        "address": "вул. Борщагівська, 126",
-        "district": "Шевченківський",
-        "lat": 50.4489,
-        "lon": 30.4231,
-    },
-    {
-        "name": "Оболонь",
-        "address": "просп. Оболонський, 15",
-        "district": "Оболонський",
-        "lat": 50.5012,
-        "lon": 30.4967,
-    },
-    {
-        "name": "Відрадний",
-        "address": "вул. Вітряні Гори, 7",
-        "district": "Святошинський",
-        "lat": 50.4678,
-        "lon": 30.3801,
-    },
-    {
-        "name": "Позняки",
-        "address": "вул. Колекторна, 40",
-        "district": "Дарницький",
-        "lat": 50.3985,
-        "lon": 30.6124,
-    },
-    {
-        "name": "Голосіїво",
-        "address": "просп. Голосіївський, 132",
-        "district": "Голосіївський",
-        "lat": 50.3724,
-        "lon": 30.4938,
-    },
-    {
-        "name": "Деснянська",
-        "address": "вул. Петра Запорожця, 22",
-        "district": "Деснянський",
-        "lat": 50.5189,
-        "lon": 30.6012,
-    },
-    {
-        "name": "Харківське шосе",
-        "address": "Харківське шосе, 165",
-        "district": "Харківський",
-        "lat": 50.3891,
-        "lon": 30.6589,
-    },
-    {
-        "name": "Лівобережна",
-        "address": "вул. Сирецька, 54",
-        "district": "Дніпровський",
-        "lat": 50.4312,
-        "lon": 30.6278,
-    },
-    {
-        "name": "Бориспільська",
-        "address": "вул. Бориспільська, 28",
-        "district": "Дарницький",
-        "lat": 50.4023,
-        "lon": 30.6712,
-    },
-    {
-        "name": "Академмістечко",
-        "address": "вул. Акад. Єфименка, 1",
-        "district": "Святошинський",
-        "lat": 50.4712,
-        "lon": 30.3524,
-    },
-    {
-        "name": "Берестейська",
-        "address": "вул. Гетьмана, 44",
-        "district": "Шевченківський",
-        "lat": 50.4534,
-        "lon": 30.4124,
-    },
-    {
-        "name": "Троєщина",
-        "address": "вул. Теліги, 89",
-        "district": "Деснянський",
-        "lat": 50.5234,
-        "lon": 30.5689,
-    },
-]
-
 
 async def seed_reference_data(session: AsyncSession) -> None:
-    """Idempotently load profiles, criteria, and Kyiv candidate locations.
+    """Idempotently load profiles and criteria.
 
+    Locations are not seeded here — they are added via the API or a separate
+    script for a specific analysis within the city limits.
     Idempotency: profiles/criteria are upserted via INSERT ... ON CONFLICT (code).
-    Locations have no UNIQUE column, so duplicates are avoided by counting first.
     """
     await session.execute(
         insert(Profile).values(PROFILES).on_conflict_do_nothing(index_elements=["code"])
@@ -228,28 +142,13 @@ async def seed_reference_data(session: AsyncSession) -> None:
         insert(Criterion).values(CRITERIA).on_conflict_do_nothing(index_elements=["code"])
     )
 
-    existing = (await session.execute(select(Location.name))).scalars().all()
-    existing_names = set(existing)
-    new_rows = [
-        {
-            "name": loc["name"],
-            "address": loc["address"],
-            "district": loc["district"],
-            "geom": f"SRID=4326;POINT({loc['lon']} {loc['lat']})",
-        }
-        for loc in LOCATIONS
-        if loc["name"] not in existing_names
-    ]
-    if new_rows:
-        await session.execute(insert(Location).values(new_rows))
-
 
 async def seed_decision_matrix(session: AsyncSession, rng_seed: int = 42) -> None:
     """Idempotently populate location_criterion_values with synthetic data.
 
-    Generates 10 criterion values for each of the 12 candidate locations using
+    Generates 10 criterion values for each location currently in the DB using
     uniform sampling within per-criterion ranges.  Called after seed_reference_data
-    so that criteria and locations already exist.
+    and after locations have been added, so that criteria and locations already exist.
 
     rng_seed allows reproducible generation; change only when refreshing the
     synthetic dataset intentionally.

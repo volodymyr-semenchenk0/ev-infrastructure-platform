@@ -5,9 +5,46 @@ from collections.abc import AsyncGenerator
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import text
+from sqlalchemy import select, text
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from testcontainers.postgres import PostgresContainer
+
+# Minimal set of Kyiv locations used exclusively in integration tests.
+# These are within Kyiv city limits and cover different districts.
+_TEST_LOCATION_ROWS: list[dict[str, str]] = [
+    {
+        "name": "Шулявка",
+        "address": "вул. Борщагівська, 126",
+        "district": "Шевченківський",
+        "geom": "SRID=4326;POINT(30.4231 50.4489)",
+    },
+    {
+        "name": "Оболонь",
+        "address": "просп. Оболонський, 15",
+        "district": "Оболонський",
+        "geom": "SRID=4326;POINT(30.4967 50.5012)",
+    },
+    {
+        "name": "Позняки",
+        "address": "вул. Колекторна, 40",
+        "district": "Дарницький",
+        "geom": "SRID=4326;POINT(30.6124 50.3985)",
+    },
+]
+
+N_TEST_LOCATIONS = len(_TEST_LOCATION_ROWS)
+
+
+async def _seed_test_locations(session: AsyncSession) -> None:
+    """Insert test locations within Kyiv city limits if they are not present yet."""
+    from db.models import Location
+
+    existing = (await session.execute(select(Location.name))).scalars().all()
+    existing_names = set(existing)
+    new_rows = [r for r in _TEST_LOCATION_ROWS if r["name"] not in existing_names]
+    if new_rows:
+        await session.execute(pg_insert(Location).values(new_rows))
 
 
 @pytest.fixture(scope="session")
@@ -83,12 +120,13 @@ def _identity_pairwise_matrix(n: int) -> list[list[dict[str, float]]]:
 
 @pytest_asyncio.fixture
 async def api_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
-    """Seeded ASGI client: 2 profiles / 10 criteria / 12 locations / 120 X-values."""
+    """Seeded ASGI client: 2 profiles / 10 criteria / N_TEST_LOCATIONS locations within Kyiv."""
     from api.deps import get_db
     from db.seed import seed_decision_matrix, seed_reference_data
     from main import app
 
     await seed_reference_data(db_session)
+    await _seed_test_locations(db_session)
     await seed_decision_matrix(db_session)
     await db_session.flush()
 

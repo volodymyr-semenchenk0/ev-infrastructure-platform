@@ -45,7 +45,7 @@ entity "locations" {
     address : VARCHAR(256)
     district : VARCHAR(64)
     geom : GEOMETRY(Point, 4326)
-    -- GiST(geom) --
+    -- просторовий індекс (geom) --
 }
 
 entity "existing_stations" {
@@ -55,7 +55,7 @@ entity "existing_stations" {
     power_kw : NUMERIC(6,2)
     connector_type : VARCHAR(32)
     geom : GEOMETRY(Point, 4326)
-    -- GiST(geom) --
+    -- просторовий індекс (geom) --
 }
 
 entity "evaluation_runs" {

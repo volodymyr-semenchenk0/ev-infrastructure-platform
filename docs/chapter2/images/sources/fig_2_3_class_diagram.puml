@@ -30,9 +30,10 @@ package "Сутності домену" as DOM #fafafa {
         + scale : Enum {quantitative, ordinal}
     }
 
-    class CriterionPriority {
-        + weight : Decimal
-        + pairwiseMatrix : FuzzyMatrix
+    class PairwiseMatrixCell {
+        + l : Decimal
+        + m : Decimal
+        + u : Decimal
     }
 
     class Location {
@@ -65,7 +66,7 @@ package "Сутності домену" as DOM #fafafa {
         + distanceToNegative : Decimal
     }
 
-    class SensitivityResult {
+    class SensitivityRecord {
         + iterations : Integer
         + perturbation : Decimal
         + stabilityMatrix : Matrix
@@ -93,7 +94,7 @@ package "Обчислювальні сервіси" as SVC #fff7ee {
     }
 
     class MonteCarloAnalyzer {
-        + runSensitivity(matrix : Matrix, weights : Vector, n : Integer, delta : Decimal) : SensitivityResult
+        + runSensitivity(matrix : Matrix, weights : Vector, n : Integer, delta : Decimal) : SensitivityRecord
         - perturbWeights(weights, delta) : Vector
         - aggregateStability(rankings : List) : Matrix
         - computeConfidenceIntervals(samples) : Map
@@ -106,7 +107,7 @@ package "Обчислювальні сервіси" as SVC #fff7ee {
 
     class OrchestrationService {
         + executeFullCycle(profileId, matrix) : EvaluationRun
-        + executeSensitivity(runId, n, delta) : SensitivityResult
+        + executeSensitivity(runId, n, delta) : SensitivityRecord
     }
 }
 
@@ -134,9 +135,9 @@ package "Інтеграція з даними" as INT #eef7f7 {
     }
 }
 
-Profile "1" -- "0..*" CriterionPriority
-Criterion "1" -- "0..*" CriterionPriority
-EvaluationRun "1" *-- "1" SensitivityResult
+Profile "1" -- "0..*" PairwiseMatrixCell
+Criterion "1" -- "0..*" PairwiseMatrixCell
+EvaluationRun "1" *-- "1" SensitivityRecord
 EvaluationRun "1" -- "0..*" RankingItem
 Location "1" -- "0..*" RankingItem
 EvaluationRun "*" -- "1" Profile

@@ -32,7 +32,7 @@ node "Сервер вебзастосунку\n<<application server>>" as AppNod
 }
 
 node "Сервер бази даних\n<<database server>>" as DBNode {
-    database "Реляційна СУБД\nз просторовим\nрозширенням\n(GiST-індекси)" as DBArt
+    database "Реляційна СУБД\nз просторовим\nрозширенням\n(просторове індексування)" as DBArt
 }
 
 cloud "Зовнішні API-сервіси" as Ext {
@@ -43,8 +43,7 @@ cloud "Зовнішні API-сервіси" as Ext {
 
 note right of ClientArt
     Середовище виконання:
-    браузер на рушії
-    Chromium (ES2022),
+    сучасний веббраузер,
     ≥4 ГБ RAM,
     ≥1366×768 пкс,
     доступ до Інтернету
@@ -53,7 +52,8 @@ end note
 note right of AppSvc
     Середовище виконання:
     OS Linux,
-    асинхронний ASGI-сервер,
+    сучасна серверна
+    платформа з REST API,
     ≥1 vCPU, ≥2.0 ГГц,
     ≥512 МБ RAM,
     ≥1 ГБ диску
@@ -63,7 +63,7 @@ note right of DBArt
     OGC Simple Features
     (ISO 19125),
     SRID = 4326 (WGS-84),
-    GiST(geom)
+    просторовий індекс (geom)
 end note
 
 Client -down-> AppNode : <<HTTPS>>\nREST API
