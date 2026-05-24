@@ -1,0 +1,29 @@
+@startuml
+' Рис. 2.9. Діаграма активностей алгоритму TOPSIS
+skinparam shadowing false
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 11
+skinparam activity {
+    BackgroundColor #f5f5f5
+    BorderColor #333333
+}
+
+start
+:Вхід: матриця рішень X,\nвектор ваг W, вектор типів T;
+
+:Векторна нормалізація\nматриці рішень;
+
+:Зважена нормалізована\nматриця;
+
+:Визначити ідеальний A⁺\nта антиідеальний A⁻ розв'язки;
+
+:Обчислити відстані S⁺ та S⁻\nдо ідеальних розв'язків;
+
+:Обчислити коефіцієнти\nблизькості C*;
+
+:Ранжувати альтернативи\nза спаданням C*;
+
+:Вихід: ранжований\nсписок альтернатив;
+stop
+
+@enduml

@@ -1,5 +1,5 @@
 @startuml
-' Рис. 2.2. Діаграма варіантів використання системи
+' Рис. 2.1. Діаграма варіантів використання системи
 left to right direction
 skinparam shadowing false
 skinparam defaultFontName "Times New Roman"
@@ -10,8 +10,7 @@ skinparam usecase {
     BorderColor #333333
 }
 
-actor "Муніципальний\nОПР" as MUN
-actor "Інвестор-ОПР" as INV
+actor "ОПР" as OPR
 actor "Адміністратор\nсистеми" as ADM
 
 rectangle "Система підтримки прийняття рішень" {
@@ -41,23 +40,14 @@ rectangle "Система підтримки прийняття рішень" {
     }
 }
 
-MUN --> UC1
-MUN --> UC2
-MUN --> UC3
-MUN --> UC4
-MUN --> UC5
-MUN --> UC6
-MUN --> UC7
-MUN --> UC8
-
-INV --> UC1
-INV --> UC2
-INV --> UC3
-INV --> UC4
-INV --> UC5
-INV --> UC6
-INV --> UC7
-INV --> UC8
+OPR --> UC1
+OPR --> UC2
+OPR --> UC3
+OPR --> UC4
+OPR --> UC5
+OPR --> UC6
+OPR --> UC7
+OPR --> UC8
 
 ADM --> UC9
 ADM --> UC10

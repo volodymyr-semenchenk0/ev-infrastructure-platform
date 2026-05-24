@@ -4,6 +4,8 @@ skinparam shadowing false
 skinparam defaultFontName "Times New Roman"
 skinparam defaultFontSize 11
 skinparam classFontSize 11
+skinparam nodesep 16
+skinparam ranksep 70
 skinparam class {
     BackgroundColor #f5f5f5
     BorderColor #333333
@@ -13,7 +15,36 @@ skinparam class {
 skinparam packageStyle rectangle
 hide circle
 
-package "Сутності домену" as DOM #fafafa {
+class OrchestrationService {
+    + executeFullCycle()
+    + executeSensitivity()
+    + compareProfiles()
+}
+
+interface IDataRepository {
+    + findProfile()
+    + findCriteria()
+    + findLocations()
+    + findDecisionMatrix()
+    + saveEvaluation()
+    + findEvaluation()
+}
+
+package "Обчислювальне ядро" as CORE #fff7ee {
+    class FAHPCalculator {
+        + computeWeights()
+    }
+
+    class TOPSISRanker {
+        + computeRanking()
+    }
+
+    class MonteCarloAnalyzer {
+        + runSensitivity()
+    }
+}
+
+package "Сутності предметної області" as DOM #fafafa {
     class Profile {
         + id : Integer
         + code : String
@@ -30,25 +61,11 @@ package "Сутності домену" as DOM #fafafa {
         + scale : Enum {quantitative, ordinal}
     }
 
-    class PairwiseMatrixCell {
-        + l : Decimal
-        + m : Decimal
-        + u : Decimal
-    }
-
     class Location {
         + id : Integer
         + name : String
         + address : String
         + district : String
-        + geometry : Point(WGS84)
-    }
-
-    class ExistingStation {
-        + id : Integer
-        + name : String
-        + powerKW : Decimal
-        + connectorType : String
         + geometry : Point(WGS84)
     }
 
@@ -74,88 +91,20 @@ package "Сутності домену" as DOM #fafafa {
     }
 }
 
-package "Обчислювальні сервіси" as SVC #fff7ee {
-    class FAHPCalculator {
-        + computeWeights(matrix : FuzzyMatrix) : Vector
-        - validateConsistency(matrix) : Boolean
-        - computeFuzzyExtents(matrix) : List<TFN>
-        - degreeOfPossibility(s1, s2) : Decimal
-        - defuzzify(extents) : Vector
-        - normalize(vector) : Vector
-    }
-
-    class TOPSISRanker {
-        + computeRanking(matrix : Matrix, weights : Vector) : List<RankingItem>
-        - normalizeMatrix(matrix) : Matrix
-        - weightedNormalize(matrix, weights) : Matrix
-        - computeIdealSolutions(matrix) : Pair<Vector,Vector>
-        - computeDistances(matrix, ideals) : Pair<Vector,Vector>
-        - computeCloseness(sPos, sNeg) : Vector
-    }
-
-    class MonteCarloAnalyzer {
-        + runSensitivity(matrix : Matrix, weights : Vector, n : Integer, delta : Decimal) : SensitivityRecord
-        - perturbWeights(weights, delta) : Vector
-        - aggregateStability(rankings : List) : Matrix
-        - computeConfidenceIntervals(samples) : Map
-    }
-
-    class RankingComparator {
-        + compareProfiles(r1 : List, r2 : List) : ComparisonResult
-        - spearmanCorrelation(r1, r2) : Decimal
-    }
-
-    class OrchestrationService {
-        + executeFullCycle(profileId, matrix) : EvaluationRun
-        + executeSensitivity(runId, n, delta) : SensitivityRecord
-    }
-}
-
-package "Інтеграція з даними" as INT #eef7f7 {
-    interface IDataRepository {
-        + findProfile(id) : Profile
-        + findCriteriaByProfile(profileId) : List<Criterion>
-        + findLocations() : List<Location>
-        + saveEvaluation(run : EvaluationRun) : Integer
-        + findEvaluation(id) : EvaluationRun
-    }
-
-    class DataRepository {
-    }
-
-    class ExternalDataLoader {
-        + loadOSMObjects(bbox) : List<Location>
-        + loadOCMStations(bbox) : List<ExistingStation>
-        + loadStatisticsByDistrict() : Map
-    }
-
-    class ResultExporter {
-        + exportJSON(run : EvaluationRun) : Document
-        + exportCSV(run : EvaluationRun) : Document
-    }
-}
-
-Profile "1" -- "0..*" PairwiseMatrixCell
-Criterion "1" -- "0..*" PairwiseMatrixCell
-EvaluationRun "1" *-- "1" SensitivityRecord
-EvaluationRun "1" -- "0..*" RankingItem
-Location "1" -- "0..*" RankingItem
-EvaluationRun "*" -- "1" Profile
-
-OrchestrationService ..> FAHPCalculator : <<uses>>
-OrchestrationService ..> TOPSISRanker : <<uses>>
-OrchestrationService ..> MonteCarloAnalyzer : <<uses>>
-OrchestrationService ..> RankingComparator : <<uses>>
-OrchestrationService ..> IDataRepository : <<uses>>
-
+' --- сервіси ---
+OrchestrationService ..> FAHPCalculator
+OrchestrationService ..> TOPSISRanker
+OrchestrationService ..> MonteCarloAnalyzer
+OrchestrationService ..> IDataRepository
+OrchestrationService ..> EvaluationRun : <<creates>>
 MonteCarloAnalyzer ..> TOPSISRanker : <<delegates>>
 
-DataRepository ..|> IDataRepository
-ExternalDataLoader ..> IDataRepository : <<persists via>>
-
-FAHPCalculator ..> Criterion
-TOPSISRanker ..> Location
-TOPSISRanker ..> Criterion
-ResultExporter ..> EvaluationRun
+' --- зв'язки сутностей предметної області ---
+Profile "*" -- "*" Criterion
+Location "*" -- "*" Criterion
+EvaluationRun "0..*" -- "1" Profile
+EvaluationRun "1" *-- "0..1" SensitivityRecord
+EvaluationRun "1" -- "0..*" RankingItem
+Location "1" -- "0..*" RankingItem
 
 @enduml

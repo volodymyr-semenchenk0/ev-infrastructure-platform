@@ -13,62 +13,60 @@ skinparam sequence {
 }
 
 actor "ОПР" as User
-participant "Клієнтська\nпідсистема" as Client
-participant ":RESTController" as Ctrl
+participant ":ClientApp" as Client
 participant ":OrchestrationService" as Orch
 participant ":FAHPCalculator" as FAHP
 participant ":TOPSISRanker" as TOP
 participant ":DataRepository" as Repo
-database "Сховище\nданих" as DB
+database "Database" as DB
 
-User -> Client : запуск обчислень
+User -> Client : start calculation
 activate Client
 
-Client -> Ctrl : POST /api/evaluations\n{profileId, pairwiseMatrix}
-activate Ctrl
-
-Ctrl -> Orch : executeFullCycle(profileId, matrix)
+Client -> Orch : executeFullCycle()
 activate Orch
 
-Orch -> Repo : findCriteriaByProfile(profileId)
+Orch -> Repo : findCriteria()
 activate Repo
-Repo -> DB : SELECT критерії
-Repo --> Orch : List<Criterion>
+Repo -> DB : read criteria
+activate DB
+DB --> Repo : criterion rows
+deactivate DB
+Repo --> Orch : criteria list
 deactivate Repo
 
-note over Orch, FAHP : [Блок FAHP]
-
-Orch -> FAHP : computeWeights(matrix)
+Orch -> FAHP : computeWeights()
 activate FAHP
-FAHP --> Orch : Vector W
+FAHP --> Orch : weight vector
 deactivate FAHP
 
-Orch -> Repo : findLocationsWithMetrics()
+Orch -> Repo : findDecisionMatrix()
 activate Repo
-Repo -> DB : SELECT локації\nта значення критеріїв
-Repo --> Orch : List<Location> + матриця X
+Repo -> DB : read decision matrix
+activate DB
+DB --> Repo : matrix rows
+deactivate DB
+Repo --> Orch : decision matrix
 deactivate Repo
 
-note over Orch, TOP : [Блок TOPSIS]
-
-Orch -> TOP : computeRanking(X, W)
+Orch -> TOP : computeRanking()
 activate TOP
-TOP --> Orch : List<RankingItem>
+TOP --> Orch : ranking result
 deactivate TOP
 
-Orch -> Repo : saveEvaluation(run)
+Orch -> Repo : saveEvaluation()
 activate Repo
-Repo -> DB : INSERT обчислювальний\nзапит і ранжування
-Repo --> Orch : evaluationId
+Repo -> DB : write evaluation
+activate DB
+DB --> Repo : record id
+deactivate DB
+Repo --> Orch : evaluation id
 deactivate Repo
 
-Orch --> Ctrl : EvaluationRun
+Orch --> Client : evaluation run
 deactivate Orch
 
-Ctrl --> Client : успішна відповідь\n{weights, ranking, executionTime}
-deactivate Ctrl
-
-Client --> User : відображення\nранжування
+Client --> User : ranking
 deactivate Client
 
 @enduml

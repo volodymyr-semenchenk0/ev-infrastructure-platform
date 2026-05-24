@@ -94,3 +94,4 @@ app/backend/.pytest_cache/
 # ─────────────────────────────────────────────
 *.log
 *.tmp
+build/tools/
