@@ -1,5 +1,5 @@
 @startuml
-' Рис. 2.10. Діаграма активностей алгоритму Монте-Карло-аналізу чутливості
+' Рис. 2.9. Діаграма активностей алгоритму Монте-Карло-аналізу чутливості
 skinparam shadowing false
 skinparam defaultFontName "Times New Roman"
 skinparam defaultFontSize 10

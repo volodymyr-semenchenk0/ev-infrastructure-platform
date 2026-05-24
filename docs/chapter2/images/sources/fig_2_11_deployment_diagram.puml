@@ -1,5 +1,5 @@
 @startuml
-' Рис. 2.12. Діаграма розгортання системи
+' Рис. 2.11. Діаграма розгортання системи
 skinparam shadowing false
 skinparam defaultFontName "Times New Roman"
 skinparam defaultFontSize 11

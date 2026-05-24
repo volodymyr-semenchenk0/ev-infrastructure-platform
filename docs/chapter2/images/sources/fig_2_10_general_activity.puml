@@ -1,5 +1,5 @@
 @startuml
-' Рис. 2.11. Діаграма активностей загального сценарію функціонування системи
+' Рис. 2.10. Діаграма активностей загального сценарію функціонування системи
 skinparam shadowing false
 skinparam defaultFontName "Times New Roman"
 skinparam defaultFontSize 9

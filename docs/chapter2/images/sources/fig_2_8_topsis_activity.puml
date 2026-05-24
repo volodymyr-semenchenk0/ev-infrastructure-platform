@@ -1,5 +1,5 @@
 @startuml
-' Рис. 2.9. Діаграма активностей алгоритму TOPSIS
+' Рис. 2.8. Діаграма активностей алгоритму TOPSIS
 skinparam shadowing false
 skinparam defaultFontName "Times New Roman"
 skinparam defaultFontSize 11
