@@ -59,7 +59,6 @@ docs/
 ├── sources/        # EV Charging.bib + супровідні джерела
 ├── вступ.md
 ├── висновки.md
-├── zmist_kursovoi.md
 ├── СТРУКТУРА_КУРСОВОЇ.md            # обов'язково при роботі над текстом
 └── ВИМОГИ_ОФОРМЛЕННЯ_ДОКУМЕНТА.md   # формат, тире, кутові лапки, лімити обсягу
 ```
@@ -87,6 +86,9 @@ docs/
 - Примітки до таблиць не використовувати; потрібні пояснення подавати в описовому тексті до або після таблиці
 - Кожен підрозділ (1.1, 1.2, …, 3.2) починається з нової сторінки
 - Стик «заголовок підрозділу → заголовок першого пункту» допускається; вступний абзац між ними не є обов'язковим
+- Канонічна назва задачі системи – «вибір локацій зарядних станцій»; уживати послідовно. «Розміщення зарядних станцій» допустиме лише як назва предметної задачі в тексті, не як назва системи
+- Прив'язка заголовків і підписів до теми: назва розділу (`#`) та підрозділи 1.1, 1.2, 2.1, 2.3 (`##`) – повна «...вибору локацій зарядних станцій»; пункти (`###`) про власний артефакт системи – короткий маркер «...системи»; пункти про сталий метод (FAHP, TOPSIS, Монте-Карло) – назва методу без прив'язки. Підписи рисунків/таблиць: власні артефакти – повна назва, сталі методи – без прив'язки
+- Метод FAHP: при першій згадці – «Fuzzy AHP (FAHP)», далі скрізь – «FAHP»
 - Малюнки у тексті – плейсхолдер `![alt](images/...)` + підпис «Рис. X.Y.», SVG/PNG генерувати окремою сесією
 - Розділ 2: PlantUML-код діаграм зберігається ВИКЛЮЧНО у `docs/chapter2/images/sources/*.puml`; у тексті `.md` блоків ```plantuml немає – лише плейсхолдер, підпис «Рис. 2.X.» і HTML-коментар-посилання `<!-- PlantUML-джерело: images/sources/fig_2_X_назва.puml -->`. Правки діаграм вносити у `.puml`-файл
 - Усі цитування – через BibTeX-ключі з `docs/sources/EV Charging.bib`; нові джерела додавати туди ж
@@ -202,12 +204,11 @@ Frontend: React 18, TypeScript 5, Vite 5, MapLibre GL 4, react-map-gl, Tailwind 
 БД: PostgreSQL 16 + PostGIS (Supabase у проді, Docker локально)
 Tooling: ruff, mypy --strict, pytest + pytest-asyncio, httpx, pre-commit, ESLint, Prettier
 
-## Поточний стан проєкту (станом на 2026-05-19)
+## Поточний стан проєкту (станом на 2026-05-25)
 
-- `mcdm/`: 4 модулі (fahp.py, topsis.py, monte_carlo.py, normalize.py) реалізовано, 11 юніт-тестів зелені
+- `mcdm/`: 4 модулі (fahp.py, topsis.py, monte_carlo.py, normalize.py) реалізовано; юніт-тести в `mcdm/tests/` (test_fahp, test_topsis, test_normalize, test_sensitivity)
 - `db/`: 8 ORM-моделей (Profile, Criterion, PairwiseMatrixEntry, Location, ExistingStation, EvaluationRun, RankingItem, SensitivityRecord), Alembic-міграція 0001 з PostGIS, seed для 2/10/12. Деталі — `app/backend/db/README.md`
-- `api/`, `schemas/`, `services/`: порожні (тільки `__init__.py`); наступні етапи roadmap
-- Тести: 26 passed (11 mcdm + 11 db_models + 4 seed); інтеграційні через testcontainers PostGIS
+- `api/`, `schemas/`, `services/`: реалізовано – роутери (criteria, locations, profiles, evaluations), Pydantic-схеми, сервіси (evaluation, comparison, sensitivity) і repository
 - `frontend/`: скелет (App, pages, features, components, lib, types)
-- Текст курсової: chapter1 (1.1.1–1.1.5, 1.2.1–1.2.7, 1.3), chapter2 (2.1–2.3), chapter3 (3.1–3.2), вступ, висновки, Додаток Ж
+- Текст курсової: chapter1 (1.1.1–1.1.3, 1.2.1–1.2.5, 1.3), chapter2 (2.1.1–2.1.3, 2.2.1–2.2.3, 2.3.1–2.3.5), chapter3 (3.1.1–3.1.7, 3.2.1–3.2.7), вступ, висновки, Додаток А
 - ADR: каталог `docs/adr/` ще не створено; перший ADR – через `engineering-architecture`

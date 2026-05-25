@@ -1,5 +1,5 @@
 @startuml
-' Рис. 2.7. Діаграма діяльності алгоритму Fuzzy AHP
+' Рис. 2.7. Діаграма діяльності алгоритму FAHP
 skinparam shadowing false
 skinparam defaultFontName "Times New Roman"
 skinparam defaultFontSize 11

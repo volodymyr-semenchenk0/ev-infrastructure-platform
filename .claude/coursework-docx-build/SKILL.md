@@ -27,7 +27,7 @@ build/
 │   ├── build_docx.sh        # orchestrator — run this
 │   ├── build_master_md.py   # combines MD pieces + preprocessing
 │   └── make_reference_docx.py  # produces reference.docx for pandoc
-├── render_plantuml.sh       # renders 13 .puml → .png (user runs locally)
+├── render_plantuml.sh       # renders the .puml diagrams → .png (user runs locally)
 └── (output files: master.md, reference.docx, *.docx, BUILD_LOG.md)
 ```
 
@@ -91,9 +91,9 @@ bracket-balanced version:
 IMG_RE = re.compile(r"!\[((?:[^\[\]]|\[[^\]]*\])*)\]\(([^)]+)\)")
 ```
 
-Three Chapter 1 figures (`fig_1_5_triangular_fuzzy_number`, etc.) and the Monte
-Carlo activity diagram have such alt-text — the naïve regex misses them and
-pandoc tries to fetch the non-existent file, producing warnings.
+Several figures (e.g. the Chapter 1 SVG diagrams and the Monte Carlo activity
+diagram) have such alt-text — the naïve regex misses them and pandoc tries to
+fetch the non-existent file, producing warnings.
 
 ### 4. Chapter 2 PlantUML blocks must be stripped before pandoc
 
@@ -149,7 +149,7 @@ For full detail see `references/known-gotchas.md`. Quick map:
 | `[@chang_...]` literal in body | Citation map missing | Rebuild `outputs/coursework_build/citations_map.json` |
 | Cells stacked vertically | tblLayout autofit + missing tblBorders | Patch `Table` style with explicit borders |
 | Wrong indent (1.25 instead of 1.27 cm) | Using `firstLine="709"` (МДР value, not курсова) | Use `firstLine="720"` |
-| Page count >50 | Long LaTeX formulas + comparison tables in 1.1.4 | Reduce duplication in 1.1.4; move long formulas to appendix |
+| Page count >50 | Long LaTeX formulas + large comparison tables | Reduce duplication around large tables; move long formulas to appendix |
 | PlantUML PNG missing | Local rendering not run / `plantuml.jar` not in `build/tools/` | Run `bash build/render_plantuml.sh` locally |
 
 ## Detailed references

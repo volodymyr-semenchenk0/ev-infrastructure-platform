@@ -1,5 +1,5 @@
 @startuml
-' Рис. 2.5. Концептуальна (ER) модель даних системи
+' Рис. 2.5. Концептуальна модель даних системи вибору локацій зарядних станцій
 skinparam shadowing false
 skinparam defaultFontName "Times New Roman"
 skinparam defaultFontSize 11

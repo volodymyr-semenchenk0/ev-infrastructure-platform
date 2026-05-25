@@ -76,10 +76,10 @@ The legend goes between the figure and the caption.
 The coursework methodology format uses **a period after the table number**:
 
 ```
-Таблиця 4.1. — Результати тестування системи
+Таблиця 4.1. – Результати тестування системи
 ```
 
-The dash separator (—) between the number and the title is conventional. Some examples in the methodology use just whitespace; both are acceptable, but the period after the number is mandatory.
+The dash separator (–, U+2013) between the number and the title is conventional. Some examples in the methodology use just whitespace; both are acceptable, but the period after the number is mandatory. Never use the em-dash «—».
 
 ### Heading position
 
@@ -107,7 +107,7 @@ The dash separator (—) between the number and the title is conventional. Some 
 
 If a table spans multiple pages:
 
-- The first page shows the full heading: `Таблиця 4.1. — Результати тестування системи` and the column headers.
+- The first page shows the full heading: `Таблиця 4.1. – Результати тестування системи` and the column headers.
 - The second page starts with: `Продовження таблиці 4.1` (без double-quotes, no full title).
 - The last page starts with: `Закінчення таблиці 4.1` (if there are 3+ parts).
 - All continuation pages must repeat the column-header row OR include a numbered row that maps to the original column numbers.
@@ -140,17 +140,7 @@ Use the unabbreviated form "таблиця" only when there is no number referen
 
 ### Required tables in this coursework
 
-By the methodology requirements for 3.2, the test cases table is mandatory and follows this pattern (from the methodology's example):
-
-```
-Таблиця 3.1. — Результати тестування системи
-
-| Функція                | Очікуваний результат | Фактичний результат |
-|------------------------|----------------------|---------------------|
-| Обчислення ваг FAHP    | ...                  | ...                 |
-| Ранжування TOPSIS      | ...                  | ...                 |
-| ...                    | ...                  | ...                 |
-```
+Which tables are mandatory and what they contain is defined in `docs/СТРУКТУРА_КУРСОВОЇ.md` — consult that file, do not hard-code the list here. Regardless of content, every table heading uses the format «Таблиця X.Y. – Назва» (see the Tables section above).
 
 ## Formulas (Формули)
 
@@ -177,10 +167,10 @@ Example layout:
 After the formula, on a new line, write the word **«де»** without a colon, then list each symbol on its own line. Period after the last variable.
 
 ```
-де ЗЕО — загальна ефективність обладнання;
-A — показник доступності обладнання, 0,7;
-P — показник продуктивності, 0,6;
-Q — показник якості, 0,5.
+де ЗЕО – загальна ефективність обладнання;
+A – показник доступності обладнання, 0,7;
+P – показник продуктивності, 0,6;
+Q – показник якості, 0,5.
 ```
 
 Critical points:
@@ -227,13 +217,7 @@ Spaces around ± and around units:
 
 ### Required formulas in this coursework
 
-Chapter 1.2 is the math-heavy section. Expected formula count:
-
-- Fuzzy AHP (Chang's method): 6–8 numbered formulas covering pairwise matrix definition, fuzzy synthetic extent, degree of possibility, defuzzification, weights normalization, Consistency Ratio.
-- TOPSIS: 6–7 numbered formulas covering normalization, weighted matrix, ideal solutions, distances, closeness coefficient.
-- Monte Carlo: 1–2 formulas for the perturbation model and frequency aggregation.
-
-All with proper "де"-explanations.
+Which subsections carry the mathematical apparatus and the expected formula composition is defined in `docs/СТРУКТУРА_КУРСОВОЇ.md` — consult that file, do not hard-code counts here. Regardless of count, every formula is numbered per chapter and followed by a «де»-explanation (see the Formulas section above).
 
 ## Common errors to fix on sight
 
@@ -242,7 +226,7 @@ All with proper "де"-explanations.
 | `Рис. 1.1 Назва` | `Рис. 1.1. Назва` |
 | `Рисунок 1.1.` | `Рис. 1.1.` (use abbreviated form per methodology) |
 | Caption above figure | Caption under figure |
-| `Таблиця 2.1 — Назва` (no period after number) | `Таблиця 2.1. — Назва` |
+| `Таблиця 2.1 – Назва` (no period after number) | `Таблиця 2.1. – Назва` |
 | Heading under the table | Heading above the table |
 | Empty cell | `–` |
 | `де:` with colon | `де` without colon |

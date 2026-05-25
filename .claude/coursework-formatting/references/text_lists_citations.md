@@ -139,7 +139,7 @@ The methodology requires **at least 10 sources**. For Master's-level work target
 If a figure or table is taken from another source, the citation goes:
 
 - For a figure: in the caption, after the title — `Рис. 2.3. Архітектура системи [12, c. 45]`.
-- For a table: in the heading, after the title — `Таблиця 1.1. — Класифікація методів MCDM [8, c. 24]`.
+- For a table: in the heading, after the title — `Таблиця 1.1. – Класифікація методів MCDM [8, c. 24]`.
 
 ## Footnotes (Підрядкові посилання)
 
@@ -164,7 +164,7 @@ Font: 12 pt, single line spacing.
 ## Punctuation rules quick-reference
 
 - One space after punctuation, no space before.
-- Em-dash with surrounding spaces: `текст — текст` (long dash, hot key Alt+0151 or autocorrect).
+- Dash (тире): use «–» (U+2013) with surrounding spaces, as in `текст – текст`. The em-dash «—» (U+2014) is not used in this coursework.
 - Hyphen without spaces in compound words: `науково-технічний`.
 - Кутові lapky: «text», not "text" or 'text' or „text".
 - Ellipsis: single character `…`, not three periods.
@@ -190,4 +190,4 @@ Font: 12 pt, single line spacing.
 | `5.000` (period as thousands separator) | `5 000` (space) |
 | Decimal point: `3.14` | Decimal comma: `3,14` |
 | Three periods `...` | Single ellipsis `…` |
-| `--` for dash | `—` em-dash with spaces |
+| `--` or `—` (U+2014) for dash | `–` (U+2013) with spaces |

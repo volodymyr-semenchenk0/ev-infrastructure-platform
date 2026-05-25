@@ -70,27 +70,25 @@ Eight rules (note rules #5 and #7 are the most commonly violated):
 
 2. Numbered chapters — UPPERCASE, centered, period after the number, no period at end:
    ```
-   1. ТЕОРЕТИЧНИЙ АНАЛІЗ ПРОБЛЕМИ
-   2. ПРОЕКТУВАННЯ СИСТЕМИ ДЛЯ ДОСЛІДЖЕННЯ ПРОЦЕСІВ ВИБОРУ ЛОКАЦІЙ ЗАРЯДНИХ СТАНЦІЙ
-   3. РЕАЛІЗАЦІЯ СИСТЕМИ ЗА ТЕМОЮ КУРСОВОЇ РОБОТИ
+   1. НАЗВА РОЗДІЛУ
    ```
+   The actual chapter titles and numbering live in `docs/СТРУКТУРА_КУРСОВОЇ.md` — never duplicate them here.
 
 3. Subsections — initial capital then lowercase, justified with 1.25 cm indent, period after the number, no period at end:
    ```
-   1.1. Аналіз напрямків (перспектив) використання...
-   2.3. Розробка алгоритмів функціонування системи
+   1.1. Назва підрозділу
    ```
 
 4. Sub-subsections (3rd level) — same rules: initial cap then lowercase, period after the number:
    ```
-   1.2.4. Математичний апарат методу Fuzzy AHP
+   1.2.1. Назва пункту
    ```
 
 5. **Every subsection starts on a new page.** Not just chapters — every 1.1, 1.2, 1.3, 2.1, ..., 3.2 starts on its own new page. The methodology: «Кожен підрозділ ПЗ починається з нового листа» (Chemerys, 2024, p. 9). This is **stricter than МДР**, where only top-level chapters force a new page.
 
 6. Word breaks (hyphenation) in headings are forbidden. A heading must not sit on the last line of a page — at least two lines of body text must follow it.
 
-7. **Section numbers carry a trailing period** that separates them from the title: `1. ТЕОРЕТИЧНИЙ АНАЛІЗ ПРОБЛЕМИ`, `1.1. Аналіз напрямків...`, `1.2.3. Параметри методу TOPSIS`. The methodology: «Номер розділу і підрозділу ставлять перед найменуванням і відокремлюють його крапкою» (Chemerys, 2024, p. 9). This **differs from МДР**, which omits the trailing period after the number.
+7. **Section numbers carry a trailing period** that separates them from the title: `1. НАЗВА РОЗДІЛУ`, `1.1. Назва підрозділу`, `1.2.1. Назва пункту`. The methodology: «Номер розділу і підрозділу ставлять перед найменуванням і відокремлюють його крапкою» (Chemerys, 2024, p. 9). This **differs from МДР**, which omits the trailing period after the number.
 
 8. **Bold for chapter/subsection headings is NOT required** by the coursework methodology (unlike МДР, which mandates bold for all headings). The methodology specifies uppercase + centered for chapters and lowercase (first cap) + justified + 1.25 indent for subsections, but does not prescribe weight. Bold is acceptable but not required.
 
@@ -120,7 +118,7 @@ in the MD sources and rebuild via `bash build/scripts/build_docx.sh`.
 |---|---|
 | `2.1 Назва підрозділу` | `2.1. Назва підрозділу` (period after number) |
 | `Рис. 1.1 Назва` | `Рис. 1.1. Назва` (period after number) |
-| `Таблиця 2.1 — Назва` | `Таблиця 2.1. — Назва` |
+| `Таблиця 2.1 – Назва` | `Таблиця 2.1. – Назва` |
 | `Рисунок 1.1` | `Рис. 1.1.` (the methodology uses abbreviated form) |
 | `"text"` or `'text'` | `«text»` (кутові) |
 | `Т.Г. Шевченко` | `Т. Г. Шевченко` (non-breaking spaces between initials and surname) |

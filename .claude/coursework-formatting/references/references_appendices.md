@@ -160,20 +160,9 @@ Source code in appendices follows different formatting from body text:
 - Line spacing: single.
 - The methodology requires that the **full code listing be in appendices, never in the main text**. In Section 3.1 only short code fragments (10–25 lines) are allowed for illustrating the most interesting algorithmic points.
 
-### Mandatory appendices for this coursework
+### Appendix composition
 
-Based on the methodology and the topic:
-
-- **Додаток А.** Лістинг ключових модулів backend (FastAPI, SQLAlchemy-моделі, FAHP, TOPSIS, Monte Carlo).
-- **Додаток Б.** Лістинг ключових модулів frontend (React+TS компоненти, API-клієнт).
-
-### Recommended additional appendices
-
-- **Додаток В.** SQL-скрипти ініціалізації БД та Alembic-міграції.
-- **Додаток Г.** Розширені UML-діаграми великого формату (для діаграм, які не вмістились на сторінку основного тексту).
-- **Додаток Д.** Повна таблиця експериментальних даних (локації × 10 критеріїв) і результати ранжувань.
-- **Додаток Ж.** Графіки аналізу чутливості Монте-Карло.
-- **Додаток К.** Додаткові скріншоти інтерфейсу системи, що не увійшли до Розділу 3.
+The list of appendices and the content assigned to each is defined in `docs/СТРУКТУРА_КУРСОВОЇ.md` — consult that file. This reference covers only the formatting rules for appendices (letters, numbering, headings), not which appendices exist.
 
 ### Multi-document appendices
 
@@ -195,26 +184,26 @@ If an appendix contains an existing document with its own internal numbering (e.
 | Page number on the «ДОДАТКИ» separator sheet | No page number on the separator sheet |
 | Continuous figure numbering (`Рис. 4.1` for the first figure of an appendix) | `Рис. А.1` (letter prefix) |
 | Each appendix continuing the previous one's pagination | Each appendix starts on a new page |
-| Appendix В titled as «Лістинг» (which is in А) | Each appendix has a unique purpose and title |
+| Two appendices with the same purpose | Each appendix has a unique purpose and title |
 
 ## Cross-reference cheatsheet — appendix letter sequence
 
 ```
-Position | Letter | Allowed? | Use as
----------|--------|----------|------------------
-1        | А      | ✓        | Лістинг backend
-2        | Б      | ✓        | Лістинг frontend
-3        | В      | ✓        | SQL/міграції
-4        | Г      | ✓        | UML-діаграми
-5        | Д      | ✓        | Таблиці експериментів
-6        | Е      | ✗ FORBID | --skip--
-7        | Є      | ✗ FORBID | --skip--
-8        | Ж      | ✓        | Графіки чутливості
-9        | З      | ✗ FORBID | --skip--
-10       | И      | ✗ FORBID | --skip-- (І, Й also forbidden)
-11       | К      | ✓        | Скріншоти інтерфейсу
-12       | Л      | ✓        | (reserve)
+Position | Letter | Allowed?
+---------|--------|----------
+1        | А      | ✓
+2        | Б      | ✓
+3        | В      | ✓
+4        | Г      | ✓
+5        | Д      | ✓
+6        | Е      | ✗ FORBID
+7        | Є      | ✗ FORBID
+8        | Ж      | ✓
+9        | З      | ✗ FORBID
+10       | И      | ✗ FORBID (І, Й also forbidden)
+11       | К      | ✓
+12       | Л      | ✓
 ...
 ```
 
-When jumping over forbidden letters, no comment or note is required — simply use the next allowed letter.
+When jumping over forbidden letters, no comment or note is required — simply use the next allowed letter. The purpose assigned to each appendix is defined in `docs/СТРУКТУРА_КУРСОВОЇ.md`, not here.

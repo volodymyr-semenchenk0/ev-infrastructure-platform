@@ -3,9 +3,9 @@
 ## Inputs
 
 - `docs/вступ.md` — introduction
-- `docs/chapter1/1_1_1.md ... 1_3.md` — Chapter 1 in 13 files
-- `docs/chapter2/2_1_1.md ... 2_3_5.md` — Chapter 2 in 14 files
-- `docs/chapter2/images/sources/*.puml` — 13 PlantUML diagrams (source)
+- `docs/chapter1/*.md` — Chapter 1 source files
+- `docs/chapter2/*.md` — Chapter 2 source files
+- `docs/chapter2/images/sources/*.puml` — PlantUML diagrams (source)
 - `docs/appendices/appendix_*.md` — appendix bodies
 - `docs/sources/EV Charging.bib` — bibtex bibliography
 - `docs/sources/files/N/*.pdf|html` — full-text source files (for page lookup)
@@ -23,7 +23,7 @@
 
 ### 1. `build/render_plantuml.sh` — optional pre-step
 
-Renders 13 `.puml` files in `docs/chapter2/images/sources/` to PNG in
+Renders the `.puml` files in `docs/chapter2/images/sources/` to PNG in
 `docs/chapter2/images/`. Auto-downloads `plantuml.jar` from GitHub releases.
 Requires Java ≥ 8. Run **locally** on the user's machine; the cloud sandbox
 cannot reach GitHub releases for the download.
@@ -102,14 +102,14 @@ Open the docx in Word/LibreOffice and check:
 1. **Headings:** "ВСТУП", "1. ТЕОРЕТИЧНИЙ АНАЛІЗ...", "2. ПРОЕКТУВАННЯ..." —
    centered, uppercase, bold (Heading 1 style).
 2. **Subsections:** "1.1. ...", "2.3. ..." — left, indented 1.27 cm, bold.
-3. **Tables:** all 22 tables have visible borders, fit page width, text wraps
+3. **Tables:** all tables have visible borders, fit page width, text wraps
    in cells.
 4. **Formulas:** click on a `$$` formula — should open as a Word equation
    (Equation Editor). NOT italic text.
 5. **Figures:** captioned "Рис. X.Y." below; missing ones show
    `[ПЛЕЙСХОЛДЕР: ...]`.
 6. **Citations:** `[5]`, `[27; 28, 70]`, etc. — no `[@key]` leftovers.
-7. **References list:** "СПИСОК ВИКОРИСТАНИХ ДЖЕРЕЛ" with 31 numbered
+7. **References list:** "СПИСОК ВИКОРИСТАНИХ ДЖЕРЕЛ" with the numbered
    entries.
 8. **Appendix:** "ДОДАТОК А" on a new page; table captions read "Таблиця А.1.".
 

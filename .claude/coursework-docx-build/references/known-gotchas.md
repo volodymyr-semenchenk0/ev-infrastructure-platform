@@ -142,26 +142,26 @@ the case logged in `build/BUILD_LOG.md` for manual follow-up.
 
 Common causes (in order of likely impact):
 
-1. **Long LaTeX formulas in 1.2.4–1.2.6** rendered as full-height display
+1. **Long LaTeX formulas in the math-heavy subsections (1.2)** rendered as full-height display
    math — each formula takes 3–4 lines. Each subsection has 4–6 formulas.
    Total adds ~10–15 pages.
-2. **Comparison table 1.3 in 1.1.4** has 14 rows × 7 columns and wraps; takes
-   2–3 pages alone.
-3. **Appendix А** with 14 attribute tables — 6–8 pages.
+2. **A large comparison table in Chapter 1** has many rows and columns and
+   wraps; takes 2–3 pages alone.
+3. **Appendix А** with multiple attribute tables.
 4. **Empty paragraph gaps** between figures/tables/headings (pandoc adds them
    liberally).
 
 **Fixes (in order of effort):**
 
-- Trim duplication in 1.1.4 prose around the table.
-- Move some FAHP/TOPSIS derivations from 1.2.4–1.2.5 body to an appendix.
+- Trim duplication in the prose around large tables.
+- Move some FAHP/TOPSIS derivations from the math-heavy subsections (1.2) body to an appendix.
 - Reduce vertical space in `Heading2` / `Heading3` styles
   (`spacing before/after`).
 - Convert long inline lists to `– item; – item` prose.
 
 ## PlantUML
 
-### Symptom: all 13 Chapter 2 figures are placeholders even after running build
+### Symptom: all Chapter 2 figures are placeholders even after running build
 
 PlantUML rendering hasn't happened yet. The cloud sandbox **cannot** render
 PlantUML (proxy blocks plantuml.com, kroki, GitHub releases).
