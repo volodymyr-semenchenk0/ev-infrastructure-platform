@@ -48,7 +48,7 @@
 | `id` | INTEGER | NOT NULL, PK | Унікальний внутрішній ідентифікатор локації-кандидата |
 | `name` | VARCHAR(128) | NOT NULL | Стисла назва або топонім локації |
 | `address` | VARCHAR(256) | NULL | Повна поштова адреса |
-| `district` | VARCHAR(64) | NOT NULL | Адміністративний район м. Київ |
+| `district` | VARCHAR(64) | NOT NULL | Адміністративний район міста-території аналізу |
 | `geom` | GEOMETRY(Point, 4326) | NOT NULL | Геометрія розташування у системі координат WGS-84; індексується GiST |
 
 Таблиця А.6. – Опис атрибутів таблиці `existing_stations`
@@ -69,7 +69,7 @@
 | `profile_id` | INTEGER | NOT NULL, FK | Профіль ОПР, що використовувався у сеансі |
 | `created_at` | TIMESTAMP | NOT NULL, DEFAULT NOW | Момент створення запису |
 | `status` | VARCHAR(16) | NOT NULL, CHECK у `{'completed', 'failed'}` | Стан виконання обчислювального сеансу |
-| `weights_vector` | JSON-документ | NOT NULL | Обчислений вектор ваг $W$ у вигляді ключ–значення (результат FAHP) |
+| `weights_vector` | JSON-документ | NOT NULL | Обчислений вектор ваг $W$ як відображення «`criterion_id` → $w_j$» (результат FAHP) |
 | `execution_time_ms` | INTEGER | NOT NULL, CHECK (`> 0`) | Виміряна тривалість обчислення у мілісекундах |
 
 Таблиця А.8. – Опис атрибутів таблиці `ranking_items`
@@ -89,6 +89,6 @@
 |---|---|---|---|
 | `evaluation_id` | INTEGER | NOT NULL, PK, FK, ON DELETE CASCADE | Ідентифікатор сеансу, до якого належить запис чутливості |
 | `iterations` | INTEGER | NOT NULL, CHECK (`> 0`) | Кількість ітерацій $N$ методу Монте-Карло |
-| `perturbation` | NUMERIC(4,3) | NOT NULL, CHECK (`> 0`) | Параметр збурення $\delta$ рівномірного розподілу $U(-\delta, +\delta)$ |
-| `stability_matrix` | JSON-документ | NOT NULL | Матриця частот потрапляння у $k$ найкращих позицій: $p_i(k)$ для $k = 1, \ldots, K_{\max}$ |
-| `confidence_intervals` | JSON-документ | NOT NULL | Довірчі інтервали значень $C_i^*$ найкращих локацій ранжування, обчислені методом перцентильного бутстрепу |
+| `perturbation` | NUMERIC(4,3) | NOT NULL, CHECK (`> 0`) | Параметр збурення $\delta$ рівномірного розподілу $\mathcal{U}(-\delta, +\delta)$ |
+| `stability_matrix` | JSON-документ | NOT NULL | Матриця індексів прийнятності рангів $p_i(k)$ для $k \in \{1, 3, 5\}$ за (1.17); структура «`location_id` → {1: $p_i(1)$, 3: $p_i(3)$, 5: $p_i(5)$}» |
+| `confidence_intervals` | JSON-документ | NOT NULL | Довірчі інтервали значень $C_i^*$ найкращих локацій ранжування, обчислені за перцентилями накопиченої вибірки; структура – список об'єктів «`location_id`, нижня межа, верхня межа» |
