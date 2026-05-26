@@ -196,13 +196,16 @@ class TestRepositories:
 
         Reference: services/repository.py spec — get_with_ranking uses selectinload.
         """
+        from tests.conftest import _seed_test_locations
+
         await seed_reference_data(db_session)
+        await _seed_test_locations(db_session)
         await db_session.flush()
 
         # Resolve 3 locations to attach ranking items to
         locations = (await db_session.execute(select(Location).limit(3))).scalars().all()
         assert len(locations) == 3, (
-            "Need at least 3 seeded locations; seed_reference_data should provide 12"
+            "Need at least 3 test locations; _seed_test_locations should provide them"
         )
 
         profile = await db_session.scalar(select(Profile).where(Profile.code == "municipal"))

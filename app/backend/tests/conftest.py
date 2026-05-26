@@ -5,8 +5,7 @@ from collections.abc import AsyncGenerator
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import select, text
-from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy import insert, select, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from testcontainers.postgres import PostgresContainer
 
@@ -44,7 +43,8 @@ async def _seed_test_locations(session: AsyncSession) -> None:
     existing_names = set(existing)
     new_rows = [r for r in _TEST_LOCATION_ROWS if r["name"] not in existing_names]
     if new_rows:
-        await session.execute(pg_insert(Location).values(new_rows))
+        await session.execute(insert(Location).values(new_rows))
+        await session.flush()
 
 
 @pytest.fixture(scope="session")

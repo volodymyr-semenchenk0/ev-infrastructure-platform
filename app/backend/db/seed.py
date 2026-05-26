@@ -178,4 +178,6 @@ async def seed_decision_matrix(session: AsyncSession, rng_seed: int = 42) -> Non
                 }
             )
 
+    if not rows:
+        return
     await session.execute(insert(LocationCriterionValue).values(rows))

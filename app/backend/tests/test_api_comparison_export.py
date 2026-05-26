@@ -48,7 +48,10 @@ async def api_client(db_session: AsyncSession) -> AsyncClient:
     Seeds reference data and decision matrix so every endpoint test starts
     from a consistent state: 2 profiles, 10 criteria, 12 locations, 120 X-values.
     """
+    from tests.conftest import _seed_test_locations
+
     await seed_reference_data(db_session)
+    await _seed_test_locations(db_session)
     await seed_decision_matrix(db_session)
     await db_session.flush()
 
