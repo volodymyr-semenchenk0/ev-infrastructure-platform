@@ -9,12 +9,15 @@ import { SensitivitySection } from './sections/SensitivitySection'
 import { WeightsSection } from './sections/WeightsSection'
 import { useSidebarStatuses } from './useSidebarStatuses'
 import { useProfileStore } from '@/store/profile-store'
+import { useUiStore } from '@/store/ui-store'
 
 const SIDEBAR_WIDTH_CLASS = 'w-[420px]'
 
 export function WorkbenchSidebar() {
   const statuses = useSidebarStatuses()
   const activeProfile = useProfileStore((s) => s.activeProfile)
+  const sidebarOpenIds = useUiStore((s) => s.sidebarOpenIds)
+  const setSidebarOpenIds = useUiStore((s) => s.setSidebarOpenIds)
 
   const sections: AccordionSection[] = [
     {
@@ -55,7 +58,11 @@ export function WorkbenchSidebar() {
       aria-label="Панель керування СППР"
       className={`${SIDEBAR_WIDTH_CLASS} shrink-0 overflow-y-auto border-r bg-card`}
     >
-      <SidebarAccordion sections={sections} defaultOpenIds={['profile']} />
+      <SidebarAccordion
+        sections={sections}
+        defaultOpenIds={sidebarOpenIds}
+        onOpenIdsChange={setSidebarOpenIds}
+      />
     </aside>
   )
 }
