@@ -22,6 +22,10 @@ interface LocationMapProps {
   // `onSelectLocation` instead of the previous internal-only highlight.
   selectedLocationId?: number | null
   onSelectLocation?: (locationId: number | null) => void
+  // Stability layer per UI_PLAN §5.2.5. When `colorMode` is 'stability' the
+  // markers shade by `stabilityByLocationId.get(id)` (p_i(1) in [0, 1]).
+  stabilityByLocationId?: Map<number, number>
+  colorMode?: 'rank' | 'stability'
 }
 
 const FLY_TO_ZOOM = 13
@@ -33,6 +37,8 @@ export function LocationMap({
   rankByLocationId,
   selectedLocationId,
   onSelectLocation,
+  stabilityByLocationId,
+  colorMode = 'rank',
 }: LocationMapProps) {
   // When `selectedLocationId` is undefined we keep the previous fully-internal
   // behaviour so callers that pass only locations/criteria do not regress.
@@ -78,6 +84,8 @@ export function LocationMap({
             rank={rankByLocationId.get(loc.id)?.rank ?? null}
             total={total}
             onClick={() => handleSelect(loc.id)}
+            stabilityProbability={stabilityByLocationId?.get(loc.id) ?? null}
+            colorMode={colorMode}
           />
         ))}
         {active && (

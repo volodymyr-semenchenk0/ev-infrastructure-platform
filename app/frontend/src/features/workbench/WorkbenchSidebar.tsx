@@ -5,18 +5,11 @@ import {
 import { MatrixSection } from './sections/MatrixSection'
 import { ProfileSection } from './sections/ProfileSection'
 import { RankingSection } from './sections/RankingSection'
+import { SensitivitySection } from './sections/SensitivitySection'
 import { WeightsSection } from './sections/WeightsSection'
 import { useSidebarStatuses } from './useSidebarStatuses'
 
-// Section 5 (sensitivity) is the last placeholder; tasks 1-4 sections, plus
-// MatrixSection (7), WeightsSection (8), and RankingSection (9), are wired.
-function Placeholder({ note }: { note: string }) {
-  return (
-    <p className="text-sm text-muted-foreground">
-      {note}
-    </p>
-  )
-}
+// All five accordion sections are wired after task 10.
 
 const SIDEBAR_WIDTH_CLASS = 'w-[420px]'
 
@@ -52,7 +45,7 @@ export function WorkbenchSidebar() {
       id: 'sensitivity',
       title: '5. Аналіз чутливості (Монте-Карло)',
       status: statuses.sensitivity,
-      content: <Placeholder note="Параметри N і δ, прогрес, мініатюри діаграм зʼявляться на кроці 10." />,
+      content: <SensitivitySection />,
     },
   ]
 
