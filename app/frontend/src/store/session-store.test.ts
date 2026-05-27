@@ -80,6 +80,26 @@ describe('useSessionStore', () => {
     expect(state.lastError).toEqual({ message: 'CR > 0.10', source: 'matrix' })
   })
 
+  it('commitMatrix writes matrix and CR while wiping downstream artefacts', () => {
+    const store = useSessionStore.getState()
+    store.setWeights({ A: 1 }, 0.05)
+    store.setRanking(SAMPLE_RANKING)
+    store.setSensitivity(SAMPLE_SENSITIVITY)
+    store.setEvaluationId(7)
+    store.setError({ message: 'boom' })
+
+    store.commitMatrix(SAMPLE_MATRIX, 0.04)
+
+    const state = useSessionStore.getState()
+    expect(state.pairwiseMatrix).toEqual(SAMPLE_MATRIX)
+    expect(state.consistencyRatio).toBe(0.04)
+    expect(state.weights).toBeNull()
+    expect(state.ranking).toBeNull()
+    expect(state.sensitivity).toBeNull()
+    expect(state.evaluationId).toBeNull()
+    expect(state.lastError).toBeNull()
+  })
+
   it('resetSession wipes every populated field', () => {
     const store = useSessionStore.getState()
     store.setPairwiseMatrix(SAMPLE_MATRIX)
