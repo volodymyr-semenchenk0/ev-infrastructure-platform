@@ -1,7 +1,9 @@
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 import { Info } from 'lucide-react'
 
 import { useCriteria } from '@/features/calculate/useCriteria'
+import { ChartExportButtons } from '@/features/export/ChartExportButtons'
+import { TabularExportButtons } from '@/features/export/TabularExportButtons'
 import { WeightsBarChart } from '@/features/results/WeightsBarChart'
 import { useSessionStore } from '@/store/session-store'
 
@@ -15,6 +17,8 @@ export function FahpDetails() {
   const consistencyRatio = useSessionStore((s) => s.consistencyRatio)
   const evaluationId = useSessionStore((s) => s.evaluationId)
   const criteria = useCriteria()
+
+  const chartRef = useRef<HTMLDivElement>(null)
 
   const criteriaNames = useMemo(() => {
     const map: Record<string, string> = {}
@@ -35,6 +39,19 @@ export function FahpDetails() {
       .sort((a, b) => b.weight - a.weight)
   }, [weights, criteriaNames])
 
+  const csvRows = useMemo(
+    () => [
+      ['rank', 'code', 'name', 'weight'],
+      ...sortedRows.map((row, idx) => [idx + 1, row.code, row.name, row.weight]),
+    ],
+    [sortedRows],
+  )
+
+  const jsonPayload = useMemo(
+    () => ({ evaluationId, consistencyRatio, weights: sortedRows }),
+    [evaluationId, consistencyRatio, sortedRows],
+  )
+
   if (!weights) {
     return (
       <p className="text-sm text-muted-foreground">
@@ -43,22 +60,38 @@ export function FahpDetails() {
     )
   }
 
+  const filenameBase = `fahp-weights-${evaluationId ?? 'session'}`
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-        {evaluationId !== null && (
-          <span>
-            ID розрахунку: <span className="font-mono text-foreground">{evaluationId}</span>
-          </span>
-        )}
-        {consistencyRatio !== null && (
-          <span>
-            CR: <span className="font-mono text-foreground">{consistencyRatio.toFixed(3)}</span>
-          </span>
-        )}
+      <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
+        <div className="flex flex-wrap gap-4">
+          {evaluationId !== null && (
+            <span>
+              ID розрахунку: <span className="font-mono text-foreground">{evaluationId}</span>
+            </span>
+          )}
+          {consistencyRatio !== null && (
+            <span>
+              CR: <span className="font-mono text-foreground">{consistencyRatio.toFixed(3)}</span>
+            </span>
+          )}
+        </div>
+        <TabularExportButtons
+          csvRows={csvRows}
+          jsonData={jsonPayload}
+          filenameBase={filenameBase}
+        />
       </div>
 
-      <WeightsBarChart weights={weights} criteriaNames={criteriaNames} />
+      <div ref={chartRef}>
+        <WeightsBarChart weights={weights} criteriaNames={criteriaNames} />
+      </div>
+      <ChartExportButtons
+        containerRef={chartRef}
+        filenameBase={filenameBase}
+        label="Експорт діаграми:"
+      />
 
       <table className="w-full text-sm">
         <thead>
