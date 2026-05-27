@@ -188,7 +188,7 @@ class SensitivityRepository:
         evaluation_id: int,
         iterations: int,
         perturbation: float,
-        stability_matrix: dict[str, list[float]],
+        stability_matrix: dict[str, dict[str, float]],
         confidence_intervals: list[dict[str, float | int]],
     ) -> SensitivityRecord:
         rec = SensitivityRecord(
