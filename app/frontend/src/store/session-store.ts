@@ -28,6 +28,9 @@ export interface SessionState {
   // single source of truth so the sidebar table, the map markers, and any
   // future popovers stay in lockstep without prop-drilling.
   selectedLocationId: number | null
+  // When true, MapPane colours markers by p_i(1) intensity instead of rank
+  // (UI_PLAN §5.2.5 «Шар стійкості»). Stays false until the first MC run.
+  stabilityLayerEnabled: boolean
 
   setPairwiseMatrix: (matrix: FuzzyNumber[][] | null) => void
   setWeights: (weights: Record<string, number> | null, consistencyRatio?: number | null) => void
@@ -36,6 +39,7 @@ export interface SessionState {
   setEvaluationId: (id: number | null) => void
   setError: (error: SessionError | null) => void
   setSelectedLocationId: (id: number | null) => void
+  setStabilityLayerEnabled: (enabled: boolean) => void
   // commitMatrix is the matrix editor's save path. It writes the matrix and
   // its CR together and wipes downstream artefacts (weights/ranking/sensitivity
   // and the evaluationId) because those were computed from the previous matrix.
@@ -55,6 +59,7 @@ const EMPTY_SESSION = {
   evaluationId: null,
   lastError: null,
   selectedLocationId: null,
+  stabilityLayerEnabled: false,
 } satisfies Pick<
   SessionState,
   | 'pairwiseMatrix'
@@ -65,6 +70,7 @@ const EMPTY_SESSION = {
   | 'evaluationId'
   | 'lastError'
   | 'selectedLocationId'
+  | 'stabilityLayerEnabled'
 >
 
 export const useSessionStore = create<SessionState>((set) => ({
@@ -89,6 +95,8 @@ export const useSessionStore = create<SessionState>((set) => ({
 
   setSelectedLocationId: (id) => set({ selectedLocationId: id }),
 
+  setStabilityLayerEnabled: (enabled) => set({ stabilityLayerEnabled: enabled }),
+
   commitMatrix: (matrix, consistencyRatio) =>
     set({
       pairwiseMatrix: matrix,
@@ -99,6 +107,7 @@ export const useSessionStore = create<SessionState>((set) => ({
       evaluationId: null,
       lastError: null,
       selectedLocationId: null,
+      stabilityLayerEnabled: false,
     }),
 
   resetSession: () => set({ ...EMPTY_SESSION }),

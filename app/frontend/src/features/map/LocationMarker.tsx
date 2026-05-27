@@ -1,6 +1,7 @@
 import { Marker } from 'react-map-gl/maplibre'
 import { MapPin } from 'lucide-react'
-import { colorByRank } from './marker-color'
+
+import { colorByRank, colorByStability } from './marker-color'
 import type { LocationItem } from '@/features/locations/useLocations'
 
 interface LocationMarkerProps {
@@ -8,6 +9,11 @@ interface LocationMarkerProps {
   rank: number | null
   total: number
   onClick: () => void
+  // Optional stability shading. When `stabilityProbability` is provided and
+  // `colorMode` is 'stability', the marker is shaded by p_i(1) intensity per
+  // UI_PLAN §5.2.5. Otherwise the marker keeps its rank-based colour.
+  stabilityProbability?: number | null
+  colorMode?: 'rank' | 'stability'
 }
 
 export function LocationMarker({
@@ -15,8 +21,19 @@ export function LocationMarker({
   rank,
   total,
   onClick,
+  stabilityProbability,
+  colorMode = 'rank',
 }: LocationMarkerProps) {
-  const color = colorByRank(rank, total)
+  const color =
+    colorMode === 'stability'
+      ? colorByStability(stabilityProbability ?? null)
+      : colorByRank(rank, total)
+  const ariaSuffix =
+    colorMode === 'stability' && stabilityProbability !== undefined && stabilityProbability !== null
+      ? `, стійкість ${(stabilityProbability * 100).toFixed(0)}%`
+      : rank
+        ? `, ранг ${rank}`
+        : ''
   return (
     <Marker
       longitude={location.longitude}
@@ -29,7 +46,7 @@ export function LocationMarker({
     >
       <button
         type="button"
-        aria-label={`${location.name}${rank ? `, ранг ${rank}` : ''}`}
+        aria-label={`${location.name}${ariaSuffix}`}
         className="block transition-transform hover:scale-110"
       >
         <MapPin

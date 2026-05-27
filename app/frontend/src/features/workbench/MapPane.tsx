@@ -14,6 +14,8 @@ export function MapPane() {
   const locations = useLocations()
   const criteria = useCriteria()
   const ranking = useSessionStore((s) => s.ranking)
+  const sensitivity = useSessionStore((s) => s.sensitivity)
+  const stabilityLayerEnabled = useSessionStore((s) => s.stabilityLayerEnabled)
   const selectedLocationId = useSessionStore((s) => s.selectedLocationId)
   const setSelectedLocationId = useSessionStore((s) => s.setSelectedLocationId)
 
@@ -26,6 +28,23 @@ export function MapPane() {
       ]),
     )
   }, [ranking])
+
+  // Per UI_PLAN §5.2.5 the shading uses p_i(1) — the top-1 acceptability
+  // index from formula (1.17). The session stores the cumulative top-k
+  // payload keyed by stringified location id and k value.
+  const stabilityByLocationId = useMemo<Map<number, number>>(() => {
+    if (!sensitivity) return new Map()
+    const map = new Map<number, number>()
+    for (const [idStr, perK] of Object.entries(sensitivity.stabilityMatrix)) {
+      const id = Number(idStr)
+      const p = (perK as Record<string, number>)['1'] ?? 0
+      map.set(id, p)
+    }
+    return map
+  }, [sensitivity])
+
+  const colorMode =
+    stabilityLayerEnabled && stabilityByLocationId.size > 0 ? 'stability' : 'rank'
 
   const isLoading = locations.isLoading || criteria.isLoading
   const isError = locations.isError || criteria.isError
@@ -46,6 +65,8 @@ export function MapPane() {
           rankByLocationId={rankByLocationId}
           selectedLocationId={selectedLocationId}
           onSelectLocation={setSelectedLocationId}
+          stabilityByLocationId={stabilityByLocationId}
+          colorMode={colorMode}
         />
       )}
     </section>
