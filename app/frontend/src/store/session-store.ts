@@ -16,12 +16,20 @@ export interface SessionError {
   source?: 'matrix' | 'fahp' | 'topsis' | 'sensitivity' | 'unknown'
 }
 
+export interface SensitivityParams {
+  iterations: number
+  perturbation: number
+}
+
 export interface SessionState {
   pairwiseMatrix: FuzzyNumber[][] | null
   weights: Record<string, number> | null
   consistencyRatio: number | null
   ranking: RankingItem[] | null
   sensitivity: SensitivityResult | null
+  // Parameters of the last Monte Carlo run; the API response does not echo
+  // them, so /details#mc reads them from here.
+  lastSensitivityParams: SensitivityParams | null
   evaluationId: number | null
   lastError: SessionError | null
   // Two-way sync for the ranking section and the map. The session is the
@@ -35,7 +43,10 @@ export interface SessionState {
   setPairwiseMatrix: (matrix: FuzzyNumber[][] | null) => void
   setWeights: (weights: Record<string, number> | null, consistencyRatio?: number | null) => void
   setRanking: (ranking: RankingItem[] | null) => void
-  setSensitivity: (sensitivity: SensitivityResult | null) => void
+  setSensitivity: (
+    sensitivity: SensitivityResult | null,
+    params?: SensitivityParams | null,
+  ) => void
   setEvaluationId: (id: number | null) => void
   setError: (error: SessionError | null) => void
   setSelectedLocationId: (id: number | null) => void
@@ -56,6 +67,7 @@ const EMPTY_SESSION = {
   consistencyRatio: null,
   ranking: null,
   sensitivity: null,
+  lastSensitivityParams: null,
   evaluationId: null,
   lastError: null,
   selectedLocationId: null,
@@ -67,6 +79,7 @@ const EMPTY_SESSION = {
   | 'consistencyRatio'
   | 'ranking'
   | 'sensitivity'
+  | 'lastSensitivityParams'
   | 'evaluationId'
   | 'lastError'
   | 'selectedLocationId'
@@ -87,7 +100,12 @@ export const useSessionStore = create<SessionState>((set) => ({
 
   setRanking: (ranking) => set({ ranking }),
 
-  setSensitivity: (sensitivity) => set({ sensitivity }),
+  setSensitivity: (sensitivity, params) =>
+    set((state) => ({
+      sensitivity,
+      lastSensitivityParams:
+        params === undefined ? state.lastSensitivityParams : params,
+    })),
 
   setEvaluationId: (id) => set({ evaluationId: id }),
 
@@ -104,6 +122,7 @@ export const useSessionStore = create<SessionState>((set) => ({
       weights: null,
       ranking: null,
       sensitivity: null,
+      lastSensitivityParams: null,
       evaluationId: null,
       lastError: null,
       selectedLocationId: null,
