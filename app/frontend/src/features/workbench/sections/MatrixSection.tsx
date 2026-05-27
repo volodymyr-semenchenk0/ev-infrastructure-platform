@@ -9,9 +9,10 @@ import {
   identityMatrix,
   type PairwiseMatrix,
 } from '@/features/calculate/saaty-scale'
+import { useCreateEvaluation } from '@/features/calculate/useCreateEvaluation'
 import { useCriteria } from '@/features/calculate/useCriteria'
 import type { ProfileDetail } from '@/features/profiles/useProfileDetails'
-import { api, NotFoundError } from '@/lib/api'
+import { api, NotFoundError, ValidationError } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { useProfileStore } from '@/store/profile-store'
 import { useSessionStore, type FuzzyNumber } from '@/store/session-store'
@@ -45,7 +46,12 @@ export function MatrixSection() {
   const pairwiseMatrix = useSessionStore((s) => s.pairwiseMatrix)
   const consistencyRatio = useSessionStore((s) => s.consistencyRatio)
   const commitMatrix = useSessionStore((s) => s.commitMatrix)
+  const setWeights = useSessionStore((s) => s.setWeights)
+  const setRanking = useSessionStore((s) => s.setRanking)
+  const setEvaluationId = useSessionStore((s) => s.setEvaluationId)
+  const setError = useSessionStore((s) => s.setError)
   const criteria = useCriteria()
+  const createEvaluation = useCreateEvaluation()
 
   const [isLoadingDefault, setIsLoadingDefault] = useState(false)
 
@@ -98,12 +104,32 @@ export function MatrixSection() {
     }
   }
 
-  const handleRunFahp = () => {
-    // FAHP call lands in task 8; for now the section only enforces the CR gate.
-    toast({
-      title: 'FAHP ще не підключено',
-      description: 'Виклик POST /api/evaluations зʼявиться на кроці 8 роадмапу.',
-    })
+  const handleRunFahp = async () => {
+    if (!pairwiseMatrix) return
+    try {
+      const result = await createEvaluation.mutateAsync({
+        profileId: activeProfile.id,
+        pairwiseMatrix: pairwiseMatrix as PairwiseMatrix,
+      })
+      // POST /api/evaluations computes FAHP and TOPSIS in one round-trip.
+      // We persist the CR currently in the session (computed by the editor)
+      // because the backend response does not echo it.
+      setWeights(result.weights, consistencyRatio ?? 0)
+      setRanking(result.ranking)
+      setEvaluationId(result.evaluationId)
+      setError(null)
+      toast({
+        title: 'Ваги обчислено',
+        description: `Сеанс №${result.evaluationId}, виконано за ${result.executionTimeMs ?? '?'} мс.`,
+      })
+    } catch (error) {
+      const description =
+        error instanceof ValidationError
+          ? error.detail
+          : 'Не вдалося обчислити ваги. Перевірте матрицю та зʼєднання.'
+      setError({ message: description, source: 'fahp' })
+      toast({ title: 'Помилка FAHP', description, variant: 'destructive' })
+    }
   }
 
   return (
@@ -146,11 +172,11 @@ export function MatrixSection() {
         <Button
           size="sm"
           onClick={handleRunFahp}
-          disabled={!canRunFahp}
+          disabled={!canRunFahp || createEvaluation.isPending}
           title={canRunFahp ? undefined : 'Узгодженість CR перевищує 0,10'}
         >
           <Calculator className="mr-2 h-4 w-4" aria-hidden="true" />
-          Обчислити ваги
+          {createEvaluation.isPending ? 'Обчислення…' : 'Обчислити ваги'}
         </Button>
       </div>
     </div>

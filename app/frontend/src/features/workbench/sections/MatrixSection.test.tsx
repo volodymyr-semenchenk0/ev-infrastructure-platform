@@ -193,4 +193,77 @@ describe('MatrixSection', () => {
     expect(useSessionStore.getState().consistencyRatio).toBe(0)
     mock.restore()
   })
+
+  it('runs FAHP and writes weights, ranking and evaluationId to the store', async () => {
+    useProfileStore.getState().setActiveProfile(PROFILE)
+    useSessionStore.getState().commitMatrix(
+      [
+        [
+          { l: 1, m: 1, u: 1 },
+          { l: 1, m: 1, u: 1 },
+        ],
+        [
+          { l: 1, m: 1, u: 1 },
+          { l: 1, m: 1, u: 1 },
+        ],
+      ],
+      0.04,
+    )
+
+    const mock = new MockAdapter(api)
+    mock.onGet('/criteria').reply(200, CRITERIA)
+    mock.onPost('/evaluations').reply(200, {
+      evaluationId: 42,
+      weights: { A: 0.5, B: 0.3, C: 0.2 },
+      ranking: [
+        { locationId: 1, rank: 1, closeness: 0.9, sPlus: 0.1, sMinus: 0.5 },
+      ],
+      executionTimeMs: 12,
+    })
+
+    const user = userEvent.setup()
+    renderSection()
+
+    await user.click(await screen.findByRole('button', { name: /Обчислити ваги/ }))
+
+    await waitFor(() => {
+      expect(useSessionStore.getState().weights).toEqual({ A: 0.5, B: 0.3, C: 0.2 })
+    })
+    expect(useSessionStore.getState().ranking).toHaveLength(1)
+    expect(useSessionStore.getState().evaluationId).toBe(42)
+    mock.restore()
+  })
+
+  it('records an error on FAHP failure without overwriting weights', async () => {
+    useProfileStore.getState().setActiveProfile(PROFILE)
+    useSessionStore.getState().commitMatrix(
+      [
+        [
+          { l: 1, m: 1, u: 1 },
+          { l: 1, m: 1, u: 1 },
+        ],
+        [
+          { l: 1, m: 1, u: 1 },
+          { l: 1, m: 1, u: 1 },
+        ],
+      ],
+      0.04,
+    )
+
+    const mock = new MockAdapter(api)
+    mock.onGet('/criteria').reply(200, CRITERIA)
+    mock.onPost('/evaluations').reply(500)
+
+    const user = userEvent.setup()
+    renderSection()
+
+    await user.click(await screen.findByRole('button', { name: /Обчислити ваги/ }))
+
+    await waitFor(() => {
+      expect(useSessionStore.getState().lastError?.source).toBe('fahp')
+    })
+    expect(useSessionStore.getState().weights).toBeNull()
+    expect(useSessionStore.getState().evaluationId).toBeNull()
+    mock.restore()
+  })
 })

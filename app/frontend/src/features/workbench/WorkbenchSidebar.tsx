@@ -4,10 +4,11 @@ import {
 } from './SidebarAccordion'
 import { MatrixSection } from './sections/MatrixSection'
 import { ProfileSection } from './sections/ProfileSection'
+import { WeightsSection } from './sections/WeightsSection'
 import { useSidebarStatuses } from './useSidebarStatuses'
 
-// Sections 3-5 are placeholders until tasks 8-10 fill them with real forms
-// and charts; ProfileSection (task 4) and MatrixSection (task 7) are wired.
+// Sections 4-5 are placeholders until tasks 9-10 fill them with real charts;
+// ProfileSection, MatrixSection, and WeightsSection are wired.
 function Placeholder({ note }: { note: string }) {
   return (
     <p className="text-sm text-muted-foreground">
@@ -38,7 +39,7 @@ export function WorkbenchSidebar() {
       id: 'weights',
       title: '3. Ваги критеріїв (FAHP)',
       status: statuses.weights,
-      content: <Placeholder note="Діаграма ваг w_j зʼявиться після виклику FAHP на кроці 8." />,
+      content: <WeightsSection />,
     },
     {
       id: 'ranking',
