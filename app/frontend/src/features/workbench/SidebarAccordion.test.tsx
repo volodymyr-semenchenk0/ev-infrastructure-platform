@@ -3,12 +3,23 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import { SidebarAccordion, type AccordionSection } from './SidebarAccordion'
+import type { SectionStatus } from './StatusBadge'
 
 function makeSections(): AccordionSection[] {
   return [
     { id: 'a', title: 'Section A', status: 'idle', content: <p>Body A</p> },
     { id: 'b', title: 'Section B', status: 'ready', content: <p>Body B</p> },
     { id: 'c', title: 'Section C', status: 'attention', content: <p>Body C</p> },
+  ]
+}
+
+function makeWizardSections(
+  statuses: [SectionStatus, SectionStatus, SectionStatus],
+): AccordionSection[] {
+  return [
+    { id: 'step1', title: 'Step 1', status: statuses[0], content: <p>Body 1</p> },
+    { id: 'step2', title: 'Step 2', status: statuses[1], content: <p>Body 2</p> },
+    { id: 'step3', title: 'Step 3', status: statuses[2], content: <p>Body 3</p> },
   ]
 }
 
@@ -71,5 +82,146 @@ describe('SidebarAccordion', () => {
     const panel = document.getElementById(panelId as string)
     expect(panel).not.toBeNull()
     expect(panel).toHaveAttribute('aria-labelledby', trigger.id)
+  })
+
+  describe('auto-open next section when current becomes ready', () => {
+    it('does not auto-open siblings on initial render even if some sections start ready', () => {
+      render(
+        <SidebarAccordion
+          sections={makeWizardSections(['ready', 'idle', 'idle'])}
+          defaultOpenIds={['step1']}
+        />,
+      )
+      expect(screen.getByRole('button', { name: /Step 1/ })).toHaveAttribute('aria-expanded', 'true')
+      expect(screen.getByRole('button', { name: /Step 2/ })).toHaveAttribute('aria-expanded', 'false')
+      expect(screen.getByRole('button', { name: /Step 3/ })).toHaveAttribute('aria-expanded', 'false')
+    })
+
+    it('auto-opens the next section when a section transitions idle -> ready', () => {
+      const { rerender } = render(
+        <SidebarAccordion
+          sections={makeWizardSections(['idle', 'idle', 'idle'])}
+          defaultOpenIds={['step1']}
+        />,
+      )
+      expect(screen.getByRole('button', { name: /Step 2/ })).toHaveAttribute('aria-expanded', 'false')
+
+      rerender(
+        <SidebarAccordion
+          sections={makeWizardSections(['ready', 'idle', 'idle'])}
+          defaultOpenIds={['step1']}
+        />,
+      )
+      expect(screen.getByRole('button', { name: /Step 2/ })).toHaveAttribute('aria-expanded', 'true')
+    })
+
+    it('does not auto-open the next section when current transitions to attention', () => {
+      const { rerender } = render(
+        <SidebarAccordion
+          sections={makeWizardSections(['idle', 'idle', 'idle'])}
+          defaultOpenIds={['step1']}
+        />,
+      )
+      rerender(
+        <SidebarAccordion
+          sections={makeWizardSections(['attention', 'idle', 'idle'])}
+          defaultOpenIds={['step1']}
+        />,
+      )
+      expect(screen.getByRole('button', { name: /Step 2/ })).toHaveAttribute('aria-expanded', 'false')
+    })
+
+    it('auto-opens the next section when a section transitions attention -> ready', () => {
+      const { rerender } = render(
+        <SidebarAccordion
+          sections={makeWizardSections(['attention', 'idle', 'idle'])}
+          defaultOpenIds={['step1']}
+        />,
+      )
+      expect(screen.getByRole('button', { name: /Step 2/ })).toHaveAttribute('aria-expanded', 'false')
+
+      rerender(
+        <SidebarAccordion
+          sections={makeWizardSections(['ready', 'idle', 'idle'])}
+          defaultOpenIds={['step1']}
+        />,
+      )
+      expect(screen.getByRole('button', { name: /Step 2/ })).toHaveAttribute('aria-expanded', 'true')
+    })
+
+    it('respects maxOpen cap when auto-opening: evicts oldest open section (FIFO)', () => {
+      const { rerender } = render(
+        <SidebarAccordion
+          sections={makeWizardSections(['idle', 'idle', 'idle'])}
+          defaultOpenIds={['step1']}
+          maxOpen={2}
+        />,
+      )
+      rerender(
+        <SidebarAccordion
+          sections={makeWizardSections(['ready', 'idle', 'idle'])}
+          defaultOpenIds={['step1']}
+          maxOpen={2}
+        />,
+      )
+      expect(screen.getByRole('button', { name: /Step 1/ })).toHaveAttribute('aria-expanded', 'true')
+      expect(screen.getByRole('button', { name: /Step 2/ })).toHaveAttribute('aria-expanded', 'true')
+
+      rerender(
+        <SidebarAccordion
+          sections={makeWizardSections(['ready', 'ready', 'idle'])}
+          defaultOpenIds={['step1']}
+          maxOpen={2}
+        />,
+      )
+      expect(screen.getByRole('button', { name: /Step 1/ })).toHaveAttribute('aria-expanded', 'false')
+      expect(screen.getByRole('button', { name: /Step 2/ })).toHaveAttribute('aria-expanded', 'true')
+      expect(screen.getByRole('button', { name: /Step 3/ })).toHaveAttribute('aria-expanded', 'true')
+    })
+
+    it('does not auto-open the next section when it is already ready', () => {
+      const { rerender } = render(
+        <SidebarAccordion
+          sections={makeWizardSections(['idle', 'ready', 'idle'])}
+          defaultOpenIds={['step1']}
+        />,
+      )
+      rerender(
+        <SidebarAccordion
+          sections={makeWizardSections(['ready', 'ready', 'idle'])}
+          defaultOpenIds={['step1']}
+        />,
+      )
+      expect(screen.getByRole('button', { name: /Step 2/ })).toHaveAttribute('aria-expanded', 'false')
+    })
+
+    it('does not re-open a section that the user manually closed until the previous step transitions again', async () => {
+      const user = userEvent.setup()
+      const { rerender } = render(
+        <SidebarAccordion
+          sections={makeWizardSections(['idle', 'idle', 'idle'])}
+          defaultOpenIds={['step1']}
+        />,
+      )
+      rerender(
+        <SidebarAccordion
+          sections={makeWizardSections(['ready', 'idle', 'idle'])}
+          defaultOpenIds={['step1']}
+        />,
+      )
+      const trigger2 = screen.getByRole('button', { name: /Step 2/ })
+      expect(trigger2).toHaveAttribute('aria-expanded', 'true')
+
+      await user.click(trigger2)
+      expect(trigger2).toHaveAttribute('aria-expanded', 'false')
+
+      rerender(
+        <SidebarAccordion
+          sections={makeWizardSections(['ready', 'idle', 'idle'])}
+          defaultOpenIds={['step1']}
+        />,
+      )
+      expect(trigger2).toHaveAttribute('aria-expanded', 'false')
+    })
   })
 })
