@@ -8,6 +8,9 @@ import { StatusBadge, type SectionStatus } from './StatusBadge'
 export interface AccordionSection {
   id: string
   title: string
+  // Shown next to the title when the section is collapsed. Pass undefined to
+  // render nothing (avoids an empty gap in the trigger row).
+  label?: string
   status: SectionStatus
   content: ReactNode
 }
@@ -116,7 +119,7 @@ export function SidebarAccordion({
                   'hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 )}
               >
-                <span className="flex items-center gap-2">
+                <span className="flex items-center gap-2 min-w-0">
                   <ChevronDown
                     aria-hidden="true"
                     className={cn(
@@ -125,6 +128,11 @@ export function SidebarAccordion({
                     )}
                   />
                   <span>{section.title}</span>
+                  {!isOpen && section.label && (
+                    <span className="truncate text-xs font-normal text-muted-foreground">
+                      {section.label}
+                    </span>
+                  )}
                 </span>
                 <StatusBadge status={section.status} />
               </button>
