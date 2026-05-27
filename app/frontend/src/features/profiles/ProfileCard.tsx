@@ -1,4 +1,4 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -23,7 +23,6 @@ export function ProfileCard({ profile, isActive, onSelect }: ProfileCardProps) {
           <CardTitle className="text-lg">{profile.name}</CardTitle>
           {isActive && <Check className="h-5 w-5 text-primary" />}
         </div>
-        <CardDescription className="font-mono text-xs">{profile.code}</CardDescription>
       </CardHeader>
       <CardContent>
         <p className="mb-4 text-sm text-muted-foreground">
