@@ -1,4 +1,5 @@
 import { Popup } from 'react-map-gl/maplibre'
+import { X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import type { LocationItem } from '@/features/locations/useLocations'
 import type { Criterion } from '@/features/calculate/useCriteria'
@@ -28,36 +29,63 @@ export function LocationPopup({
       anchor="top"
       onClose={onClose}
       closeOnClick={false}
-      maxWidth="320px"
+      closeButton={false}
+      maxWidth="340px"
     >
-      <div className="space-y-2">
-        <div className="flex items-start justify-between gap-2">
+      <div className="relative p-4 space-y-3 min-w-[280px]">
+        {/* Custom close button — inset from corner */}
+        <button
+          onClick={onClose}
+          className="absolute right-3 top-3 rounded-md p-0.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          aria-label="Закрити"
+        >
+          <X size={14} />
+        </button>
+
+        {/* Name + district stacked */}
+        <div className="pr-6 space-y-1">
           <h3 className="text-sm font-semibold leading-tight">{location.name}</h3>
           {location.district && (
-            <Badge variant="outline" className="shrink-0 text-[10px]">
+            <Badge variant="outline" className="text-[10px]">
               {location.district}
             </Badge>
           )}
         </div>
+
         {location.address && (
           <p className="text-xs text-muted-foreground">{location.address}</p>
         )}
+
+        {/* Rank chip + C* */}
         {rank != null && (
-          <p className="text-xs">
-            <span className="font-semibold">Ранг #{rank}</span>
-            {closeness != null && <span> · C* = {closeness.toFixed(3)}</span>}
-          </p>
+          <div className="flex items-center gap-2">
+            <span className="rounded bg-muted px-2 py-0.5 text-xs font-semibold tabular-nums">
+              Ранг #{rank}
+            </span>
+            {closeness != null && (
+              <span className="text-xs text-muted-foreground tabular-nums">
+                C* = {closeness.toFixed(3)}
+              </span>
+            )}
+          </div>
         )}
+
+        {/* Criteria table — Ukrainian name + (unit) */}
         <table className="w-full border-collapse text-[11px]">
           <tbody>
             {Object.entries(values).map(([code, value]) => {
-              const name = criteriaByCode.get(code)?.name ?? code
+              const criterion = criteriaByCode.get(code)
+              const label = criterion
+                ? `${criterion.name} (${criterion.unit})`
+                : code
               return (
                 <tr key={code} className="border-b last:border-0">
-                  <td className="py-1 pr-2 font-mono text-muted-foreground" title={name}>
-                    {code}
+                  <td className="py-1 pr-3 text-muted-foreground leading-snug">
+                    {label}
                   </td>
-                  <td className="py-1 text-right font-mono">{value.toFixed(2)}</td>
+                  <td className="py-1 text-right font-mono whitespace-nowrap">
+                    {value.toFixed(2)}
+                  </td>
                 </tr>
               )
             })}
