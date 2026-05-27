@@ -2,9 +2,15 @@ import { ResponsiveHeatMap, type HeatMapDatum } from '@nivo/heatmap'
 
 import { getNivoTheme } from '@/lib/nivo-theme'
 
+// Cumulative top-k probabilities per formula (1.17) for the canonical set
+// {1, 3, 5} fixed by subsection 2.3.3.
+const K_VALUES = [1, 3, 5] as const
+
+type TopKProbabilities = Record<string, number>
+
 interface StabilityHeatmapProps {
-  stabilityMatrix: Record<string, number[]>
-  fullNameByCode?: Record<string, string>
+  stabilityMatrix: Record<string, TopKProbabilities>
+  nameByLocationId?: Record<number, string>
 }
 
 interface RowDatum {
@@ -14,35 +20,36 @@ interface RowDatum {
 
 export function StabilityHeatmap({
   stabilityMatrix,
-  fullNameByCode,
+  nameByLocationId,
 }: StabilityHeatmapProps) {
-  const codes = Object.keys(stabilityMatrix)
-  const n = codes.length
-  if (n === 0) {
+  const locationIds = Object.keys(stabilityMatrix)
+  if (locationIds.length === 0) {
     return null
   }
 
-  const rankLabels = Array.from({ length: n }, (_, i) => `R${i + 1}`)
-
-  const data: RowDatum[] = codes.map((code) => ({
-    id: code,
-    data: stabilityMatrix[code].map((prob, idx) => ({
-      x: rankLabels[idx],
-      y: prob,
-    })),
-  }))
+  const data: RowDatum[] = locationIds.map((locationId) => {
+    const entry = stabilityMatrix[locationId]
+    const label = nameByLocationId?.[Number(locationId)] ?? `#${locationId}`
+    return {
+      id: label,
+      data: K_VALUES.map((k) => ({
+        x: `Top-${k}`,
+        y: entry[String(k)] ?? 0,
+      })),
+    }
+  })
 
   return (
     <div style={{ height: 480 }}>
       <ResponsiveHeatMap<RowDatum['data'][number], { name?: string }>
         data={data}
-        margin={{ top: 64, right: 32, bottom: 16, left: 96 }}
+        margin={{ top: 64, right: 32, bottom: 16, left: 160 }}
         valueFormat={(v) => `${((v ?? 0) * 100).toFixed(1)}%`}
         axisTop={{
           tickSize: 0,
           tickPadding: 8,
           tickRotation: 0,
-          legend: 'Позиція в ранжуванні',
+          legend: 'Група топ-k',
           legendOffset: -48,
           legendPosition: 'middle',
         }}
@@ -50,7 +57,7 @@ export function StabilityHeatmap({
           tickSize: 0,
           tickPadding: 8,
           legend: 'Локація',
-          legendOffset: -72,
+          legendOffset: -132,
           legendPosition: 'middle',
         }}
         colors={{
@@ -76,12 +83,10 @@ export function StabilityHeatmap({
               fontSize: 12,
             }}
           >
-            <div className="font-medium">
-              {fullNameByCode?.[String(cell.serieId)] ?? cell.serieId}
-            </div>
-            <div>Позиція: {cell.data.x}</div>
+            <div className="font-medium">{cell.serieId}</div>
+            <div>{cell.data.x}</div>
             <div>
-              P(rank) = {((cell.data.y ?? 0) * 100).toFixed(2)}%
+              p_i(k) = {((cell.data.y ?? 0) * 100).toFixed(2)}%
             </div>
           </div>
         )}

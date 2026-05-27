@@ -23,9 +23,19 @@ from db.base import Base
 
 
 class EvaluationRun(Base):
-    """Один сеанс обчислень FAHP+TOPSIS."""
+    """One FAHP+TOPSIS evaluation session (Appendix A.7)."""
 
     __tablename__ = "evaluation_runs"
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('completed', 'failed')",
+            name="ck_evaluation_runs_status_enum",
+        ),
+        CheckConstraint(
+            "execution_time_ms > 0",
+            name="ck_evaluation_runs_execution_time_positive",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     profile_id: Mapped[int] = mapped_column(ForeignKey("profiles.id"), nullable=False)
@@ -34,7 +44,7 @@ class EvaluationRun(Base):
     )
     status: Mapped[str] = mapped_column(String(16), nullable=False)
     weights_vector: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
-    execution_time_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    execution_time_ms: Mapped[int] = mapped_column(Integer, nullable=False)
 
     ranking: Mapped[list[RankingItem]] = relationship(
         back_populates="evaluation", cascade="all, delete-orphan"

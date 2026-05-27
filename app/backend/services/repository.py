@@ -14,9 +14,9 @@ from sqlalchemy.orm import selectinload
 
 from db.models import (
     Criterion,
+    CriterionValue,
     EvaluationRun,
     Location,
-    LocationCriterionValue,
     Profile,
     RankingItem,
     SensitivityRecord,
@@ -63,10 +63,10 @@ class LocationRepository:
         """
         locations = await self.list_ordered()
         stmt = select(
-            LocationCriterionValue.location_id,
+            CriterionValue.location_id,
             Criterion.code,
-            LocationCriterionValue.value,
-        ).join(Criterion, LocationCriterionValue.criterion_id == Criterion.id)
+            CriterionValue.value,
+        ).join(Criterion, CriterionValue.criterion_id == Criterion.id)
         rows = (await self.session.execute(stmt)).all()
         criteria_map: dict[int, dict[str, float]] = {}
         for loc_id, code, value in rows:
@@ -109,12 +109,12 @@ class DecisionMatrixRepository:
             return np.zeros((len(location_ids), len(criterion_ids)))
 
         stmt = select(
-            LocationCriterionValue.location_id,
-            LocationCriterionValue.criterion_id,
-            LocationCriterionValue.value,
+            CriterionValue.location_id,
+            CriterionValue.criterion_id,
+            CriterionValue.value,
         ).where(
-            LocationCriterionValue.location_id.in_(location_ids),
-            LocationCriterionValue.criterion_id.in_(criterion_ids),
+            CriterionValue.location_id.in_(location_ids),
+            CriterionValue.criterion_id.in_(criterion_ids),
         )
         result = await self.session.execute(stmt)
         lookup = {(row.location_id, row.criterion_id): float(row.value) for row in result.all()}
@@ -188,7 +188,7 @@ class SensitivityRepository:
         evaluation_id: int,
         iterations: int,
         perturbation: float,
-        stability_matrix: dict[str, list[float]],
+        stability_matrix: dict[str, dict[str, float]],
         confidence_intervals: list[dict[str, float | int]],
     ) -> SensitivityRecord:
         rec = SensitivityRecord(

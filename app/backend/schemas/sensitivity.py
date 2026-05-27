@@ -1,4 +1,4 @@
-"""DTOs for Monte-Carlo sensitivity analysis (spec 2.1.6 §8)."""
+"""DTOs for Monte Carlo sensitivity analysis (subsection 2.3.3, Appendix A.9)."""
 
 from __future__ import annotations
 
@@ -9,24 +9,39 @@ from schemas.base import CamelModel
 DEFAULT_ITERATIONS: int = 10_000
 DEFAULT_PERTURBATION: float = 0.15
 
+# Chapter 2.3.3 fixes acceptability index group sizes; Appendix A persists
+# p_i(k) for exactly these k.
+STABILITY_K_VALUES: tuple[int, ...] = (1, 3, 5)
+# Chapter 2.3.3 + Appendix A.9 specify CIs for the top-3 alternatives only.
+TOP_N_FOR_CONFIDENCE_INTERVALS: int = 3
+
 
 class SensitivityRequest(CamelModel):
-    """POST /api/evaluations/{id}/sensitivity — MC parameters."""
+    """POST /api/evaluations/{id}/sensitivity request body."""
 
     iterations: int = Field(default=DEFAULT_ITERATIONS, ge=100, le=100_000)
     perturbation: float = Field(default=DEFAULT_PERTURBATION, gt=0.0, le=0.5)
 
 
 class ConfidenceInterval(CamelModel):
-    """95 % CI for the closeness coefficient of one location."""
+    """95 % confidence interval for the closeness coefficient of one location.
+
+    Field names match Appendix A.9 (`lower`, `upper`).
+    """
 
     location_id: int
-    low: float
-    high: float
+    lower: float
+    upper: float
 
 
 class SensitivityRead(CamelModel):
-    """Aggregated Monte-Carlo result: rank-stability matrix + CIs."""
+    """Aggregated Monte Carlo result.
 
-    stability_matrix: dict[str, list[float]]
+    `stability_matrix[location_id][k]` is the acceptability index p_i(k) per
+    formula (1.17) for k in STABILITY_K_VALUES. `confidence_intervals` lists
+    the top-`TOP_N_FOR_CONFIDENCE_INTERVALS` alternatives ordered by mean C*
+    descending (Appendix A.9).
+    """
+
+    stability_matrix: dict[int, dict[int, float]]
     confidence_intervals: list[ConfidenceInterval]

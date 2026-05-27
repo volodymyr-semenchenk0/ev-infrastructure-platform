@@ -70,12 +70,13 @@ class EvaluationService:
         types_arr = np.array([1 if c.optimization_type == "max" else -1 for c in criteria])
         scores, ranking, s_pos, s_neg = topsis_with_distances(x, weights, types_arr)
 
-        elapsed_ms = int((time.perf_counter() - started) * 1000)
+        # Appendix A.7 requires execution_time_ms > 0; clamp sub-millisecond runs to 1.
+        elapsed_ms = max(int((time.perf_counter() - started) * 1000), 1)
 
         weights_dict = {c.code: float(w) for c, w in zip(criteria, weights, strict=True)}
         run = await self.eval_repo.create(
             profile_id=profile_id,
-            status="done",
+            status="completed",
             weights=weights_dict,
             execution_time_ms=elapsed_ms,
         )

@@ -12,8 +12,8 @@ interface ConfidenceIntervalsChartProps {
 interface CiDatum {
   location: string
   mean: number
-  low: number
-  high: number
+  lower: number
+  upper: number
   [key: string]: string | number
 }
 
@@ -27,8 +27,8 @@ const ErrorBarsLayer: BarCustomLayer<CiDatum> = ({ bars, yScale }) => {
       {bars.map((bar) => {
         const datum = bar.data.data
         const x = bar.x + bar.width / 2
-        const yLow = scale(datum.low)
-        const yHigh = scale(datum.high)
+        const yLow = scale(datum.lower)
+        const yHigh = scale(datum.upper)
         return (
           <g key={`err-${bar.key}`} stroke="hsl(var(--foreground))" strokeWidth={1.5}>
             <line x1={x} x2={x} y1={yLow} y2={yHigh} />
@@ -49,9 +49,9 @@ export function ConfidenceIntervalsChart({
     const label = nameByLocationId?.[ci.locationId] ?? `#${ci.locationId}`
     return {
       location: `${idx + 1}. ${label}`,
-      mean: (ci.low + ci.high) / 2,
-      low: ci.low,
-      high: ci.high,
+      mean: (ci.lower + ci.upper) / 2,
+      lower: ci.lower,
+      upper: ci.upper,
     }
   })
 
@@ -59,10 +59,10 @@ export function ConfidenceIntervalsChart({
     return null
   }
 
-  // Expand y-domain so the upper whisker (`high`) fits inside the plot area;
+  // Expand y-domain so the upper whisker fits inside the plot area;
   // otherwise Nivo's default yScale stops at max(mean) and error bars get clipped.
-  const yMax = Math.max(...data.map((d) => d.high)) * 1.05
-  const yMin = Math.max(0, Math.min(...data.map((d) => d.low)) - 0.05)
+  const yMax = Math.max(...data.map((d) => d.upper)) * 1.05
+  const yMin = Math.max(0, Math.min(...data.map((d) => d.lower)) - 0.05)
 
   return (
     <div style={{ height: 420 }}>
@@ -114,7 +114,7 @@ export function ConfidenceIntervalsChart({
             <div className="font-medium">{row.location}</div>
             <div>C̄* = {row.mean.toFixed(4)}</div>
             <div>
-              95% CI = [{row.low.toFixed(4)}; {row.high.toFixed(4)}]
+              95% CI = [{row.lower.toFixed(4)}; {row.upper.toFixed(4)}]
             </div>
           </div>
         )}

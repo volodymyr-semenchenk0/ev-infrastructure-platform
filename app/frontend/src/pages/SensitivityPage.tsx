@@ -62,14 +62,6 @@ function SensitivityDetail({ evaluationId }: { evaluationId: number }) {
     return Object.fromEntries(locations.data.map((l) => [l.id, l.name]))
   }, [locations.data])
 
-  const fullNameByCode = useMemo<Record<string, string>>(() => {
-    if (!locations.data) return {}
-    // stabilityMatrix is keyed by location.name from backend — same as `name`.
-    return Object.fromEntries(
-      locations.data.map((l) => [l.name, l.address ?? l.name]),
-    )
-  }, [locations.data])
-
   if (evaluation.error instanceof NotFoundError) {
     return <Navigate to="/sensitivity" replace />
   }
@@ -148,11 +140,12 @@ function SensitivityDetail({ evaluationId }: { evaluationId: number }) {
             <CardContent>
               <StabilityHeatmap
                 stabilityMatrix={result.stabilityMatrix}
-                fullNameByCode={fullNameByCode}
+                nameByLocationId={nameByLocationId}
               />
               <p className="mt-2 text-xs text-muted-foreground">
-                Рядок — локація, колонка R<i>k</i> — позиція в ранжуванні. Колір
-                кодує P(rank=k | location). Сума по рядку = 1 (формула 1.17).
+                Рядок – локація, колонка Top-k – ймовірність потрапити в групу
+                k найкращих за {form.iterations.toLocaleString('uk-UA')} прогонів
+                (формула 1.17, k ∈ {'{'}1, 3, 5{'}'}).
               </p>
             </CardContent>
           </Card>
@@ -167,8 +160,8 @@ function SensitivityDetail({ evaluationId }: { evaluationId: number }) {
                 nameByLocationId={nameByLocationId}
               />
               <p className="mt-2 text-xs text-muted-foreground">
-                Усі {result.confidenceIntervals.length} локацій, відсортовано за
-                середнім C* спаданням. Семплів: {form.iterations.toLocaleString('uk-UA')},
+                Топ-{result.confidenceIntervals.length} локацій за середнім C*
+                (Додаток А.9). Семплів: {form.iterations.toLocaleString('uk-UA')},
                 δ = {form.perturbation.toFixed(2)}.
               </p>
             </CardContent>

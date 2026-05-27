@@ -194,15 +194,16 @@ export interface components {
         };
         /**
          * ConfidenceInterval
-         * @description 95 % CI for the closeness coefficient of one location.
+         * @description 95 % confidence interval for the closeness coefficient of one location.
+         * Field names match Appendix A.9.
          */
         ConfidenceInterval: {
             /** Locationid */
             locationId: number;
-            /** Low */
-            low: number;
-            /** High */
-            high: number;
+            /** Lower */
+            lower: number;
+            /** Upper */
+            upper: number;
         };
         /**
          * CriterionRead
@@ -382,12 +383,16 @@ export interface components {
         };
         /**
          * SensitivityRead
-         * @description Aggregated Monte-Carlo result: rank-stability matrix + CIs.
+         * @description Aggregated Monte Carlo result per Appendix A.9.
+         * stabilityMatrix[locationId][k] = p_i(k) (formula 1.17) for k in {1, 3, 5}.
+         * confidenceIntervals lists top-N alternatives ordered by mean C* descending.
          */
         SensitivityRead: {
             /** Stabilitymatrix */
             stabilityMatrix: {
-                [key: string]: number[];
+                [locationId: string]: {
+                    [k: string]: number;
+                };
             };
             /** Confidenceintervals */
             confidenceIntervals: components["schemas"]["ConfidenceInterval"][];

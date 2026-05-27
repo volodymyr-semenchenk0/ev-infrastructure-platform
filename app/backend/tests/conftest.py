@@ -154,7 +154,7 @@ async def hwang_yoon_api_client(db_session: AsyncSession) -> AsyncGenerator[Asyn
     from geoalchemy2 import WKTElement
 
     from api.deps import get_db
-    from db.models import Criterion, Location, LocationCriterionValue, Profile
+    from db.models import Criterion, CriterionValue, Location, Profile
     from main import app
 
     profile = Profile(code="hy_test", name="Hwang-Yoon test")
@@ -190,7 +190,7 @@ async def hwang_yoon_api_client(db_session: AsyncSession) -> AsyncGenerator[Asyn
     for i, loc in enumerate(locations):
         for j, crit in enumerate(criteria):
             db_session.add(
-                LocationCriterionValue(
+                CriterionValue(
                     location_id=loc.id,
                     criterion_id=crit.id,
                     value=raw_x[i][j],
