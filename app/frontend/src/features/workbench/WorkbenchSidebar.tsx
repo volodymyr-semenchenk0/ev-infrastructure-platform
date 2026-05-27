@@ -2,11 +2,12 @@ import {
   SidebarAccordion,
   type AccordionSection,
 } from './SidebarAccordion'
+import { MatrixSection } from './sections/MatrixSection'
 import { ProfileSection } from './sections/ProfileSection'
 import { useSidebarStatuses } from './useSidebarStatuses'
 
-// Sections 2-5 are placeholders until tasks 7-10 fill them with real forms
-// and charts; ProfileSection (task 4) is the first real accordion body.
+// Sections 3-5 are placeholders until tasks 8-10 fill them with real forms
+// and charts; ProfileSection (task 4) and MatrixSection (task 7) are wired.
 function Placeholder({ note }: { note: string }) {
   return (
     <p className="text-sm text-muted-foreground">
@@ -31,9 +32,7 @@ export function WorkbenchSidebar() {
       id: 'matrix',
       title: '2. Матриця попарних порівнянь',
       status: statuses.matrix,
-      content: (
-        <Placeholder note="Зведення матриці та кнопки «Редагувати», «Завантажити дефолт», «Обчислити ваги» зʼявляться на кроці 7." />
-      ),
+      content: <MatrixSection />,
     },
     {
       id: 'weights',
