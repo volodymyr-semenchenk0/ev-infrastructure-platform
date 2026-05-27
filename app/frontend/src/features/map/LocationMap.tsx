@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import { Map as MapGL } from 'react-map-gl/maplibre'
+import { useEffect, useRef, useState } from 'react'
+import { Map as MapGL, type MapRef } from 'react-map-gl/maplibre'
+
 import { LocationMarker } from './LocationMarker'
 import { LocationPopup } from './LocationPopup'
 import { MapLegend } from './MapLegend'
@@ -16,20 +17,59 @@ interface LocationMapProps {
   locations: LocationItem[]
   criteria: Criterion[]
   rankByLocationId: Map<number, RankInfo>
+  // Optional two-way sync. When `selectedLocationId` changes the map flies
+  // to that marker and shows its popup; marker clicks invoke
+  // `onSelectLocation` instead of the previous internal-only highlight.
+  selectedLocationId?: number | null
+  onSelectLocation?: (locationId: number | null) => void
 }
 
-export function LocationMap({ locations, criteria, rankByLocationId }: LocationMapProps) {
-  const [activeId, setActiveId] = useState<number | null>(null)
+const FLY_TO_ZOOM = 13
+const FLY_TO_DURATION_MS = 600
+
+export function LocationMap({
+  locations,
+  criteria,
+  rankByLocationId,
+  selectedLocationId,
+  onSelectLocation,
+}: LocationMapProps) {
+  // When `selectedLocationId` is undefined we keep the previous fully-internal
+  // behaviour so callers that pass only locations/criteria do not regress.
+  const isControlled = selectedLocationId !== undefined
+  const [internalActiveId, setInternalActiveId] = useState<number | null>(null)
+  const activeId = isControlled ? (selectedLocationId ?? null) : internalActiveId
+
   const total = locations.length
   const active = locations.find((l) => l.id === activeId) ?? null
   const activeRank = active ? rankByLocationId.get(active.id) ?? null : null
 
+  const mapRef = useRef<MapRef | null>(null)
+
+  useEffect(() => {
+    if (!isControlled || !active || !mapRef.current) return
+    mapRef.current.flyTo({
+      center: [active.longitude, active.latitude],
+      zoom: FLY_TO_ZOOM,
+      duration: FLY_TO_DURATION_MS,
+    })
+  }, [active, isControlled])
+
+  const handleSelect = (id: number | null) => {
+    if (isControlled) {
+      onSelectLocation?.(id)
+    } else {
+      setInternalActiveId(id)
+    }
+  }
+
   return (
     <div className="relative h-full w-full">
       <MapGL
+        ref={mapRef}
         initialViewState={KYIV_CENTER}
         mapStyle={OSM_STYLE}
-        onClick={() => setActiveId(null)}
+        onClick={() => handleSelect(null)}
       >
         {locations.map((loc) => (
           <LocationMarker
@@ -37,7 +77,7 @@ export function LocationMap({ locations, criteria, rankByLocationId }: LocationM
             location={loc}
             rank={rankByLocationId.get(loc.id)?.rank ?? null}
             total={total}
-            onClick={() => setActiveId(loc.id)}
+            onClick={() => handleSelect(loc.id)}
           />
         ))}
         {active && (
@@ -46,7 +86,7 @@ export function LocationMap({ locations, criteria, rankByLocationId }: LocationM
             rank={activeRank?.rank ?? null}
             closeness={activeRank?.closeness ?? null}
             criteria={criteria}
-            onClose={() => setActiveId(null)}
+            onClose={() => handleSelect(null)}
           />
         )}
       </MapGL>

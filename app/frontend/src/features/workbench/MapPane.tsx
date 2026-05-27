@@ -14,6 +14,8 @@ export function MapPane() {
   const locations = useLocations()
   const criteria = useCriteria()
   const ranking = useSessionStore((s) => s.ranking)
+  const selectedLocationId = useSessionStore((s) => s.selectedLocationId)
+  const setSelectedLocationId = useSessionStore((s) => s.setSelectedLocationId)
 
   const rankByLocationId = useMemo<Map<number, RankInfo>>(() => {
     if (!ranking) return new Map()
@@ -42,6 +44,8 @@ export function MapPane() {
           locations={locations.data}
           criteria={criteria.data}
           rankByLocationId={rankByLocationId}
+          selectedLocationId={selectedLocationId}
+          onSelectLocation={setSelectedLocationId}
         />
       )}
     </section>
