@@ -46,36 +46,53 @@ export function SidebarAccordion({
     [maxOpen],
   )
 
-  // Wizard auto-advance: when any section transitions into 'ready' (from
-  // 'idle' or 'attention'), open the first not-yet-ready section below the
-  // transition so the operator does not have to click through every step.
-  // We skip over sections that are already 'ready' because a single user
-  // action can flip several steps at once (e.g. POST /api/evaluations
-  // returns FAHP weights and TOPSIS ranking in one round-trip, so both
-  // 'weights' and 'ranking' become ready in the same render and the next
-  // unfinished step is 'sensitivity'). We watch transitions only —
-  // sections that mount already 'ready' (restored session) do not trigger
-  // this, which keeps user-controlled state intact across rerenders.
-  // Manual closes are also respected: the next auto-open fires only on
-  // the next status transition.
+  // Wizard auto-advance: open the relevant section whenever one or more steps
+  // complete in the same render. We watch status transitions only — sections
+  // that mount already 'ready' (restored session) do not trigger this, which
+  // keeps user-controlled state intact. Manual closes are respected: the next
+  // auto-open fires only on the next transition.
+  //
+  // Single transition (e.g. matrix → ready): guide the operator to the next
+  // step by opening the section immediately below.
+  //
+  // Multiple simultaneous transitions (e.g. POST /api/evaluations returns FAHP
+  // weights AND TOPSIS ranking in one round-trip): open the LAST section that
+  // just became ready so the operator sees the most recent computation result.
+  // Opening the section right after it would skip over the ranking results the
+  // operator needs to review before deciding to run sensitivity analysis.
   const prevStatusesRef = useRef<Record<string, SectionStatus>>({})
   useEffect(() => {
     const prev = prevStatusesRef.current
-    const transitionedToReady = sections.some(
-      (s) => s.status === 'ready' && prev[s.id] !== undefined && prev[s.id] !== 'ready',
-    )
-    if (transitionedToReady) {
-      const target = sections.find((s) => s.status !== 'ready')
-      if (target) {
-        setOpenOrder((current) => {
-          if (current.includes(target.id)) return current
-          const appended = [...current, target.id]
-          return appended.length > maxOpen
-            ? appended.slice(appended.length - maxOpen)
-            : appended
-        })
+
+    const transitionedIndices: number[] = []
+    sections.forEach((s, i) => {
+      if (s.status === 'ready' && prev[s.id] !== undefined && prev[s.id] !== 'ready') {
+        transitionedIndices.push(i)
       }
+    })
+
+    let targetId: string | undefined
+    if (transitionedIndices.length === 1) {
+      const next = sections[transitionedIndices[0] + 1]
+      if (next && next.status !== 'ready') {
+        targetId = next.id
+      }
+    } else if (transitionedIndices.length > 1) {
+      const lastIdx = transitionedIndices[transitionedIndices.length - 1]
+      targetId = sections[lastIdx].id
     }
+
+    if (targetId !== undefined) {
+      const id = targetId
+      setOpenOrder((current) => {
+        if (current.includes(id)) return current
+        const appended = [...current, id]
+        return appended.length > maxOpen
+          ? appended.slice(appended.length - maxOpen)
+          : appended
+      })
+    }
+
     prevStatusesRef.current = Object.fromEntries(sections.map((s) => [s.id, s.status]))
   }, [sections, maxOpen])
 
