@@ -46,6 +46,14 @@ describe('useSessionStore', () => {
     expect(state.sensitivity).toBeNull()
     expect(state.evaluationId).toBeNull()
     expect(state.lastError).toBeNull()
+    expect(state.selectedLocationId).toBeNull()
+  })
+
+  it('tracks the selected location id', () => {
+    useSessionStore.getState().setSelectedLocationId(7)
+    expect(useSessionStore.getState().selectedLocationId).toBe(7)
+    useSessionStore.getState().setSelectedLocationId(null)
+    expect(useSessionStore.getState().selectedLocationId).toBeNull()
   })
 
   it('stores the pairwise matrix', () => {

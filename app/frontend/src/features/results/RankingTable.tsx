@@ -25,6 +25,11 @@ type SortDir = 'asc' | 'desc'
 
 interface RankingTableProps {
   rows: RankingRow[]
+  // Optional two-way sync hooks. When `onRowClick` is set, the table renders
+  // selectable rows; otherwise the table stays read-only and existing callers
+  // do not pick up extra interactivity.
+  selectedLocationId?: number | null
+  onRowClick?: (locationId: number) => void
 }
 
 function rankBgClass(rank: number, total: number): string {
@@ -33,7 +38,11 @@ function rankBgClass(rank: number, total: number): string {
   return ''
 }
 
-export function RankingTable({ rows }: RankingTableProps) {
+export function RankingTable({
+  rows,
+  selectedLocationId,
+  onRowClick,
+}: RankingTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>('rank')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
 
@@ -102,22 +111,48 @@ export function RankingTable({ rows }: RankingTableProps) {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {sorted.map((row) => (
-          <TableRow key={row.locationId} className={cn(rankBgClass(row.rank, rows.length))}>
-            <TableCell data-testid="rank-cell" className="font-semibold">
-              {row.rank}
-            </TableCell>
-            <TableCell>{row.name}</TableCell>
-            <TableCell className="text-muted-foreground">{row.district ?? '—'}</TableCell>
-            <TableCell className="font-mono">{row.closeness.toFixed(3)}</TableCell>
-            <TableCell className="font-mono text-muted-foreground">
-              {row.sPlus.toFixed(3)}
-            </TableCell>
-            <TableCell className="font-mono text-muted-foreground">
-              {row.sMinus.toFixed(3)}
-            </TableCell>
-          </TableRow>
-        ))}
+        {sorted.map((row) => {
+          const isSelected = selectedLocationId === row.locationId
+          const interactive = Boolean(onRowClick)
+          return (
+            <TableRow
+              key={row.locationId}
+              aria-selected={interactive ? isSelected : undefined}
+              onClick={interactive ? () => onRowClick?.(row.locationId) : undefined}
+              tabIndex={interactive ? 0 : undefined}
+              onKeyDown={
+                interactive
+                  ? (event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        onRowClick?.(row.locationId)
+                      }
+                    }
+                  : undefined
+              }
+              className={cn(
+                rankBgClass(row.rank, rows.length),
+                interactive && 'cursor-pointer hover:bg-accent/40',
+                isSelected && 'outline outline-2 -outline-offset-1 outline-primary',
+              )}
+            >
+              <TableCell data-testid="rank-cell" className="font-semibold">
+                {row.rank}
+              </TableCell>
+              <TableCell>{row.name}</TableCell>
+              <TableCell className="text-muted-foreground">
+                {row.district ?? '—'}
+              </TableCell>
+              <TableCell className="font-mono">{row.closeness.toFixed(3)}</TableCell>
+              <TableCell className="font-mono text-muted-foreground">
+                {row.sPlus.toFixed(3)}
+              </TableCell>
+              <TableCell className="font-mono text-muted-foreground">
+                {row.sMinus.toFixed(3)}
+              </TableCell>
+            </TableRow>
+          )
+        })}
       </TableBody>
     </Table>
   )

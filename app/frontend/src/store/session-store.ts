@@ -24,6 +24,10 @@ export interface SessionState {
   sensitivity: SensitivityResult | null
   evaluationId: number | null
   lastError: SessionError | null
+  // Two-way sync for the ranking section and the map. The session is the
+  // single source of truth so the sidebar table, the map markers, and any
+  // future popovers stay in lockstep without prop-drilling.
+  selectedLocationId: number | null
 
   setPairwiseMatrix: (matrix: FuzzyNumber[][] | null) => void
   setWeights: (weights: Record<string, number> | null, consistencyRatio?: number | null) => void
@@ -31,6 +35,7 @@ export interface SessionState {
   setSensitivity: (sensitivity: SensitivityResult | null) => void
   setEvaluationId: (id: number | null) => void
   setError: (error: SessionError | null) => void
+  setSelectedLocationId: (id: number | null) => void
   // commitMatrix is the matrix editor's save path. It writes the matrix and
   // its CR together and wipes downstream artefacts (weights/ranking/sensitivity
   // and the evaluationId) because those were computed from the previous matrix.
@@ -49,6 +54,7 @@ const EMPTY_SESSION = {
   sensitivity: null,
   evaluationId: null,
   lastError: null,
+  selectedLocationId: null,
 } satisfies Pick<
   SessionState,
   | 'pairwiseMatrix'
@@ -58,6 +64,7 @@ const EMPTY_SESSION = {
   | 'sensitivity'
   | 'evaluationId'
   | 'lastError'
+  | 'selectedLocationId'
 >
 
 export const useSessionStore = create<SessionState>((set) => ({
@@ -80,6 +87,8 @@ export const useSessionStore = create<SessionState>((set) => ({
 
   setError: (error) => set({ lastError: error }),
 
+  setSelectedLocationId: (id) => set({ selectedLocationId: id }),
+
   commitMatrix: (matrix, consistencyRatio) =>
     set({
       pairwiseMatrix: matrix,
@@ -89,6 +98,7 @@ export const useSessionStore = create<SessionState>((set) => ({
       sensitivity: null,
       evaluationId: null,
       lastError: null,
+      selectedLocationId: null,
     }),
 
   resetSession: () => set({ ...EMPTY_SESSION }),

@@ -4,11 +4,12 @@ import {
 } from './SidebarAccordion'
 import { MatrixSection } from './sections/MatrixSection'
 import { ProfileSection } from './sections/ProfileSection'
+import { RankingSection } from './sections/RankingSection'
 import { WeightsSection } from './sections/WeightsSection'
 import { useSidebarStatuses } from './useSidebarStatuses'
 
-// Sections 4-5 are placeholders until tasks 9-10 fill them with real charts;
-// ProfileSection, MatrixSection, and WeightsSection are wired.
+// Section 5 (sensitivity) is the last placeholder; tasks 1-4 sections, plus
+// MatrixSection (7), WeightsSection (8), and RankingSection (9), are wired.
 function Placeholder({ note }: { note: string }) {
   return (
     <p className="text-sm text-muted-foreground">
@@ -45,7 +46,7 @@ export function WorkbenchSidebar() {
       id: 'ranking',
       title: '4. Ранжування локацій (TOPSIS)',
       status: statuses.ranking,
-      content: <Placeholder note="Таблиця рангів і колір маркерів на карті зʼявляться на кроці 9." />,
+      content: <RankingSection />,
     },
     {
       id: 'sensitivity',
