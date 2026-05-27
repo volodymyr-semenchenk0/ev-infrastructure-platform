@@ -13,7 +13,7 @@ import numpy as np
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 
-from db.models import Criterion, Location, LocationCriterionValue, Profile
+from db.models import Criterion, CriterionValue, Location, Profile
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -154,7 +154,7 @@ async def seed_decision_matrix(session: AsyncSession, rng_seed: int = 42) -> Non
     synthetic dataset intentionally.
     """
     existing_count: int = (
-        await session.execute(select(func.count()).select_from(LocationCriterionValue))
+        await session.execute(select(func.count()).select_from(CriterionValue))
     ).scalar_one()
     if existing_count > 0:
         # Table already populated; do nothing (idempotency guard).
@@ -180,4 +180,4 @@ async def seed_decision_matrix(session: AsyncSession, rng_seed: int = 42) -> Non
 
     if not rows:
         return
-    await session.execute(insert(LocationCriterionValue).values(rows))
+    await session.execute(insert(CriterionValue).values(rows))

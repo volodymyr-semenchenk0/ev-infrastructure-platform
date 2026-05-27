@@ -281,6 +281,7 @@ class TestEvaluationRunModel:
             profile_id=profile.id,
             status="completed",
             weights_vector=weights,
+            execution_time_ms=1,
         )
         db_session.add(run)
         await db_session.flush()
@@ -310,7 +311,9 @@ class TestRankingItemModel:
         db_session.add(profile)
         await db_session.flush()
 
-        run = EvaluationRun(profile_id=profile.id, status="completed", weights_vector={})
+        run = EvaluationRun(
+            profile_id=profile.id, status="completed", weights_vector={}, execution_time_ms=1
+        )
         loc = Location(
             name="Test Location",
             address="вул. Тестова, 1",
@@ -383,7 +386,9 @@ class TestSensitivityRecordModel:
         db_session.add(profile)
         await db_session.flush()
 
-        run = EvaluationRun(profile_id=profile.id, status="completed", weights_vector={})
+        run = EvaluationRun(
+            profile_id=profile.id, status="completed", weights_vector={}, execution_time_ms=1
+        )
         db_session.add(run)
         await db_session.flush()
 

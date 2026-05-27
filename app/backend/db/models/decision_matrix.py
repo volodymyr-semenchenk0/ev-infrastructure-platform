@@ -1,4 +1,4 @@
-"""LocationCriterionValue — decision matrix X (12 locations × 10 criteria)."""
+"""CriterionValue - decision matrix X cell (Appendix A.4)."""
 
 from __future__ import annotations
 
@@ -10,16 +10,17 @@ from sqlalchemy.orm import Mapped, mapped_column
 from db.base import Base
 
 
-class LocationCriterionValue(Base):
-    """One cell of the TOPSIS decision matrix X[i,j].
+class CriterionValue(Base):
+    """One cell of the TOPSIS decision matrix X[i, j].
 
     Composite PK (location_id, criterion_id) ensures at most one value per
-    (location, criterion) pair.  ON DELETE CASCADE on location_id keeps the
-    matrix consistent when a location is removed.
+    (location, criterion) pair. ON DELETE CASCADE on location_id keeps the
+    matrix consistent when a location is removed. Table name matches the
+    entity name in subsection 2.2.1 and Appendix A.4.
     """
 
-    __tablename__ = "location_criterion_values"
-    __table_args__ = (CheckConstraint("value >= 0", name="ck_lcv_value_nonneg"),)
+    __tablename__ = "criterion_values"
+    __table_args__ = (CheckConstraint("value >= 0", name="ck_criterion_values_value_nonneg"),)
 
     location_id: Mapped[int] = mapped_column(
         ForeignKey("locations.id", ondelete="CASCADE"), primary_key=True

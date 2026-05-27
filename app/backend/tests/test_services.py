@@ -16,9 +16,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import (
     Criterion,
+    CriterionValue,
     EvaluationRun,
     Location,
-    LocationCriterionValue,
     Profile,
     RankingItem,
     SensitivityRecord,
@@ -138,7 +138,7 @@ class TestRepositories:
         """DecisionMatrixRepository.load_matrix must return ndarray of shape (n_locations, 10).
 
         All values must be >= 0 (enforced by DB CHECK constraint).
-        The first cell X[0, 0] must equal the LocationCriterionValue row
+        The first cell X[0, 0] must equal the CriterionValue row
         (location_ids[0], criterion_ids[0]) seeded with rng_seed=42.
 
         Reference: spec 2.2.2 §9 — decision matrix shape (n_locations × 10 criteria),
@@ -176,9 +176,9 @@ class TestRepositories:
         # Verify cell (0, 0) matches the seeded value for (location_ids[0], criterion_ids[0]).
         # seed_decision_matrix uses rng_seed=42 → deterministic, so this must match.
         db_value = await db_session.scalar(
-            select(LocationCriterionValue.value).where(
-                LocationCriterionValue.location_id == location_ids[0],
-                LocationCriterionValue.criterion_id == criterion_ids[0],
+            select(CriterionValue.value).where(
+                CriterionValue.location_id == location_ids[0],
+                CriterionValue.criterion_id == criterion_ids[0],
             )
         )
         assert db_value is not None, "No LCV row found for (location_ids[0], criterion_ids[0])"
@@ -577,7 +577,7 @@ class TestEndToEndHwangYoon:
         parameters to restrict the scope of a run?  This test assumes yes.
         """
         # Clear all reference data so the service only sees our 3 ad-hoc criteria.
-        await db_session.execute(delete(LocationCriterionValue))
+        await db_session.execute(delete(CriterionValue))
         await db_session.execute(delete(RankingItem))
         await db_session.execute(delete(EvaluationRun))
         await db_session.execute(delete(Location))
@@ -638,7 +638,7 @@ class TestEndToEndHwangYoon:
         for i, loc in enumerate(locations):
             for j, crit in enumerate(criteria):
                 db_session.add(
-                    LocationCriterionValue(
+                    CriterionValue(
                         location_id=loc.id,
                         criterion_id=crit.id,
                         value=raw_x[i][j],
