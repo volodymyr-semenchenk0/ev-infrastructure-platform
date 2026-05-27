@@ -35,7 +35,7 @@ export function DetailsPage() {
   }, [hash])
 
   return (
-    <main className="flex-1 overflow-auto">
+    <div className="flex-1 overflow-auto">
       <div className="mx-auto max-w-6xl space-y-6 p-8">
         <div className="flex items-center justify-between">
           <div>
@@ -117,6 +117,6 @@ export function DetailsPage() {
           <McDetails />
         </section>
       </div>
-    </main>
+    </div>
   )
 }
