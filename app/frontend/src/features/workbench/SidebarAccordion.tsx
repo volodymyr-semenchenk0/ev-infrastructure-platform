@@ -1,4 +1,4 @@
-import { useCallback, useId, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { ChevronDown } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
@@ -45,6 +45,33 @@ export function SidebarAccordion({
     },
     [maxOpen],
   )
+
+  // Wizard auto-advance: when a section transitions into 'ready' (from 'idle'
+  // or 'attention'), open the section directly below it so the operator does
+  // not have to click through every step. We watch transitions only — sections
+  // that mount already 'ready' (e.g. restored session) do not trigger this,
+  // which keeps user-controlled state intact across rerenders. Manual closes
+  // are also respected: the next auto-open only fires on the next transition.
+  const prevStatusesRef = useRef<Record<string, SectionStatus>>({})
+  useEffect(() => {
+    const prev = prevStatusesRef.current
+    const justBecameReady = sections.findIndex(
+      (s) => s.status === 'ready' && prev[s.id] !== undefined && prev[s.id] !== 'ready',
+    )
+    if (justBecameReady !== -1) {
+      const next = sections[justBecameReady + 1]
+      if (next && next.status !== 'ready') {
+        setOpenOrder((current) => {
+          if (current.includes(next.id)) return current
+          const appended = [...current, next.id]
+          return appended.length > maxOpen
+            ? appended.slice(appended.length - maxOpen)
+            : appended
+        })
+      }
+    }
+    prevStatusesRef.current = Object.fromEntries(sections.map((s) => [s.id, s.status]))
+  }, [sections, maxOpen])
 
   return (
     <div className="divide-y border-b">
