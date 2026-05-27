@@ -7,6 +7,8 @@ import { useProfiles } from '@/features/profiles/useProfiles'
 import { useProfileStore, type Profile } from '@/store/profile-store'
 import { useSessionStore } from '@/store/session-store'
 
+import { useLoadProfileDefault } from './useLoadProfileDefault'
+
 // Sidebar §5.2.1: profile picker collapses to a one-line status once a
 // profile is chosen; clicking «Змінити» expands the picker again. Switching
 // the profile wipes the rest of the session because weights and rankings
@@ -16,15 +18,24 @@ export function ProfileSection() {
   const activeProfile = useProfileStore((s) => s.activeProfile)
   const setActiveProfile = useProfileStore((s) => s.setActiveProfile)
   const resetSession = useSessionStore((s) => s.resetSession)
+  const loadProfileDefault = useLoadProfileDefault()
   const [expanded, setExpanded] = useState(false)
 
   const handleSelect = (profile: Profile) => {
-    if (activeProfile?.id !== profile.id) {
+    const isSwitching = activeProfile?.id !== profile.id
+    if (isSwitching) {
       // Changing the profile invalidates anything we cached for the old one.
       resetSession()
     }
     setActiveProfile(profile)
     setExpanded(false)
+    if (isSwitching) {
+      // Auto-load the default Ã matrix in the background; the matrix accordion
+      // picks it up via the session store. Success is silent because the
+      // operator just picked the profile and does not need a confirmation
+      // toast on top. The hook still toasts on 404/error fallbacks.
+      void loadProfileDefault(profile.id, { silentSuccess: true })
+    }
   }
 
   if (profiles.isLoading) {

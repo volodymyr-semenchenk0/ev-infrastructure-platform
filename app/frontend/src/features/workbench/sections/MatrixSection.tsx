@@ -4,18 +4,15 @@ import { Calculator, Download, Pencil } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/use-toast'
-import { computeConsistencyStats } from '@/features/calculate/consistency'
-import {
-  identityMatrix,
-  type PairwiseMatrix,
-} from '@/features/calculate/saaty-scale'
+import { type PairwiseMatrix } from '@/features/calculate/saaty-scale'
 import { useCreateEvaluation } from '@/features/calculate/useCreateEvaluation'
 import { useCriteria } from '@/features/calculate/useCriteria'
-import type { ProfileDetail } from '@/features/profiles/useProfileDetails'
-import { api, NotFoundError, ValidationError } from '@/lib/api'
+import { ValidationError } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { useProfileStore } from '@/store/profile-store'
-import { useSessionStore, type FuzzyNumber } from '@/store/session-store'
+import { useSessionStore } from '@/store/session-store'
+
+import { useLoadProfileDefault } from './useLoadProfileDefault'
 
 const CR_THRESHOLD = 0.1
 const CR_WARN_LIMIT = 0.15
@@ -45,13 +42,13 @@ export function MatrixSection() {
   const activeProfile = useProfileStore((s) => s.activeProfile)
   const pairwiseMatrix = useSessionStore((s) => s.pairwiseMatrix)
   const consistencyRatio = useSessionStore((s) => s.consistencyRatio)
-  const commitMatrix = useSessionStore((s) => s.commitMatrix)
   const setWeights = useSessionStore((s) => s.setWeights)
   const setRanking = useSessionStore((s) => s.setRanking)
   const setEvaluationId = useSessionStore((s) => s.setEvaluationId)
   const setError = useSessionStore((s) => s.setError)
   const criteria = useCriteria()
   const createEvaluation = useCreateEvaluation()
+  const loadProfileDefault = useLoadProfileDefault()
 
   const [isLoadingDefault, setIsLoadingDefault] = useState(false)
 
@@ -76,29 +73,7 @@ export function MatrixSection() {
   const handleLoadDefault = async () => {
     setIsLoadingDefault(true)
     try {
-      const { data } = await api.get<ProfileDetail>(`/profiles/${activeProfile.id}`)
-      const remote = data.pairwiseMatrix as FuzzyNumber[][] | null | undefined
-      if (remote && remote.length > 0) {
-        const stats = computeConsistencyStats(remote)
-        commitMatrix(remote, stats.cr)
-        toast({ title: 'Дефолтну матрицю завантажено' })
-      } else {
-        const fallback = identityMatrix(m)
-        commitMatrix(fallback, 0)
-        toast({
-          title: 'Дефолти ще не задані',
-          description: 'Завантажено одиничну матрицю; відредагуйте її вручну.',
-          variant: 'destructive',
-        })
-      }
-    } catch (error) {
-      const fallback = identityMatrix(m)
-      commitMatrix(fallback, 0)
-      const description =
-        error instanceof NotFoundError
-          ? 'Профіль ще не має збереженої матриці; завантажено одиничну.'
-          : 'Не вдалося завантажити дефолт; завантажено одиничну матрицю.'
-      toast({ title: 'Завантаження дефолту', description, variant: 'destructive' })
+      await loadProfileDefault(activeProfile.id)
     } finally {
       setIsLoadingDefault(false)
     }
