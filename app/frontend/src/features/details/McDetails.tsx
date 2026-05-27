@@ -1,5 +1,7 @@
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 
+import { ChartExportButtons } from '@/features/export/ChartExportButtons'
+import { TabularExportButtons } from '@/features/export/TabularExportButtons'
 import { useLocations } from '@/features/locations/useLocations'
 import { ConfidenceIntervalsChart } from '@/features/sensitivity/ConfidenceIntervalsChart'
 import { StabilityHeatmap } from '@/features/sensitivity/StabilityHeatmap'
@@ -13,12 +15,38 @@ const MC_SEED = 42 // backend DEFAULT_SEED
 export function McDetails() {
   const sensitivity = useSessionStore((s) => s.sensitivity)
   const params = useSessionStore((s) => s.lastSensitivityParams)
+  const evaluationId = useSessionStore((s) => s.evaluationId)
   const locations = useLocations()
+
+  const ciChartRef = useRef<HTMLDivElement>(null)
+  const heatmapRef = useRef<HTMLDivElement>(null)
 
   const nameByLocationId = useMemo<Record<number, string>>(() => {
     if (!locations.data) return {}
     return Object.fromEntries(locations.data.map((l) => [l.id, l.name]))
   }, [locations.data])
+
+  const sortedRows = useMemo(() => {
+    if (!sensitivity) return []
+    return Object.entries(sensitivity.stabilityMatrix)
+      .map(([idStr, perK]) => ({
+        locationId: Number(idStr),
+        perK: perK as Record<string, number>,
+      }))
+      .sort((a, b) => (b.perK['1'] ?? 0) - (a.perK['1'] ?? 0))
+  }, [sensitivity])
+
+  const stabilityCsv = useMemo(() => {
+    if (!sensitivity) return [] as ReadonlyArray<ReadonlyArray<string | number>>
+    return [
+      ['location_id', 'name', ...K_VALUES.map((k) => `p_${k}`)],
+      ...sortedRows.map(({ locationId, perK }) => [
+        locationId,
+        nameByLocationId[locationId] ?? `#${locationId}`,
+        ...K_VALUES.map((k) => perK[String(k)] ?? 0),
+      ]),
+    ]
+  }, [sensitivity, sortedRows, nameByLocationId])
 
   if (!sensitivity) {
     return (
@@ -29,12 +57,7 @@ export function McDetails() {
     )
   }
 
-  const sortedRows = Object.entries(sensitivity.stabilityMatrix)
-    .map(([idStr, perK]) => ({
-      locationId: Number(idStr),
-      perK: perK as Record<string, number>,
-    }))
-    .sort((a, b) => (b.perK['1'] ?? 0) - (a.perK['1'] ?? 0))
+  const filenameBase = `monte-carlo-${evaluationId ?? 'session'}`
 
   return (
     <div className="space-y-6">
@@ -46,23 +69,51 @@ export function McDetails() {
         </dl>
       )}
 
-      <div>
-        <h3 className="mb-2 text-sm font-semibold">
-          95 % довірчі інтервали C* для топ-{sensitivity.confidenceIntervals.length}
-        </h3>
-        <ConfidenceIntervalsChart
-          confidenceIntervals={sensitivity.confidenceIntervals}
-          nameByLocationId={nameByLocationId}
+      <div className="flex justify-end">
+        <TabularExportButtons
+          csvRows={stabilityCsv}
+          jsonData={{
+            evaluationId,
+            params: params ?? null,
+            seed: MC_SEED,
+            stabilityMatrix: sensitivity.stabilityMatrix,
+            confidenceIntervals: sensitivity.confidenceIntervals,
+          }}
+          filenameBase={filenameBase}
         />
       </div>
 
-      <div>
-        <h3 className="mb-2 text-sm font-semibold">
+      <div className="space-y-2">
+        <h3 className="text-sm font-semibold">
+          95 % довірчі інтервали C* для топ-{sensitivity.confidenceIntervals.length}
+        </h3>
+        <div ref={ciChartRef}>
+          <ConfidenceIntervalsChart
+            confidenceIntervals={sensitivity.confidenceIntervals}
+            nameByLocationId={nameByLocationId}
+          />
+        </div>
+        <ChartExportButtons
+          containerRef={ciChartRef}
+          filenameBase={`${filenameBase}-ci`}
+          label="Експорт ДІ:"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <h3 className="text-sm font-semibold">
           Матриця стабільності p_i(k) (теплова карта)
         </h3>
-        <StabilityHeatmap
-          stabilityMatrix={sensitivity.stabilityMatrix}
-          nameByLocationId={nameByLocationId}
+        <div ref={heatmapRef}>
+          <StabilityHeatmap
+            stabilityMatrix={sensitivity.stabilityMatrix}
+            nameByLocationId={nameByLocationId}
+          />
+        </div>
+        <ChartExportButtons
+          containerRef={heatmapRef}
+          filenameBase={`${filenameBase}-heatmap`}
+          label="Експорт теплової карти:"
         />
       </div>
 

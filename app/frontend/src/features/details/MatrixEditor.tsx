@@ -14,6 +14,7 @@ import {
   type PairwiseMatrix,
 } from '@/features/calculate/saaty-scale'
 import { useCriteria } from '@/features/calculate/useCriteria'
+import { TabularExportButtons } from '@/features/export/TabularExportButtons'
 import { useSessionStore } from '@/store/session-store'
 
 const CR_THRESHOLD = 0.1
@@ -88,6 +89,34 @@ export function MatrixEditor() {
     navigate('/')
   }
 
+  const csvRows = useMemo(() => {
+    if (!matrix || !criteria.data) return [] as ReadonlyArray<ReadonlyArray<string | number>>
+    const header: Array<string | number> = ['i_code', 'j_code', 'l', 'm', 'u']
+    const rows: Array<Array<string | number>> = [header]
+    for (let i = 0; i < matrix.length; i += 1) {
+      for (let j = 0; j < matrix.length; j += 1) {
+        const tfn = matrix[i][j]
+        rows.push([
+          criteria.data[i].code,
+          criteria.data[j].code,
+          tfn.l,
+          tfn.m,
+          tfn.u,
+        ])
+      }
+    }
+    return rows
+  }, [matrix, criteria.data])
+
+  const jsonPayload = useMemo(
+    () => ({
+      criteria: criteria.data?.map((c) => c.code) ?? [],
+      matrix,
+      consistencyRatio: stats?.cr ?? null,
+    }),
+    [criteria.data, matrix, stats],
+  )
+
   if (criteria.isLoading) {
     return <Skeleton className="h-96 w-full" />
   }
@@ -129,6 +158,15 @@ export function MatrixEditor() {
           </Button>
         </div>
       </header>
+
+      <div className="flex justify-end">
+        <TabularExportButtons
+          csvRows={csvRows}
+          jsonData={jsonPayload}
+          filenameBase="pairwise-matrix"
+          label="Експорт матриці:"
+        />
+      </div>
 
       <section
         aria-label="Статистика узгодженості"

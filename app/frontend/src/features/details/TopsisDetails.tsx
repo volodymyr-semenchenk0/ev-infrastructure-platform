@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 
+import { TabularExportButtons } from '@/features/export/TabularExportButtons'
 import { useLocations } from '@/features/locations/useLocations'
 import { RankingTable, type RankingRow } from '@/features/results/RankingTable'
 import { useSessionStore } from '@/store/session-store'
@@ -11,6 +12,7 @@ import { IntermediatesGapNote } from './FahpDetails'
 // matrix, and ideal-solution vectors require backend changes (see ADR-0001).
 export function TopsisDetails() {
   const ranking = useSessionStore((s) => s.ranking)
+  const evaluationId = useSessionStore((s) => s.evaluationId)
   const selectedLocationId = useSessionStore((s) => s.selectedLocationId)
   const setSelectedLocationId = useSessionStore((s) => s.setSelectedLocationId)
   const locations = useLocations()
@@ -32,6 +34,22 @@ export function TopsisDetails() {
     })
   }, [ranking, locations.data])
 
+  const csvRows = useMemo(
+    () => [
+      ['rank', 'location_id', 'name', 'district', 'closeness', 's_plus', 's_minus'],
+      ...rows.map((row) => [
+        row.rank,
+        row.locationId,
+        row.name,
+        row.district ?? '',
+        row.closeness,
+        row.sPlus,
+        row.sMinus,
+      ]),
+    ],
+    [rows],
+  )
+
   if (!ranking) {
     return (
       <p className="text-sm text-muted-foreground">
@@ -40,8 +58,17 @@ export function TopsisDetails() {
     )
   }
 
+  const filenameBase = `topsis-ranking-${evaluationId ?? 'session'}`
+
   return (
     <div className="space-y-4">
+      <div className="flex justify-end">
+        <TabularExportButtons
+          csvRows={csvRows}
+          jsonData={{ evaluationId, ranking: rows }}
+          filenameBase={filenameBase}
+        />
+      </div>
       <RankingTable
         rows={rows}
         selectedLocationId={selectedLocationId}
