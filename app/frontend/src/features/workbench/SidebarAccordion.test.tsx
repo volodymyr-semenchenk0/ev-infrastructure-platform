@@ -179,20 +179,53 @@ describe('SidebarAccordion', () => {
       expect(screen.getByRole('button', { name: /Step 3/ })).toHaveAttribute('aria-expanded', 'true')
     })
 
-    it('does not auto-open the next section when it is already ready', () => {
+    it('skips over already-ready sections to open the next idle one', () => {
+      // Models the FAHP+TOPSIS round-trip: two adjacent steps flip to 'ready'
+      // in the same render. We want the next *unfinished* step to open, not
+      // to stop at the first transition.
       const { rerender } = render(
         <SidebarAccordion
-          sections={makeWizardSections(['idle', 'ready', 'idle'])}
+          sections={[
+            { id: 'step1', title: 'Step 1', status: 'ready', content: <p>Body 1</p> },
+            { id: 'step2', title: 'Step 2', status: 'idle', content: <p>Body 2</p> },
+            { id: 'step3', title: 'Step 3', status: 'idle', content: <p>Body 3</p> },
+            { id: 'step4', title: 'Step 4', status: 'idle', content: <p>Body 4</p> },
+          ]}
+          defaultOpenIds={['step2']}
+          maxOpen={2}
+        />,
+      )
+      rerender(
+        <SidebarAccordion
+          sections={[
+            { id: 'step1', title: 'Step 1', status: 'ready', content: <p>Body 1</p> },
+            { id: 'step2', title: 'Step 2', status: 'ready', content: <p>Body 2</p> },
+            { id: 'step3', title: 'Step 3', status: 'ready', content: <p>Body 3</p> },
+            { id: 'step4', title: 'Step 4', status: 'idle', content: <p>Body 4</p> },
+          ]}
+          defaultOpenIds={['step2']}
+          maxOpen={2}
+        />,
+      )
+      expect(screen.getByRole('button', { name: /Step 4/ })).toHaveAttribute('aria-expanded', 'true')
+    })
+
+    it('does nothing when all sections are ready (nothing left to advance to)', () => {
+      const { rerender } = render(
+        <SidebarAccordion
+          sections={makeWizardSections(['idle', 'ready', 'ready'])}
           defaultOpenIds={['step1']}
         />,
       )
       rerender(
         <SidebarAccordion
-          sections={makeWizardSections(['ready', 'ready', 'idle'])}
+          sections={makeWizardSections(['ready', 'ready', 'ready'])}
           defaultOpenIds={['step1']}
         />,
       )
+      // step2 and step3 were already ready, so nothing should newly open.
       expect(screen.getByRole('button', { name: /Step 2/ })).toHaveAttribute('aria-expanded', 'false')
+      expect(screen.getByRole('button', { name: /Step 3/ })).toHaveAttribute('aria-expanded', 'false')
     })
 
     it('does not re-open a section that the user manually closed until the previous step transitions again', async () => {

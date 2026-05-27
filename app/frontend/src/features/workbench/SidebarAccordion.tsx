@@ -46,24 +46,30 @@ export function SidebarAccordion({
     [maxOpen],
   )
 
-  // Wizard auto-advance: when a section transitions into 'ready' (from 'idle'
-  // or 'attention'), open the section directly below it so the operator does
-  // not have to click through every step. We watch transitions only — sections
-  // that mount already 'ready' (e.g. restored session) do not trigger this,
-  // which keeps user-controlled state intact across rerenders. Manual closes
-  // are also respected: the next auto-open only fires on the next transition.
+  // Wizard auto-advance: when any section transitions into 'ready' (from
+  // 'idle' or 'attention'), open the first not-yet-ready section below the
+  // transition so the operator does not have to click through every step.
+  // We skip over sections that are already 'ready' because a single user
+  // action can flip several steps at once (e.g. POST /api/evaluations
+  // returns FAHP weights and TOPSIS ranking in one round-trip, so both
+  // 'weights' and 'ranking' become ready in the same render and the next
+  // unfinished step is 'sensitivity'). We watch transitions only —
+  // sections that mount already 'ready' (restored session) do not trigger
+  // this, which keeps user-controlled state intact across rerenders.
+  // Manual closes are also respected: the next auto-open fires only on
+  // the next status transition.
   const prevStatusesRef = useRef<Record<string, SectionStatus>>({})
   useEffect(() => {
     const prev = prevStatusesRef.current
-    const justBecameReady = sections.findIndex(
+    const transitionedToReady = sections.some(
       (s) => s.status === 'ready' && prev[s.id] !== undefined && prev[s.id] !== 'ready',
     )
-    if (justBecameReady !== -1) {
-      const next = sections[justBecameReady + 1]
-      if (next && next.status !== 'ready') {
+    if (transitionedToReady) {
+      const target = sections.find((s) => s.status !== 'ready')
+      if (target) {
         setOpenOrder((current) => {
-          if (current.includes(next.id)) return current
-          const appended = [...current, next.id]
+          if (current.includes(target.id)) return current
+          const appended = [...current, target.id]
           return appended.length > maxOpen
             ? appended.slice(appended.length - maxOpen)
             : appended
