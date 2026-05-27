@@ -31,6 +31,10 @@ export interface SessionState {
   setSensitivity: (sensitivity: SensitivityResult | null) => void
   setEvaluationId: (id: number | null) => void
   setError: (error: SessionError | null) => void
+  // commitMatrix is the matrix editor's save path. It writes the matrix and
+  // its CR together and wipes downstream artefacts (weights/ranking/sensitivity
+  // and the evaluationId) because those were computed from the previous matrix.
+  commitMatrix: (matrix: FuzzyNumber[][], consistencyRatio: number) => void
   resetSession: () => void
 }
 
@@ -75,6 +79,17 @@ export const useSessionStore = create<SessionState>((set) => ({
   setEvaluationId: (id) => set({ evaluationId: id }),
 
   setError: (error) => set({ lastError: error }),
+
+  commitMatrix: (matrix, consistencyRatio) =>
+    set({
+      pairwiseMatrix: matrix,
+      consistencyRatio,
+      weights: null,
+      ranking: null,
+      sensitivity: null,
+      evaluationId: null,
+      lastError: null,
+    }),
 
   resetSession: () => set({ ...EMPTY_SESSION }),
 }))

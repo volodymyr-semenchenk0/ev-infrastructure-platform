@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import {
   Select,
   SelectContent,
@@ -6,6 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { cn } from '@/lib/utils'
 import {
   SAATY_VALUES,
   formatSaatyValue,
@@ -25,6 +26,11 @@ interface AhpMatrixProps {
   criteria: CriterionInfo[]
   matrix: PairwiseMatrix
   onChange: (next: PairwiseMatrix) => void
+  // Optional list of (i, j) pairs (upper triangle indices) to visually flag
+  // as the largest inconsistency contributors. Both the upper-triangle cell
+  // and its mirror in the lower triangle pick up the highlight so the user
+  // can spot the reciprocal pair.
+  highlightPairs?: ReadonlyArray<readonly [number, number]>
 }
 
 function formatTfn(tfn: FuzzyNumber): string {
@@ -40,7 +46,12 @@ function closestSaatyValue(m: number): number {
   )
 }
 
-export function AhpMatrix({ criteria, matrix, onChange }: AhpMatrixProps) {
+export function AhpMatrix({
+  criteria,
+  matrix,
+  onChange,
+  highlightPairs,
+}: AhpMatrixProps) {
   const n = criteria.length
 
   const handleSelect = useCallback(
@@ -53,6 +64,17 @@ export function AhpMatrix({ criteria, matrix, onChange }: AhpMatrixProps) {
     },
     [matrix, onChange],
   )
+
+  const highlightSet = useMemo(() => {
+    const set = new Set<string>()
+    for (const [i, j] of highlightPairs ?? []) {
+      set.add(`${i}-${j}`)
+      set.add(`${j}-${i}`)
+    }
+    return set
+  }, [highlightPairs])
+
+  const isHighlighted = (i: number, j: number) => highlightSet.has(`${i}-${j}`)
 
   return (
     <div className="overflow-auto">
@@ -95,11 +117,15 @@ export function AhpMatrix({ criteria, matrix, onChange }: AhpMatrixProps) {
                 if (i < j) {
                   const currentM = matrix[i][j].m
                   const snapped = closestSaatyValue(currentM)
+                  const highlight = isHighlighted(i, j)
                   return (
                     <td
                       key={j}
                       data-testid={`cell-${i}-${j}`}
-                      className="border p-1"
+                      className={cn(
+                        'border p-1',
+                        highlight && 'bg-amber-50 ring-1 ring-amber-400 dark:bg-amber-900/30',
+                      )}
                     >
                       <div className="flex flex-col items-stretch gap-1">
                         <Select
@@ -130,7 +156,10 @@ export function AhpMatrix({ criteria, matrix, onChange }: AhpMatrixProps) {
                   <td
                     key={j}
                     data-testid={`cell-${i}-${j}`}
-                    className="border bg-muted/10 px-2 py-1.5 text-center text-muted-foreground"
+                    className={cn(
+                      'border bg-muted/10 px-2 py-1.5 text-center text-muted-foreground',
+                      isHighlighted(i, j) && 'bg-amber-50/60 dark:bg-amber-900/20',
+                    )}
                   >
                     {formatTfn(matrix[i][j])}
                   </td>
