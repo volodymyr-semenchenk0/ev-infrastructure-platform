@@ -1,7 +1,7 @@
 # СППР – Вибір локацій EV-зарядних станцій, Київ
 
 Курсова робота з дисципліни «Системний аналіз», спеціальність 124, магістратура ЧНУ.
-Дедлайн – червень 2026. Математичний розділ (FAHP + TOPSIS + Monte Carlo) – 50/100 балів.
+Дедлайн – червень 2026. Математичний апарат (FAHP + TOPSIS + Монте-Карло) – підрозділ 1.2 Розділу 1, 50/100 балів.
 
 ## Запуск локально
 
@@ -51,14 +51,12 @@ app/
 └── shared/         # майбутні спільні артефакти (поки порожньо)
 
 docs/
-├── chapter1/       # текст курсової: огляд предметної області
-├── chapter2/       # математичний розділ (FAHP + TOPSIS + MC)
-├── chapter3/       # опис реалізації СППР
+├── chapter1/       # теоретичний аналіз проблеми + математичний апарат (FAHP, TOPSIS, MC) у 1.2
+├── chapter2/       # проектування системи (структура, БД, алгоритми)
 ├── appendices/     # додатки А–Ї
 ├── adr/            # Architecture Decision Records (NNNN-title.md)
 ├── sources/        # EV Charging.bib + супровідні джерела
 ├── вступ.md
-├── висновки.md
 ├── СТРУКТУРА_КУРСОВОЇ.md            # обов'язково при роботі над текстом
 └── ВИМОГИ_ОФОРМЛЕННЯ_ДОКУМЕНТА.md   # формат, тире, кутові лапки, лімити обсягу
 ```
@@ -193,7 +191,7 @@ feat(frontend): MapLibre map component with markers
 fix(backend): CORS for localhost:5173
 chore(infra): healthcheck for docker-compose
 docs(adr): ADR-0002 use pymcdm vs custom implementation
-docs(chapter2): підрозділ 2.3.1 – формулювання задачі TOPSIS
+docs(chapter2): підрозділ 2.3.2 – алгоритм TOPSIS
 ```
 
 ## Технологічний стек
@@ -210,5 +208,5 @@ Tooling: ruff, mypy --strict, pytest + pytest-asyncio, httpx, pre-commit, ESLint
 - `db/`: 8 ORM-моделей (Profile, Criterion, PairwiseMatrixEntry, Location, ExistingStation, EvaluationRun, RankingItem, SensitivityRecord), Alembic-міграція 0001 з PostGIS, seed для 2/10/12. Деталі — `app/backend/db/README.md`
 - `api/`, `schemas/`, `services/`: реалізовано – роутери (criteria, locations, profiles, evaluations), Pydantic-схеми, сервіси (evaluation, comparison, sensitivity) і repository
 - `frontend/`: скелет (App, pages, features, components, lib, types)
-- Текст курсової: chapter1 (1.1.1–1.1.3, 1.2.1–1.2.5, 1.3), chapter2 (2.1.1–2.1.3, 2.2.1–2.2.3, 2.3.1–2.3.5), chapter3 (3.1.1–3.1.7, 3.2.1–3.2.7), вступ, висновки, Додаток А
+- Текст курсової: Розділ 1 (1.1.1–1.1.3, 1.2.1–1.2.5, 1.3) – теоретичний аналіз із математичним апаратом FAHP/TOPSIS/чутливості у 1.2.2–1.2.5; Розділ 2 (2.1.1–2.1.3, 2.2.1–2.2.3, 2.3.1–2.3.5) – проектування системи (структура, БД, алгоритми, розгортання); Розділ 3 ще не створено; вступ, Додаток А
 - ADR: каталог `docs/adr/` ще не створено; перший ADR – через `engineering-architecture`
