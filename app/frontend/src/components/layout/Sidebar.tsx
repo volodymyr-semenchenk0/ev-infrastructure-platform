@@ -6,7 +6,6 @@ import {
   TrendingUp,
   Map as MapIcon,
   Activity,
-  GitCompare,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -17,6 +16,9 @@ type NavItem = {
   end?: boolean
 }
 
+// `/` now points to the new workbench (UI_PLAN §5); the legacy pages stay
+// reachable via these deep links until task 11 retires them. The comparison
+// page is intentionally absent here per UI_PLAN §3.6.
 const nav: NavItem[] = [
   { to: '/', label: 'Головна', icon: Home, end: true },
   { to: '/profile', label: 'Профілі', icon: Users },
@@ -24,7 +26,6 @@ const nav: NavItem[] = [
   { to: '/results', label: 'Результати', icon: TrendingUp },
   { to: '/map', label: 'Карта', icon: MapIcon },
   { to: '/sensitivity', label: 'Чутливість', icon: Activity },
-  { to: '/comparison', label: 'Порівняння', icon: GitCompare },
 ]
 
 export function Sidebar() {
