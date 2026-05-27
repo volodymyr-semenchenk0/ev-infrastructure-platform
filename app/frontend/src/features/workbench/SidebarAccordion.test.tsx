@@ -179,10 +179,11 @@ describe('SidebarAccordion', () => {
       expect(screen.getByRole('button', { name: /Step 3/ })).toHaveAttribute('aria-expanded', 'true')
     })
 
-    it('skips over already-ready sections to open the next idle one', () => {
-      // Models the FAHP+TOPSIS round-trip: two adjacent steps flip to 'ready'
-      // in the same render. We want the next *unfinished* step to open, not
-      // to stop at the first transition.
+    it('opens the last section that transitioned when multiple flip to ready simultaneously', () => {
+      // Models the FAHP+TOPSIS round-trip: POST /api/evaluations returns both
+      // weights and ranking in one response, so step2 and step3 flip to 'ready'
+      // in the same render. We open the LAST transitioned section (step3 = TOPSIS
+      // ranking) so the operator sees the most recent computation result.
       const { rerender } = render(
         <SidebarAccordion
           sections={[
@@ -207,7 +208,8 @@ describe('SidebarAccordion', () => {
           maxOpen={2}
         />,
       )
-      expect(screen.getByRole('button', { name: /Step 4/ })).toHaveAttribute('aria-expanded', 'true')
+      expect(screen.getByRole('button', { name: /Step 3/ })).toHaveAttribute('aria-expanded', 'true')
+      expect(screen.getByRole('button', { name: /Step 4/ })).toHaveAttribute('aria-expanded', 'false')
     })
 
     it('does nothing when all sections are ready (nothing left to advance to)', () => {
