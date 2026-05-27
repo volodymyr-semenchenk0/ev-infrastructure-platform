@@ -214,7 +214,7 @@ class TestRepositories:
         repo = EvaluationRepository(db_session)
         eval_run = await repo.create(
             profile_id=profile.id,
-            status="done",
+            status="completed",
             weights={"Pop_dens": 0.5, "Traffic": 0.5},
             execution_time_ms=100,
         )
@@ -429,27 +429,29 @@ class TestSensitivityService:
         )
         return profile.id, result.evaluation_id
 
-    async def test_sensitivity_service_persists_record_with_full_confidence_intervals(
+    async def test_sensitivity_service_persists_record_with_top_n_confidence_intervals(
         self, db_session: AsyncSession
     ) -> None:
-        """SensitivityService.run must persist a SensitivityRecord and return SensitivityRead.
+        """Result contains a CI per top-N alternative ordered by mean C* descending.
 
-        The result must contain confidence_intervals for every location (one CI per
-        alternative), ordered by mean closeness C* descending. The DB record must
-        have iterations == requested count.
+        Per Appendix A.9, only the top-3 alternatives carry confidence intervals;
+        midpoints must be monotonically non-increasing. CI fields are `lower`/`upper`.
 
-        Reference: spec 2.1.6 §8 — Monte-Carlo outputs: stability_matrix + CIs.
+        Reference: subsection 2.3.3 + Appendix A.9.
         """
+        from schemas.sensitivity import TOP_N_FOR_CONFIDENCE_INTERVALS
+
         _, eval_id = await self._create_evaluation(db_session)
 
         sens = SensitivityService(db_session)
         result = await sens.run(evaluation_id=eval_id, iterations=200, perturbation=0.1)
 
         assert isinstance(result, SensitivityRead), f"Expected SensitivityRead, got {type(result)}"
-        assert len(result.confidence_intervals) > 0, (
-            "Expected CIs for all locations, got empty list"
+        assert len(result.confidence_intervals) == TOP_N_FOR_CONFIDENCE_INTERVALS, (
+            f"Expected {TOP_N_FOR_CONFIDENCE_INTERVALS} CIs (top-N only), "
+            f"got {len(result.confidence_intervals)}"
         )
-        midpoints = [(ci.low + ci.high) / 2 for ci in result.confidence_intervals]
+        midpoints = [(ci.lower + ci.upper) / 2 for ci in result.confidence_intervals]
         assert midpoints == sorted(midpoints, reverse=True), (
             "Confidence intervals must be ordered by mean C* descending"
         )
@@ -460,16 +462,18 @@ class TestSensitivityService:
         assert rec is not None, "SensitivityRecord must be persisted in DB"
         assert rec.iterations == 200, f"Persisted iterations={rec.iterations}, expected 200"
 
-    async def test_sensitivity_service_stability_matrix_shape_matches_n_locations(
+    async def test_sensitivity_service_stability_matrix_top_k_per_location(
         self, db_session: AsyncSession
     ) -> None:
-        """stability_matrix must have one entry per location and each entry must sum to 1.
+        """stability_matrix[location_id] = {k: p_i(k)} for k in {1, 3, 5}.
 
-        stability_matrix[location_code] = list of K floats (probability of rank k).
-        sum(probs) ≈ 1.0 because the distribution across all rank positions is complete.
+        p_i(k) is the cumulative top-k acceptability index per formula (1.17),
+        bounded in [0, 1] and monotonically non-decreasing in k.
 
-        Reference: formula (1.17) — rank-frequency matrix normalised to probabilities.
+        Reference: subsection 2.3.3 + Appendix A.9.
         """
+        from schemas.sensitivity import STABILITY_K_VALUES
+
         _, eval_id = await self._create_evaluation(db_session)
 
         sens = SensitivityService(db_session)
@@ -478,11 +482,20 @@ class TestSensitivityService:
         assert len(result.stability_matrix) > 0, (
             "Expected entries in stability_matrix (one per location), got empty dict"
         )
-        for code, probs in result.stability_matrix.items():
-            total = sum(probs)
-            assert abs(total - 1.0) < 1e-6, (
-                f"Rank probabilities for location '{code}' sum to {total}, expected 1.0"
+        for location_id, per_k in result.stability_matrix.items():
+            assert set(per_k.keys()) == set(STABILITY_K_VALUES), (
+                f"location {location_id}: expected k values {STABILITY_K_VALUES}, "
+                f"got {sorted(per_k.keys())}"
             )
+            prev = -1.0
+            for k in STABILITY_K_VALUES:
+                value = per_k[k]
+                assert 0.0 <= value <= 1.0, f"p_{location_id}({k})={value} outside [0, 1]"
+                assert value >= prev, (
+                    f"p_{location_id} must be non-decreasing in k; "
+                    f"got {value} at k={k} after {prev}"
+                )
+                prev = value
 
     async def test_sensitivity_service_seed_42_is_reproducible(
         self, db_session: AsyncSession

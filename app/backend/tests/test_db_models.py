@@ -279,7 +279,7 @@ class TestEvaluationRunModel:
         weights = {"c1": 0.4, "c2": 0.3, "c3": 0.3}
         run = EvaluationRun(
             profile_id=profile.id,
-            status="done",
+            status="completed",
             weights_vector=weights,
         )
         db_session.add(run)
@@ -310,7 +310,7 @@ class TestRankingItemModel:
         db_session.add(profile)
         await db_session.flush()
 
-        run = EvaluationRun(profile_id=profile.id, status="done", weights_vector={})
+        run = EvaluationRun(profile_id=profile.id, status="completed", weights_vector={})
         loc = Location(
             name="Test Location",
             address="вул. Тестова, 1",
@@ -383,7 +383,7 @@ class TestSensitivityRecordModel:
         db_session.add(profile)
         await db_session.flush()
 
-        run = EvaluationRun(profile_id=profile.id, status="done", weights_vector={})
+        run = EvaluationRun(profile_id=profile.id, status="completed", weights_vector={})
         db_session.add(run)
         await db_session.flush()
 
@@ -391,8 +391,9 @@ class TestSensitivityRecordModel:
             evaluation_id=run.id,
             iterations=1000,
             perturbation=0.15,
-            stability_matrix={"L1": [0.9, 0.08, 0.02]},
-            confidence_intervals={"L1": [0.82, 0.96]},
+            # Shape matches Appendix A.9: {location_id: {k: p_i(k)}}.
+            stability_matrix={"1": {"1": 0.9, "3": 0.98, "5": 1.0}},
+            confidence_intervals=[{"location_id": 1, "lower": 0.82, "upper": 0.96}],
         )
         db_session.add(record)
         await db_session.flush()

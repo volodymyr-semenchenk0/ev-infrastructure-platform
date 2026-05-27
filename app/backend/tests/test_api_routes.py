@@ -332,21 +332,22 @@ class TestSensitivity:
     Reference: spec 2.1.6 §8 — Monte-Carlo sensitivity analysis endpoint.
     """
 
-    async def test_post_sensitivity_returns_200_with_full_cis(
+    async def test_post_sensitivity_returns_200_with_top_n_cis(
         self, api_client: AsyncClient
     ) -> None:
         """POST /api/evaluations/{id}/sensitivity must return 200 with MC results.
 
-        Response must contain:
-          - stabilityMatrix: dict with one entry per location (12 keys)
-          - confidenceIntervals: list with one item per location (12 items),
-            each with locationId, low, high
+        Per Appendix A.9 and subsection 2.3.3, the response must contain:
+          - stabilityMatrix: {locationId: {1: p_i(1), 3: p_i(3), 5: p_i(5)}}
+          - confidenceIntervals: top-N items only with keys locationId, lower, upper
 
         Runs 200 iterations to keep test duration short while still exercising
-        the full Monte-Carlo pipeline.
+        the full Monte Carlo pipeline.
 
-        Reference: spec 2.1.6 §8 — stability_matrix + CI structure (formula 1.17).
+        Reference: subsection 2.3.3, Appendix A.9, formula (1.17).
         """
+        from schemas.sensitivity import STABILITY_K_VALUES, TOP_N_FOR_CONFIDENCE_INTERVALS
+
         profiles_resp = await api_client.get("/api/profiles")
         profiles = profiles_resp.json()
         municipal = next(p for p in profiles if p["code"] == "municipal")
@@ -372,11 +373,18 @@ class TestSensitivity:
         assert len(stability_matrix) > 0, (
             "Expected stabilityMatrix with at least one location key, got empty dict"
         )
+        any_entry = next(iter(stability_matrix.values()))
+        expected_k = {str(k) for k in STABILITY_K_VALUES}
+        assert set(any_entry.keys()) == expected_k, (
+            f"Each stability entry must carry top-k keys {expected_k}; got {set(any_entry.keys())}"
+        )
 
         cis = data.get("confidenceIntervals", [])
-        assert len(cis) > 0, "Expected confidenceIntervals for all locations, got empty list"
+        assert len(cis) == TOP_N_FOR_CONFIDENCE_INTERVALS, (
+            f"Expected {TOP_N_FOR_CONFIDENCE_INTERVALS} CIs (top-N only), got {len(cis)}"
+        )
         first_ci = cis[0]
-        expected_ci_keys = {"locationId", "low", "high"}
+        expected_ci_keys = {"locationId", "lower", "upper"}
         assert expected_ci_keys.issubset(first_ci.keys()), (
             f"Missing keys in CI item. "
             f"Expected subset {expected_ci_keys}, got {set(first_ci.keys())}"
@@ -387,10 +395,10 @@ class TestSensitivity:
     ) -> None:
         """confidenceIntervals must be ordered by mean closeness C* descending.
 
-        The frontend bar chart shows all locations sorted from best to worst;
-        the API contract guarantees this ordering so the client does not need
-        to re-sort. Since C*_mean = (low + high) / 2, we assert the midpoint
-        of each subsequent interval is ≤ the previous one.
+        The frontend bar chart shows the top-N locations sorted from best to
+        worst; the API contract guarantees this ordering so the client does not
+        need to re-sort. Since C*_mean = (lower + upper) / 2, we assert the
+        midpoint of each subsequent interval is <= the previous one.
         """
         profiles_resp = await api_client.get("/api/profiles")
         profiles = profiles_resp.json()
@@ -412,7 +420,7 @@ class TestSensitivity:
         assert sens_resp.status_code == 200
 
         cis = sens_resp.json()["confidenceIntervals"]
-        midpoints = [(ci["low"] + ci["high"]) / 2 for ci in cis]
+        midpoints = [(ci["lower"] + ci["upper"]) / 2 for ci in cis]
         for i in range(len(midpoints) - 1):
             assert midpoints[i] >= midpoints[i + 1], (
                 f"CI list not sorted desc: midpoint[{i}]={midpoints[i]:.4f} "
