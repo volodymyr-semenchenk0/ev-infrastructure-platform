@@ -22,6 +22,10 @@ interface SidebarAccordionProps {
   // open at once"). When the user opens a section beyond the cap, the oldest
   // open one collapses first (FIFO).
   maxOpen?: number
+  // Called whenever the set of open section ids changes. Use this to persist
+  // accordion state across page navigations (uncontrolled component — this is
+  // a write-only notification, not a controlled prop).
+  onOpenIdsChange?: (ids: string[]) => void
 }
 
 const DEFAULT_MAX_OPEN = 2
@@ -30,6 +34,7 @@ export function SidebarAccordion({
   sections,
   defaultOpenIds = [],
   maxOpen = DEFAULT_MAX_OPEN,
+  onOpenIdsChange,
 }: SidebarAccordionProps) {
   const idPrefix = useId()
   // openOrder preserves insertion order so the oldest-open section gets
@@ -48,6 +53,10 @@ export function SidebarAccordion({
     },
     [maxOpen],
   )
+
+  useEffect(() => {
+    onOpenIdsChange?.(openOrder)
+  }, [openOrder, onOpenIdsChange])
 
   // Wizard auto-advance: open the relevant section whenever one or more steps
   // complete in the same render. We watch status transitions only — sections
