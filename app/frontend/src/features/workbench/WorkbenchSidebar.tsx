@@ -8,18 +8,19 @@ import { RankingSection } from './sections/RankingSection'
 import { SensitivitySection } from './sections/SensitivitySection'
 import { WeightsSection } from './sections/WeightsSection'
 import { useSidebarStatuses } from './useSidebarStatuses'
-
-// All five accordion sections are wired after task 10.
+import { useProfileStore } from '@/store/profile-store'
 
 const SIDEBAR_WIDTH_CLASS = 'w-[420px]'
 
 export function WorkbenchSidebar() {
   const statuses = useSidebarStatuses()
+  const activeProfile = useProfileStore((s) => s.activeProfile)
 
   const sections: AccordionSection[] = [
     {
       id: 'profile',
       title: '1. Профіль ОПР',
+      label: activeProfile?.name,
       status: statuses.profile,
       content: <ProfileSection />,
     },
