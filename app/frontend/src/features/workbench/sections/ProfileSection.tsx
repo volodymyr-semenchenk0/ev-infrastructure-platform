@@ -62,9 +62,6 @@ export function ProfileSection() {
           <p className="truncate text-sm font-medium">
             Профіль: {activeProfile.name}
           </p>
-          <p className="truncate font-mono text-xs text-muted-foreground">
-            {activeProfile.code}
-          </p>
         </div>
         <Button variant="outline" size="sm" onClick={() => setExpanded(true)}>
           Змінити
