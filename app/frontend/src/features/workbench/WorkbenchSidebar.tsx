@@ -2,10 +2,11 @@ import {
   SidebarAccordion,
   type AccordionSection,
 } from './SidebarAccordion'
+import { ProfileSection } from './sections/ProfileSection'
 import { useSidebarStatuses } from './useSidebarStatuses'
 
-// Section content is intentionally a placeholder for now: each of tasks 4-10
-// in the UI roadmap replaces one of these slots with a real form / chart.
+// Sections 2-5 are placeholders until tasks 7-10 fill them with real forms
+// and charts; ProfileSection (task 4) is the first real accordion body.
 function Placeholder({ note }: { note: string }) {
   return (
     <p className="text-sm text-muted-foreground">
@@ -24,7 +25,7 @@ export function WorkbenchSidebar() {
       id: 'profile',
       title: '1. Профіль ОПР',
       status: statuses.profile,
-      content: <Placeholder note="Дві картки профілів зʼявляться тут на кроці 4 роадмапу." />,
+      content: <ProfileSection />,
     },
     {
       id: 'matrix',
