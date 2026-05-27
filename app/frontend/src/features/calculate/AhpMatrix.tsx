@@ -77,8 +77,8 @@ export function AhpMatrix({
   const isHighlighted = (i: number, j: number) => highlightSet.has(`${i}-${j}`)
 
   return (
-    <div className="overflow-auto">
-      <table className="border-collapse text-xs">
+    <div className="overflow-x-auto">
+      <table className="w-full table-fixed border-collapse text-xs">
         <thead>
           <tr>
             <th className="w-20 border bg-muted/40 p-1.5"></th>

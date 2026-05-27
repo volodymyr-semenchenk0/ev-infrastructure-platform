@@ -137,7 +137,9 @@ export function MatrixEditor() {
     <div className="space-y-4">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-xl font-semibold">Редактор матриці $\tilde{'{'}A{'}'}$</h2>
+          <h2 className="text-xl font-semibold">
+            Редактор матриці <span className="font-serif italic">Ã</span>
+          </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Верхній трикутник редагується значеннями шкали Сааті; нижній –
             автоматично обернений TFN за формулою (1.6); діагональ – (1, 1, 1).
