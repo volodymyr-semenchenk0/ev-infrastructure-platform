@@ -75,3 +75,54 @@ def test_sensitivity_delta_zero_rank_matches_topsis() -> None:
     # rank_freq diagonal (per deterministic rank) must equal N_SIM
     for alt_idx, rank in enumerate(det_ranking.tolist()):
         assert result["rank_freq"][alt_idx, rank] == N_SIM
+
+
+def test_sensitivity_top_k_acceptability_is_cumulative_top_k() -> None:
+    """p_i(k) is the cumulative top-k probability per formula (1.17).
+
+    With delta=0 every iteration produces the same TOPSIS ranking; the text's
+    1-indexed rank r is the 0-indexed Python rank +1, so p_i(k) = 1 iff
+    rank_python(i) < k and 0 otherwise. Boundary case k >= n_alt: p_i(k) = 1
+    for every alternative.
+
+    Reference: Lahdelma & Salminen (2001), formula (1.17) of subsection 1.2.4.
+    """
+    _, det_ranking = topsis(DM, WEIGHTS, TYPES)
+    python_rank_of = {alt: r for r, alt in enumerate(det_ranking.tolist())}
+
+    result = sensitivity_analysis(
+        DM, WEIGHTS, TYPES, topsis, n_simulations=N_SIM, delta=0.0, seed=0
+    )
+
+    assert "top_k_freq" in result, "p_i(k) cumulative aggregate must be in the return dict"
+    top_k = result["top_k_freq"]
+    for k in (1, 3, 5):
+        assert k in top_k, f"missing acceptability index for k={k}"
+        for alt_idx in range(N_ALT):
+            expected = 1.0 if python_rank_of[alt_idx] < k else 0.0
+            actual = float(top_k[k][alt_idx])
+            assert actual == expected, (
+                f"alt={alt_idx} k={k}: got p_i(k)={actual}, expected {expected}"
+            )
+
+
+def test_sensitivity_top_k_acceptability_matches_rank_freq_cumsum() -> None:
+    """p_i(k) equals the column-cumulative sum of rank_freq divided by N.
+
+    From formula (1.17), p_i(k) = (1/N) sum_{t} 1[rank(a_i) <= k]. Because the
+    raw rank_freq[r, i] is the per-iteration count at exact rank r, the
+    cumulative top-k aggregate is sum_{r=0}^{k-1} rank_freq[r, i] / N. This
+    invariant must hold regardless of delta. Uses delta=0.15 (the project
+    default) to exercise a non-trivial rank distribution.
+
+    Reference: Lahdelma & Salminen (2001), formula (1.17) of subsection 1.2.4.
+    """
+    result = sensitivity_analysis(
+        DM, WEIGHTS, TYPES, topsis, n_simulations=N_SIM, delta=0.15, seed=0
+    )
+    rank_freq = result["rank_freq"]
+    top_k = result["top_k_freq"]
+
+    for k in (1, 3, 5):
+        expected = rank_freq[: min(k, N_ALT), :].sum(axis=0) / N_SIM
+        np.testing.assert_allclose(top_k[k], expected, atol=1e-12)
