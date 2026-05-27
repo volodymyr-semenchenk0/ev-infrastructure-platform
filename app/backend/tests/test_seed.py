@@ -14,7 +14,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import Criterion, Profile
-from db.seed import seed_reference_data  # does not exist yet — red phase
+from db.seed import seed_reference_data
 
 # ---------------------------------------------------------------------------
 # Expected reference constants (source: master.md Table 3.1, Table 3.3)

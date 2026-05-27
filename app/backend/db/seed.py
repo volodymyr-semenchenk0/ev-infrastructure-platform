@@ -131,7 +131,9 @@ async def seed_reference_data(session: AsyncSession) -> None:
     """Idempotently load profiles and criteria.
 
     Locations are not seeded here — they are added via the API or a separate
-    script for a specific analysis within the city limits.
+    script for a specific analysis within the city limits. Default pairwise
+    matrices Ã per profile are NOT persisted by the seed: they live in
+    `db/defaults.py` and are built on the fly inside `GET /api/profiles/{id}`.
     Idempotency: profiles/criteria are upserted via INSERT ... ON CONFLICT (code).
     """
     await session.execute(

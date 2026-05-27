@@ -100,6 +100,35 @@ class TestProfiles:
 
         assert response.status_code == 404
 
+    async def test_get_profile_returns_seeded_pairwise_matrix(
+        self, api_client: AsyncClient
+    ) -> None:
+        """GET /api/profiles/{id} must surface the seeded Ã matrix.
+
+        Each cell carries a TFN; diagonal cells are crisp 1; the matrix is
+        n x n where n equals the number of criteria.
+
+        Reference: UI_PLAN §4 fallback contract — when defaults exist the
+        frontend must consume them instead of falling back to identity.
+        """
+        listing = await api_client.get("/api/profiles")
+        profiles = listing.json()
+        municipal = next(p for p in profiles if p["code"] == "municipal")
+
+        response = await api_client.get(f"/api/profiles/{municipal['id']}")
+        assert response.status_code == 200
+        data = response.json()
+        matrix = data.get("pairwiseMatrix")
+        assert matrix is not None, "pairwiseMatrix must be present after seed_pairwise_matrices ran"
+        assert len(matrix) == 10
+        for row in matrix:
+            assert len(row) == 10
+        for i, row in enumerate(matrix):
+            for j, cell in enumerate(row):
+                assert {"l", "m", "u"}.issubset(cell.keys())
+                if i == j:
+                    assert cell == {"l": 1.0, "m": 1.0, "u": 1.0}
+
 
 # ---------------------------------------------------------------------------
 # B. Criteria
