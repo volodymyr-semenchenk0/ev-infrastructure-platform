@@ -129,7 +129,7 @@ export function SidebarAccordion({
                   />
                   <span>{section.title}</span>
                   {!isOpen && section.label && (
-                    <span className="truncate text-xs font-normal text-muted-foreground">
+                    <span className="truncate rounded border border-border bg-background px-1.5 py-0.5 text-xs font-normal text-foreground">
                       {section.label}
                     </span>
                   )}
