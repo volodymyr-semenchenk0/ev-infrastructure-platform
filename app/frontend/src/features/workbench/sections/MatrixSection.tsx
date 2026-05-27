@@ -1,6 +1,5 @@
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Calculator, Download, Pencil } from 'lucide-react'
+import { Calculator, Pencil } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/use-toast'
@@ -11,8 +10,6 @@ import { ValidationError } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { useProfileStore } from '@/store/profile-store'
 import { useSessionStore } from '@/store/session-store'
-
-import { useLoadProfileDefault } from './useLoadProfileDefault'
 
 const CR_THRESHOLD = 0.1
 const CR_WARN_LIMIT = 0.15
@@ -48,9 +45,6 @@ export function MatrixSection() {
   const setError = useSessionStore((s) => s.setError)
   const criteria = useCriteria()
   const createEvaluation = useCreateEvaluation()
-  const loadProfileDefault = useLoadProfileDefault()
-
-  const [isLoadingDefault, setIsLoadingDefault] = useState(false)
 
   if (!activeProfile) {
     return (
@@ -69,15 +63,6 @@ export function MatrixSection() {
   const setPairs = pairwiseMatrix ? countSetPairs(pairwiseMatrix) : 0
   const cr = consistencyRatio ?? 0
   const canRunFahp = pairwiseMatrix !== null && cr <= CR_THRESHOLD
-
-  const handleLoadDefault = async () => {
-    setIsLoadingDefault(true)
-    try {
-      await loadProfileDefault(activeProfile.id)
-    } finally {
-      setIsLoadingDefault(false)
-    }
-  }
 
   const handleRunFahp = async () => {
     if (!pairwiseMatrix) return
@@ -134,15 +119,6 @@ export function MatrixSection() {
             <Pencil className="mr-2 h-4 w-4" aria-hidden="true" />
             Редагувати матрицю
           </Link>
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleLoadDefault}
-          disabled={isLoadingDefault}
-        >
-          <Download className="mr-2 h-4 w-4" aria-hidden="true" />
-          {isLoadingDefault ? 'Завантаження…' : 'Завантажити дефолт профілю'}
         </Button>
         <Button
           size="sm"
