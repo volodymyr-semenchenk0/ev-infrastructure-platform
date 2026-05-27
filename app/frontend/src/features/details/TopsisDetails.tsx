@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 
 import { TabularExportButtons } from '@/features/export/TabularExportButtons'
 import { useLocations } from '@/features/locations/useLocations'
+import { ClosenessScatterPlot } from '@/features/results/ClosenessScatterPlot'
 import { RankingTable, type RankingRow } from '@/features/results/RankingTable'
 import { useSessionStore } from '@/store/session-store'
 
@@ -76,6 +77,7 @@ export function TopsisDetails() {
           setSelectedLocationId(selectedLocationId === id ? null : id)
         }
       />
+      <ClosenessScatterPlot rows={rows} />
       <IntermediatesGapNote
         items={['r_ij', 'v_ij', 'A^+', 'A^-']}
         formulas="формули (1.10)-(1.13)"
