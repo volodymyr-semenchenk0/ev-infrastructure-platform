@@ -2,6 +2,7 @@ import { Zap, RotateCcw } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { useProfileStore } from '@/store/profile-store'
+import { useSessionStore } from '@/store/session-store'
 
 interface HeaderProps {
   onResetSession?: () => void
@@ -10,9 +11,11 @@ interface HeaderProps {
 export function Header({ onResetSession }: HeaderProps = {}) {
   const activeProfile = useProfileStore((s) => s.activeProfile)
   const setActiveProfile = useProfileStore((s) => s.setActiveProfile)
+  const resetSession = useSessionStore((s) => s.resetSession)
 
   const handleReset = () => {
     setActiveProfile(null)
+    resetSession()
     onResetSession?.()
   }
 
