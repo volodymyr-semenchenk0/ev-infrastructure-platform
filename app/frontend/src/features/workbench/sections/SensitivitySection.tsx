@@ -57,7 +57,10 @@ export function SensitivitySection() {
         evaluationId,
         body: form.requestBody,
       })) as SensitivityResponse
-      setSensitivity(result)
+      setSensitivity(result, {
+        iterations: form.iterations,
+        perturbation: form.perturbation,
+      })
       setError(null)
       toast({
         title: 'Аналіз чутливості виконано',
