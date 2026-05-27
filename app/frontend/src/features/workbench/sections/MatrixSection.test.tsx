@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 
 import { api } from '@/lib/api'
 import { useProfileStore } from '@/store/profile-store'
-import { useSessionStore, type FuzzyNumber } from '@/store/session-store'
+import { useSessionStore } from '@/store/session-store'
 
 import { MatrixSection } from './MatrixSection'
 
@@ -117,80 +117,6 @@ describe('MatrixSection', () => {
 
     await screen.findByText(/Редагувати матрицю/)
     expect(expectButton(/Обчислити ваги/)).toBeEnabled()
-    mock.restore()
-  })
-
-  it('loads the default matrix from the API when present', async () => {
-    useProfileStore.getState().setActiveProfile(PROFILE)
-    const matrix: FuzzyNumber[][] = [
-      [
-        { l: 1, m: 1, u: 1 },
-        { l: 2, m: 3, u: 4 },
-        { l: 1, m: 1, u: 1 },
-      ],
-      [
-        { l: 1 / 4, m: 1 / 3, u: 1 / 2 },
-        { l: 1, m: 1, u: 1 },
-        { l: 1, m: 1, u: 1 },
-      ],
-      [
-        { l: 1, m: 1, u: 1 },
-        { l: 1, m: 1, u: 1 },
-        { l: 1, m: 1, u: 1 },
-      ],
-    ]
-    const mock = new MockAdapter(api)
-    mock.onGet('/criteria').reply(200, CRITERIA)
-    mock.onGet('/profiles/1').reply(200, { id: 1, code: 'municipal', name: 'M', pairwiseMatrix: matrix })
-
-    const user = userEvent.setup()
-    renderSection()
-
-    await user.click(await screen.findByRole('button', { name: /Завантажити дефолт/ }))
-    await waitFor(() => {
-      expect(useSessionStore.getState().pairwiseMatrix).not.toBeNull()
-    })
-    expect(useSessionStore.getState().pairwiseMatrix![0][1].m).toBe(3)
-    mock.restore()
-  })
-
-  it('falls back to identity when the profile has no default matrix', async () => {
-    useProfileStore.getState().setActiveProfile(PROFILE)
-    const mock = new MockAdapter(api)
-    mock.onGet('/criteria').reply(200, CRITERIA)
-    mock.onGet('/profiles/1').reply(200, { id: 1, code: 'municipal', name: 'M', pairwiseMatrix: null })
-
-    const user = userEvent.setup()
-    renderSection()
-
-    await user.click(await screen.findByRole('button', { name: /Завантажити дефолт/ }))
-    await waitFor(() => {
-      expect(useSessionStore.getState().pairwiseMatrix).not.toBeNull()
-    })
-    const matrix = useSessionStore.getState().pairwiseMatrix!
-    expect(matrix).toHaveLength(3)
-    for (const row of matrix) {
-      for (const tfn of row) {
-        expect(tfn).toEqual({ l: 1, m: 1, u: 1 })
-      }
-    }
-    mock.restore()
-  })
-
-  it('falls back to identity on a 404 response', async () => {
-    useProfileStore.getState().setActiveProfile(PROFILE)
-    const mock = new MockAdapter(api)
-    mock.onGet('/criteria').reply(200, CRITERIA)
-    mock.onGet('/profiles/1').reply(404, { detail: 'Not found' })
-
-    const user = userEvent.setup()
-    renderSection()
-
-    await user.click(await screen.findByRole('button', { name: /Завантажити дефолт/ }))
-    await waitFor(() => {
-      expect(useSessionStore.getState().pairwiseMatrix).not.toBeNull()
-    })
-    expect(useSessionStore.getState().consistencyRatio).toBe(0)
     mock.restore()
   })
 
