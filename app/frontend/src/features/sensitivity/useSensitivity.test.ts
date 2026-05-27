@@ -9,10 +9,13 @@ describe('useSensitivity payload contract', () => {
   it('POSTs to /evaluations/:id/sensitivity and returns SensitivityRead', async () => {
     const mock = new MockAdapter(api)
     const responseBody: SensitivityResponse = {
-      stabilityMatrix: { A1: [1, 0], A2: [0, 1] },
+      stabilityMatrix: {
+        '1': { '1': 0.8, '3': 0.95, '5': 1.0 },
+        '2': { '1': 0.2, '3': 0.6, '5': 1.0 },
+      },
       confidenceIntervals: [
-        { locationId: 1, low: 0.4, high: 0.6 },
-        { locationId: 2, low: 0.1, high: 0.3 },
+        { locationId: 1, lower: 0.4, upper: 0.6 },
+        { locationId: 2, lower: 0.1, upper: 0.3 },
       ],
     }
     mock.onPost('/evaluations/7/sensitivity').reply(200, responseBody)
@@ -22,7 +25,7 @@ describe('useSensitivity payload contract', () => {
       perturbation: 0.1,
     })
 
-    expect(data.stabilityMatrix).toHaveProperty('A1')
+    expect(data.stabilityMatrix).toHaveProperty('1')
     expect(data.confidenceIntervals).toHaveLength(2)
     mock.restore()
   })
