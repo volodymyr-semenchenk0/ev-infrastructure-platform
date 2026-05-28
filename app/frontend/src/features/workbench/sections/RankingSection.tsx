@@ -1,13 +1,16 @@
 import { useMemo } from 'react'
-import { Link } from 'react-router-dom'
-import { ExternalLink } from 'lucide-react'
+import { EyeOff, MapPin } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ExportButtons } from '@/features/export/ExportButtons'
+import { TabularExportButtons } from '@/features/export/TabularExportButtons'
 import { useLocations } from '@/features/locations/useLocations'
+import { ClosenessScatterPlot } from '@/features/results/ClosenessScatterPlot'
+import { IntermediatesGapNote } from '@/features/results/IntermediatesGapNote'
 import { RankingTable, type RankingRow } from '@/features/results/RankingTable'
+import { RankingMapEmbed } from '@/features/workbench/RankingMapEmbed'
 import { useSessionStore } from '@/store/session-store'
+import { useUiStore } from '@/store/ui-store'
 
 export function RankingSection() {
   const ranking = useSessionStore((s) => s.ranking)
@@ -15,6 +18,8 @@ export function RankingSection() {
   const selectedLocationId = useSessionStore((s) => s.selectedLocationId)
   const setSelectedLocationId = useSessionStore((s) => s.setSelectedLocationId)
   const locations = useLocations()
+  const mapVisible = useUiStore((s) => s.mapVisible)
+  const setMapVisible = useUiStore((s) => s.setMapVisible)
 
   const rows = useMemo<RankingRow[]>(() => {
     if (!ranking || !locations.data) return []
@@ -33,6 +38,22 @@ export function RankingSection() {
     })
   }, [ranking, locations.data])
 
+  const csvRows = useMemo(
+    () => [
+      ['rank', 'location_id', 'name', 'district', 'closeness', 's_plus', 's_minus'],
+      ...rows.map((row) => [
+        row.rank,
+        row.locationId,
+        row.name,
+        row.district ?? '',
+        row.closeness,
+        row.sPlus,
+        row.sMinus,
+      ]),
+    ],
+    [rows],
+  )
+
   if (!ranking) {
     return (
       <p className="text-sm text-muted-foreground">
@@ -46,8 +67,36 @@ export function RankingSection() {
     return <Skeleton className="h-32 w-full" />
   }
 
+  const filenameBase = `topsis-ranking-${evaluationId ?? 'session'}`
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <Button
+          type="button"
+          variant={mapVisible ? 'outline' : 'default'}
+          size="sm"
+          onClick={() => setMapVisible(!mapVisible)}
+        >
+          {mapVisible ? (
+            <>
+              <EyeOff className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
+              Приховати карту
+            </>
+          ) : (
+            <>
+              <MapPin className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
+              Показати на карті
+            </>
+          )}
+        </Button>
+        <TabularExportButtons
+          csvRows={csvRows}
+          jsonData={{ evaluationId, ranking: rows }}
+          filenameBase={filenameBase}
+        />
+      </div>
+      {mapVisible && <RankingMapEmbed />}
       <RankingTable
         rows={rows}
         selectedLocationId={selectedLocationId}
@@ -55,17 +104,11 @@ export function RankingSection() {
           setSelectedLocationId(selectedLocationId === id ? null : id)
         }
       />
-      <div className="flex flex-wrap items-center gap-2">
-        {evaluationId !== null && (
-          <ExportButtons evaluationId={evaluationId} size="sm" variant="outline" />
-        )}
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/details#topsis">
-            <ExternalLink className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
-            Деталі обчислень
-          </Link>
-        </Button>
-      </div>
+      <ClosenessScatterPlot rows={rows} />
+      <IntermediatesGapNote
+        items={['r_ij', 'v_ij', 'A^+', 'A^-']}
+        formulas="формули (1.10)-(1.13)"
+      />
     </div>
   )
 }

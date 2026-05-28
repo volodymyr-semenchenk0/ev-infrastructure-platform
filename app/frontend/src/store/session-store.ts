@@ -28,16 +28,16 @@ export interface SessionState {
   ranking: RankingItem[] | null
   sensitivity: SensitivityResult | null
   // Parameters of the last Monte Carlo run; the API response does not echo
-  // them, so /details#mc reads them from here.
+  // them, so the MC details panel reads them from here.
   lastSensitivityParams: SensitivityParams | null
   evaluationId: number | null
   lastError: SessionError | null
   // Two-way sync for the ranking section and the map. The session is the
-  // single source of truth so the sidebar table, the map markers, and any
+  // single source of truth so the ranking table, the map markers, and any
   // future popovers stay in lockstep without prop-drilling.
   selectedLocationId: number | null
-  // When true, MapPane colours markers by p_i(1) intensity instead of rank
-  // (UI_PLAN §5.2.5 «Шар стійкості»). Stays false until the first MC run.
+  // When true, MapPane colours markers by p_i(1) intensity instead of rank.
+  // Stays false until the first MC run.
   stabilityLayerEnabled: boolean
 
   setPairwiseMatrix: (matrix: FuzzyNumber[][] | null) => void

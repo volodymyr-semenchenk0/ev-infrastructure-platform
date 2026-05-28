@@ -49,8 +49,9 @@ describe('WeightsSection', () => {
     mock.restore()
   })
 
-  it('renders the chart, sorted table and final CR when weights are present', async () => {
+  it('renders the chart, sorted table with rank, CR, and gap note when weights are present', async () => {
     useSessionStore.getState().setWeights({ B: 0.5, A: 0.3, C: 0.2 }, 0.07)
+    useSessionStore.getState().setEvaluationId(7)
 
     const mock = new MockAdapter(api)
     mock.onGet('/criteria').reply(200, CRITERIA)
@@ -58,11 +59,25 @@ describe('WeightsSection', () => {
     renderSection()
 
     expect(await screen.findByTestId('weights-chart')).toHaveTextContent('3 bars')
+
     const rows = screen.getAllByRole('row').slice(1) // skip header row
-    const codeColumn = rows.map((row) => row.querySelectorAll('td')[1]?.textContent)
+    // Columns are: #, Критерій, Код, w_j — code is the third <td>.
+    const codeColumn = rows.map((row) => row.querySelectorAll('td')[2]?.textContent)
     expect(codeColumn).toEqual(['B', 'A', 'C'])
-    expect(screen.getByText(/Підсумкове CR/)).toBeInTheDocument()
+
+    // CR is rendered in the top metadata row, alongside the evaluationId.
+    expect(screen.getByText(/CR:/)).toBeInTheDocument()
     expect(screen.getByText('0.070')).toBeInTheDocument()
+    expect(screen.getByText(/ID розрахунку/)).toBeInTheDocument()
+
+    // Inline export buttons (CSV/JSON) come from TabularExportButtons.
+    expect(screen.getByRole('button', { name: /^CSV$/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^JSON$/ })).toBeInTheDocument()
+    // Chart export buttons (PNG/SVG).
+    expect(screen.getByRole('button', { name: /PNG/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /SVG/ })).toBeInTheDocument()
+    // Gap note signpost.
+    expect(screen.getByText(/ADR-0001/)).toBeInTheDocument()
     mock.restore()
   })
 })

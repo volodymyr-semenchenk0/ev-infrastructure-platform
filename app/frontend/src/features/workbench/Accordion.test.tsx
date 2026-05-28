@@ -1,8 +1,9 @@
+import { useState } from 'react'
 import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
-import { SidebarAccordion, type AccordionSection } from './SidebarAccordion'
+import { Accordion, type AccordionSection } from './Accordion'
 import type { SectionStatus } from './StatusBadge'
 
 function makeSections(): AccordionSection[] {
@@ -23,9 +24,26 @@ function makeWizardSections(
   ]
 }
 
-describe('SidebarAccordion', () => {
+// Tests use a stateful wrapper because Accordion is fully controlled.
+function ControlledAccordion(props: {
+  sections: AccordionSection[]
+  initialOpenIds?: string[]
+  maxOpen?: number
+}) {
+  const [openIds, setOpenIds] = useState<string[]>(props.initialOpenIds ?? [])
+  return (
+    <Accordion
+      sections={props.sections}
+      openIds={openIds}
+      onOpenIdsChange={setOpenIds}
+      maxOpen={props.maxOpen}
+    />
+  )
+}
+
+describe('Accordion', () => {
   it('renders one trigger per section with the status badge label', () => {
-    render(<SidebarAccordion sections={makeSections()} />)
+    render(<ControlledAccordion sections={makeSections()} />)
     expect(screen.getByRole('button', { name: /Section A/ })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Section B/ })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Section C/ })).toBeInTheDocument()
@@ -34,8 +52,8 @@ describe('SidebarAccordion', () => {
     expect(screen.getByText('Потребує уваги')).toBeInTheDocument()
   })
 
-  it('reflects defaultOpenIds via aria-expanded', () => {
-    render(<SidebarAccordion sections={makeSections()} defaultOpenIds={['b']} />)
+  it('reflects initial openIds via aria-expanded', () => {
+    render(<ControlledAccordion sections={makeSections()} initialOpenIds={['b']} />)
     expect(screen.getByRole('button', { name: /Section A/ })).toHaveAttribute('aria-expanded', 'false')
     expect(screen.getByRole('button', { name: /Section B/ })).toHaveAttribute('aria-expanded', 'true')
     expect(screen.getByText('Body B')).toBeInTheDocument()
@@ -43,7 +61,7 @@ describe('SidebarAccordion', () => {
 
   it('toggles a section open and closed on click', async () => {
     const user = userEvent.setup()
-    render(<SidebarAccordion sections={makeSections()} />)
+    render(<ControlledAccordion sections={makeSections()} />)
     const trigger = screen.getByRole('button', { name: /Section A/ })
 
     expect(trigger).toHaveAttribute('aria-expanded', 'false')
@@ -58,7 +76,7 @@ describe('SidebarAccordion', () => {
 
   it('evicts the oldest open section when the maxOpen cap is exceeded', async () => {
     const user = userEvent.setup()
-    render(<SidebarAccordion sections={makeSections()} maxOpen={2} />)
+    render(<ControlledAccordion sections={makeSections()} maxOpen={2} />)
     const triggerA = screen.getByRole('button', { name: /Section A/ })
     const triggerB = screen.getByRole('button', { name: /Section B/ })
     const triggerC = screen.getByRole('button', { name: /Section C/ })
@@ -75,7 +93,7 @@ describe('SidebarAccordion', () => {
   })
 
   it('wires aria-controls between trigger and the panel region', () => {
-    render(<SidebarAccordion sections={makeSections()} defaultOpenIds={['a']} />)
+    render(<ControlledAccordion sections={makeSections()} initialOpenIds={['a']} />)
     const trigger = screen.getByRole('button', { name: /Section A/ })
     const panelId = trigger.getAttribute('aria-controls')
     expect(panelId).toBeTruthy()
@@ -87,9 +105,9 @@ describe('SidebarAccordion', () => {
   describe('auto-open next section when current becomes ready', () => {
     it('does not auto-open siblings on initial render even if some sections start ready', () => {
       render(
-        <SidebarAccordion
+        <ControlledAccordion
           sections={makeWizardSections(['ready', 'idle', 'idle'])}
-          defaultOpenIds={['step1']}
+          initialOpenIds={['step1']}
         />,
       )
       expect(screen.getByRole('button', { name: /Step 1/ })).toHaveAttribute('aria-expanded', 'true')
@@ -99,17 +117,17 @@ describe('SidebarAccordion', () => {
 
     it('auto-opens the next section when a section transitions idle -> ready', () => {
       const { rerender } = render(
-        <SidebarAccordion
+        <ControlledAccordion
           sections={makeWizardSections(['idle', 'idle', 'idle'])}
-          defaultOpenIds={['step1']}
+          initialOpenIds={['step1']}
         />,
       )
       expect(screen.getByRole('button', { name: /Step 2/ })).toHaveAttribute('aria-expanded', 'false')
 
       rerender(
-        <SidebarAccordion
+        <ControlledAccordion
           sections={makeWizardSections(['ready', 'idle', 'idle'])}
-          defaultOpenIds={['step1']}
+          initialOpenIds={['step1']}
         />,
       )
       expect(screen.getByRole('button', { name: /Step 2/ })).toHaveAttribute('aria-expanded', 'true')
@@ -117,15 +135,15 @@ describe('SidebarAccordion', () => {
 
     it('does not auto-open the next section when current transitions to attention', () => {
       const { rerender } = render(
-        <SidebarAccordion
+        <ControlledAccordion
           sections={makeWizardSections(['idle', 'idle', 'idle'])}
-          defaultOpenIds={['step1']}
+          initialOpenIds={['step1']}
         />,
       )
       rerender(
-        <SidebarAccordion
+        <ControlledAccordion
           sections={makeWizardSections(['attention', 'idle', 'idle'])}
-          defaultOpenIds={['step1']}
+          initialOpenIds={['step1']}
         />,
       )
       expect(screen.getByRole('button', { name: /Step 2/ })).toHaveAttribute('aria-expanded', 'false')
@@ -133,17 +151,17 @@ describe('SidebarAccordion', () => {
 
     it('auto-opens the next section when a section transitions attention -> ready', () => {
       const { rerender } = render(
-        <SidebarAccordion
+        <ControlledAccordion
           sections={makeWizardSections(['attention', 'idle', 'idle'])}
-          defaultOpenIds={['step1']}
+          initialOpenIds={['step1']}
         />,
       )
       expect(screen.getByRole('button', { name: /Step 2/ })).toHaveAttribute('aria-expanded', 'false')
 
       rerender(
-        <SidebarAccordion
+        <ControlledAccordion
           sections={makeWizardSections(['ready', 'idle', 'idle'])}
-          defaultOpenIds={['step1']}
+          initialOpenIds={['step1']}
         />,
       )
       expect(screen.getByRole('button', { name: /Step 2/ })).toHaveAttribute('aria-expanded', 'true')
@@ -151,16 +169,16 @@ describe('SidebarAccordion', () => {
 
     it('respects maxOpen cap when auto-opening: evicts oldest open section (FIFO)', () => {
       const { rerender } = render(
-        <SidebarAccordion
+        <ControlledAccordion
           sections={makeWizardSections(['idle', 'idle', 'idle'])}
-          defaultOpenIds={['step1']}
+          initialOpenIds={['step1']}
           maxOpen={2}
         />,
       )
       rerender(
-        <SidebarAccordion
+        <ControlledAccordion
           sections={makeWizardSections(['ready', 'idle', 'idle'])}
-          defaultOpenIds={['step1']}
+          initialOpenIds={['step1']}
           maxOpen={2}
         />,
       )
@@ -168,9 +186,9 @@ describe('SidebarAccordion', () => {
       expect(screen.getByRole('button', { name: /Step 2/ })).toHaveAttribute('aria-expanded', 'true')
 
       rerender(
-        <SidebarAccordion
+        <ControlledAccordion
           sections={makeWizardSections(['ready', 'ready', 'idle'])}
-          defaultOpenIds={['step1']}
+          initialOpenIds={['step1']}
           maxOpen={2}
         />,
       )
@@ -185,26 +203,26 @@ describe('SidebarAccordion', () => {
       // in the same render. We open the LAST transitioned section (step3 = TOPSIS
       // ranking) so the operator sees the most recent computation result.
       const { rerender } = render(
-        <SidebarAccordion
+        <ControlledAccordion
           sections={[
             { id: 'step1', title: 'Step 1', status: 'ready', content: <p>Body 1</p> },
             { id: 'step2', title: 'Step 2', status: 'idle', content: <p>Body 2</p> },
             { id: 'step3', title: 'Step 3', status: 'idle', content: <p>Body 3</p> },
             { id: 'step4', title: 'Step 4', status: 'idle', content: <p>Body 4</p> },
           ]}
-          defaultOpenIds={['step2']}
+          initialOpenIds={['step2']}
           maxOpen={2}
         />,
       )
       rerender(
-        <SidebarAccordion
+        <ControlledAccordion
           sections={[
             { id: 'step1', title: 'Step 1', status: 'ready', content: <p>Body 1</p> },
             { id: 'step2', title: 'Step 2', status: 'ready', content: <p>Body 2</p> },
             { id: 'step3', title: 'Step 3', status: 'ready', content: <p>Body 3</p> },
             { id: 'step4', title: 'Step 4', status: 'idle', content: <p>Body 4</p> },
           ]}
-          defaultOpenIds={['step2']}
+          initialOpenIds={['step2']}
           maxOpen={2}
         />,
       )
@@ -214,15 +232,15 @@ describe('SidebarAccordion', () => {
 
     it('does nothing when all sections are ready (nothing left to advance to)', () => {
       const { rerender } = render(
-        <SidebarAccordion
+        <ControlledAccordion
           sections={makeWizardSections(['idle', 'ready', 'ready'])}
-          defaultOpenIds={['step1']}
+          initialOpenIds={['step1']}
         />,
       )
       rerender(
-        <SidebarAccordion
+        <ControlledAccordion
           sections={makeWizardSections(['ready', 'ready', 'ready'])}
-          defaultOpenIds={['step1']}
+          initialOpenIds={['step1']}
         />,
       )
       // step2 and step3 were already ready, so nothing should newly open.
@@ -233,15 +251,15 @@ describe('SidebarAccordion', () => {
     it('does not re-open a section that the user manually closed until the previous step transitions again', async () => {
       const user = userEvent.setup()
       const { rerender } = render(
-        <SidebarAccordion
+        <ControlledAccordion
           sections={makeWizardSections(['idle', 'idle', 'idle'])}
-          defaultOpenIds={['step1']}
+          initialOpenIds={['step1']}
         />,
       )
       rerender(
-        <SidebarAccordion
+        <ControlledAccordion
           sections={makeWizardSections(['ready', 'idle', 'idle'])}
-          defaultOpenIds={['step1']}
+          initialOpenIds={['step1']}
         />,
       )
       const trigger2 = screen.getByRole('button', { name: /Step 2/ })
@@ -251,9 +269,9 @@ describe('SidebarAccordion', () => {
       expect(trigger2).toHaveAttribute('aria-expanded', 'false')
 
       rerender(
-        <SidebarAccordion
+        <ControlledAccordion
           sections={makeWizardSections(['ready', 'idle', 'idle'])}
-          defaultOpenIds={['step1']}
+          initialOpenIds={['step1']}
         />,
       )
       expect(trigger2).toHaveAttribute('aria-expanded', 'false')

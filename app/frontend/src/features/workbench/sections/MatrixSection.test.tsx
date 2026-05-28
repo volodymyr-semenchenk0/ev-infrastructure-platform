@@ -2,12 +2,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import MockAdapter from 'axios-mock-adapter'
-import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { api } from '@/lib/api'
 import { useProfileStore } from '@/store/profile-store'
-import { useSessionStore } from '@/store/session-store'
+import { useSessionStore, type FuzzyNumber } from '@/store/session-store'
 
 import { MatrixSection } from './MatrixSection'
 
@@ -19,19 +18,32 @@ const CRITERIA = [
 
 const PROFILE = { id: 1, code: 'municipal', name: 'Муніципалітет' }
 
+// Circular preference A≫B≫C≫A — gives CR ≫ 0.10 for n=3.
+const HIGH_CR_3X3: FuzzyNumber[][] = [
+  [
+    { l: 1, m: 1, u: 1 },
+    { l: 7, m: 9, u: 9 },
+    { l: 1 / 9, m: 1 / 9, u: 1 / 7 },
+  ],
+  [
+    { l: 1 / 9, m: 1 / 9, u: 1 / 7 },
+    { l: 1, m: 1, u: 1 },
+    { l: 7, m: 9, u: 9 },
+  ],
+  [
+    { l: 7, m: 9, u: 9 },
+    { l: 1 / 9, m: 1 / 9, u: 1 / 7 },
+    { l: 1, m: 1, u: 1 },
+  ],
+]
+
 function renderSection() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={client}>
-      <MemoryRouter>
-        <MatrixSection />
-      </MemoryRouter>
+      <MatrixSection />
     </QueryClientProvider>,
   )
-}
-
-function expectButton(name: RegExp) {
-  return screen.getByRole('button', { name })
 }
 
 describe('MatrixSection', () => {
@@ -52,89 +64,69 @@ describe('MatrixSection', () => {
     mock.restore()
   })
 
-  it('shows totalPairs = m(m-1)/2 and 0 set pairs when the matrix is empty', async () => {
+  it('renders the Saaty scale legend above the editable matrix', async () => {
     useProfileStore.getState().setActiveProfile(PROFILE)
     const mock = new MockAdapter(api)
     mock.onGet('/criteria').reply(200, CRITERIA)
 
     renderSection()
 
-    expect(await screen.findByText(/0/)).toBeInTheDocument()
-    // m=3 -> m(m-1)/2 = 3 total pairs
-    expect(screen.getByText(/3/)).toBeInTheDocument()
-    expect(screen.getByText('—')).toBeInTheDocument()
+    expect(await screen.findByText('Шкала Сааті')).toBeInTheDocument()
+    // λ_max stat card is the consistency block; presence confirms the merged
+    // editor (not just the old summary card) is rendered.
+    expect(screen.getByText('λ_max')).toBeInTheDocument()
     mock.restore()
   })
 
-  it('disables «Обчислити ваги» when CR > 0.10', async () => {
+  it('disables «Обчислити ваги» when the local matrix has CR > 0.10', async () => {
     useProfileStore.getState().setActiveProfile(PROFILE)
-    // 2x2 matrix is enough to enable the section logic; CR is forced by the
-    // session store so we do not need real consistency math here.
-    useSessionStore.getState().commitMatrix(
-      [
-        [
-          { l: 1, m: 1, u: 1 },
-          { l: 1, m: 2, u: 3 },
-        ],
-        [
-          { l: 1 / 3, m: 1 / 2, u: 1 },
-          { l: 1, m: 1, u: 1 },
-        ],
-      ],
-      0.18,
-    )
+    useSessionStore.getState().commitMatrix(HIGH_CR_3X3, 0)
 
     const mock = new MockAdapter(api)
     mock.onGet('/criteria').reply(200, CRITERIA)
 
     renderSection()
 
-    await screen.findByText(/Редагувати матрицю/)
-    expect(expectButton(/Обчислити ваги/)).toBeDisabled()
+    const button = await screen.findByRole('button', { name: /Обчислити ваги/ })
+    await waitFor(() => expect(button).toBeDisabled())
     mock.restore()
   })
 
-  it('enables «Обчислити ваги» when CR is within the threshold', async () => {
+  it('enables «Обчислити ваги» when the default identity matrix is in the editor', async () => {
     useProfileStore.getState().setActiveProfile(PROFILE)
-    useSessionStore.getState().commitMatrix(
-      [
-        [
-          { l: 1, m: 1, u: 1 },
-          { l: 1, m: 1, u: 1 },
-        ],
-        [
-          { l: 1, m: 1, u: 1 },
-          { l: 1, m: 1, u: 1 },
-        ],
-      ],
-      0.05,
-    )
 
     const mock = new MockAdapter(api)
     mock.onGet('/criteria').reply(200, CRITERIA)
 
     renderSection()
 
-    await screen.findByText(/Редагувати матрицю/)
-    expect(expectButton(/Обчислити ваги/)).toBeEnabled()
+    const button = await screen.findByRole('button', { name: /Обчислити ваги/ })
+    await waitFor(() => expect(button).toBeEnabled())
     mock.restore()
   })
 
-  it('runs FAHP and writes weights, ranking and evaluationId to the store', async () => {
+  it('reset (icon-only) returns the matrix to identity, clearing prior edits', async () => {
     useProfileStore.getState().setActiveProfile(PROFILE)
-    useSessionStore.getState().commitMatrix(
-      [
-        [
-          { l: 1, m: 1, u: 1 },
-          { l: 1, m: 1, u: 1 },
-        ],
-        [
-          { l: 1, m: 1, u: 1 },
-          { l: 1, m: 1, u: 1 },
-        ],
-      ],
-      0.04,
-    )
+    useSessionStore.getState().commitMatrix(HIGH_CR_3X3, 0)
+
+    const mock = new MockAdapter(api)
+    mock.onGet('/criteria').reply(200, CRITERIA)
+
+    const user = userEvent.setup()
+    renderSection()
+
+    // Wait for the Compute button to be disabled (HIGH_CR_3X3 ⇒ CR > 0.10)
+    const compute = await screen.findByRole('button', { name: /Обчислити ваги/ })
+    await waitFor(() => expect(compute).toBeDisabled())
+
+    await user.click(screen.getByRole('button', { name: 'Скинути до дефолту' }))
+    // After reset to identity, CR = 0 ⇒ Compute is enabled.
+    await waitFor(() => expect(compute).toBeEnabled())
+    mock.restore()
+  })
+
+  it('runs FAHP using the local matrix and writes results to the store', async () => {
+    useProfileStore.getState().setActiveProfile(PROFILE)
 
     const mock = new MockAdapter(api)
     mock.onGet('/criteria').reply(200, CRITERIA)
@@ -157,24 +149,13 @@ describe('MatrixSection', () => {
     })
     expect(useSessionStore.getState().ranking).toHaveLength(1)
     expect(useSessionStore.getState().evaluationId).toBe(42)
+    // The local matrix is also committed to session so other consumers can read it.
+    expect(useSessionStore.getState().pairwiseMatrix).not.toBeNull()
     mock.restore()
   })
 
   it('records an error on FAHP failure without overwriting weights', async () => {
     useProfileStore.getState().setActiveProfile(PROFILE)
-    useSessionStore.getState().commitMatrix(
-      [
-        [
-          { l: 1, m: 1, u: 1 },
-          { l: 1, m: 1, u: 1 },
-        ],
-        [
-          { l: 1, m: 1, u: 1 },
-          { l: 1, m: 1, u: 1 },
-        ],
-      ],
-      0.04,
-    )
 
     const mock = new MockAdapter(api)
     mock.onGet('/criteria').reply(200, CRITERIA)

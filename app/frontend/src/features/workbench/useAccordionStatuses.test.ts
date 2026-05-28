@@ -4,7 +4,7 @@ import { renderHook, act } from '@testing-library/react'
 import { useProfileStore } from '@/store/profile-store'
 import { useSessionStore, type FuzzyNumber } from '@/store/session-store'
 
-import { useSidebarStatuses } from './useSidebarStatuses'
+import { useAccordionStatuses } from './useAccordionStatuses'
 
 const MATRIX_2x2: FuzzyNumber[][] = [
   [
@@ -22,13 +22,13 @@ function resetStores() {
   useProfileStore.getState().setActiveProfile(null)
 }
 
-describe('useSidebarStatuses', () => {
+describe('useAccordionStatuses', () => {
   beforeEach(() => {
     resetStores()
   })
 
   it('starts every section idle when stores are empty', () => {
-    const { result } = renderHook(() => useSidebarStatuses())
+    const { result } = renderHook(() => useAccordionStatuses())
     expect(result.current).toEqual({
       profile: 'idle',
       matrix: 'idle',
@@ -39,7 +39,7 @@ describe('useSidebarStatuses', () => {
   })
 
   it('flips profile to ready when an active profile is set', () => {
-    const { result } = renderHook(() => useSidebarStatuses())
+    const { result } = renderHook(() => useAccordionStatuses())
     act(() => {
       useProfileStore.getState().setActiveProfile({
         id: 1,
@@ -50,8 +50,8 @@ describe('useSidebarStatuses', () => {
     expect(result.current.profile).toBe('ready')
   })
 
-  it('marks the matrix ready when filled and CR <= 0.10', () => {
-    const { result } = renderHook(() => useSidebarStatuses())
+  it('marks matrix ready when filled and CR <= 0.10', () => {
+    const { result } = renderHook(() => useAccordionStatuses())
     act(() => {
       useSessionStore.getState().setPairwiseMatrix(MATRIX_2x2)
       useSessionStore.getState().setWeights({ A: 0.5, B: 0.5 }, 0.05)
@@ -59,8 +59,8 @@ describe('useSidebarStatuses', () => {
     expect(result.current.matrix).toBe('ready')
   })
 
-  it('marks the matrix attention when CR exceeds 0.10', () => {
-    const { result } = renderHook(() => useSidebarStatuses())
+  it('marks matrix attention when CR exceeds 0.10', () => {
+    const { result } = renderHook(() => useAccordionStatuses())
     act(() => {
       useSessionStore.getState().setPairwiseMatrix(MATRIX_2x2)
       useSessionStore.getState().setWeights({ A: 0.5, B: 0.5 }, 0.18)
@@ -68,8 +68,8 @@ describe('useSidebarStatuses', () => {
     expect(result.current.matrix).toBe('attention')
   })
 
-  it('marks weights, ranking, sensitivity ready once their data lands', () => {
-    const { result } = renderHook(() => useSidebarStatuses())
+  it('marks weights/ranking/sensitivity ready once their data lands', () => {
+    const { result } = renderHook(() => useAccordionStatuses())
     act(() => {
       useSessionStore.getState().setWeights({ A: 1 }, 0)
       useSessionStore.getState().setRanking([

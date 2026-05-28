@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useId, useRef, type ReactNode } from 'react'
 import { ChevronDown } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
@@ -15,48 +15,40 @@ export interface AccordionSection {
   content: ReactNode
 }
 
-interface SidebarAccordionProps {
+interface AccordionProps {
   sections: AccordionSection[]
-  defaultOpenIds?: string[]
-  // Hard cap on simultaneously open sections (UI_PLAN §5.2: "single or double
-  // open at once"). When the user opens a section beyond the cap, the oldest
-  // open one collapses first (FIFO).
+  openIds: string[]
+  onOpenIdsChange: (ids: string[]) => void
+  // Hard cap on simultaneously open sections. When the user opens a section
+  // beyond the cap, the oldest open one collapses first (FIFO).
   maxOpen?: number
-  // Called whenever the set of open section ids changes. Use this to persist
-  // accordion state across page navigations (uncontrolled component — this is
-  // a write-only notification, not a controlled prop).
-  onOpenIdsChange?: (ids: string[]) => void
 }
 
-const DEFAULT_MAX_OPEN = 2
+const DEFAULT_MAX_OPEN = 3
 
-export function SidebarAccordion({
+// FIFO append with cap eviction. Order is meaningful: the oldest entry sits at
+// the front of the array, so a cap-trim slices off the tail-most window.
+function appendCapped(current: string[], id: string, maxOpen: number): string[] {
+  if (current.includes(id)) return current
+  const next = [...current, id]
+  return next.length > maxOpen ? next.slice(next.length - maxOpen) : next
+}
+
+export function Accordion({
   sections,
-  defaultOpenIds = [],
-  maxOpen = DEFAULT_MAX_OPEN,
+  openIds,
   onOpenIdsChange,
-}: SidebarAccordionProps) {
+  maxOpen = DEFAULT_MAX_OPEN,
+}: AccordionProps) {
   const idPrefix = useId()
-  // openOrder preserves insertion order so the oldest-open section gets
-  // evicted when the cap is reached.
-  const [openOrder, setOpenOrder] = useState<string[]>(() => defaultOpenIds.slice(0, maxOpen))
 
-  const toggle = useCallback(
-    (sectionId: string) => {
-      setOpenOrder((current) => {
-        if (current.includes(sectionId)) {
-          return current.filter((id) => id !== sectionId)
-        }
-        const next = [...current, sectionId]
-        return next.length > maxOpen ? next.slice(next.length - maxOpen) : next
-      })
-    },
-    [maxOpen],
-  )
-
-  useEffect(() => {
-    onOpenIdsChange?.(openOrder)
-  }, [openOrder, onOpenIdsChange])
+  const toggle = (sectionId: string) => {
+    if (openIds.includes(sectionId)) {
+      onOpenIdsChange(openIds.filter((id) => id !== sectionId))
+      return
+    }
+    onOpenIdsChange(appendCapped(openIds, sectionId, maxOpen))
+  }
 
   // Wizard auto-advance: open the relevant section whenever one or more steps
   // complete in the same render. We watch status transitions only — sections
@@ -73,6 +65,10 @@ export function SidebarAccordion({
   // Opening the section right after it would skip over the ranking results the
   // operator needs to review before deciding to run sensitivity analysis.
   const prevStatusesRef = useRef<Record<string, SectionStatus>>({})
+  // Keep openIds available inside the effect without retriggering on every
+  // change — the effect must fire on `sections` changes only (status diff).
+  const openIdsRef = useRef(openIds)
+  openIdsRef.current = openIds
   useEffect(() => {
     const prev = prevStatusesRef.current
 
@@ -96,26 +92,27 @@ export function SidebarAccordion({
 
     if (targetId !== undefined) {
       const id = targetId
-      setOpenOrder((current) => {
-        if (current.includes(id)) return current
-        const appended = [...current, id]
-        return appended.length > maxOpen
-          ? appended.slice(appended.length - maxOpen)
-          : appended
-      })
+      const next = appendCapped(openIdsRef.current, id, maxOpen)
+      if (next !== openIdsRef.current) {
+        onOpenIdsChange(next)
+      }
     }
 
     prevStatusesRef.current = Object.fromEntries(sections.map((s) => [s.id, s.status]))
-  }, [sections, maxOpen])
+  }, [sections, maxOpen, onOpenIdsChange])
 
   return (
-    <div className="divide-y border-b">
+    <div className="flex flex-col gap-4">
       {sections.map((section) => {
-        const isOpen = openOrder.includes(section.id)
+        const isOpen = openIds.includes(section.id)
         const panelId = `${idPrefix}-${section.id}-panel`
         const triggerId = `${idPrefix}-${section.id}-trigger`
         return (
-          <div key={section.id} className="bg-card">
+          <div
+            key={section.id}
+            id={section.id}
+            className="overflow-hidden rounded-lg border bg-card scroll-mt-4"
+          >
             <h3 className="m-0">
               <button
                 id={triggerId}
@@ -124,7 +121,7 @@ export function SidebarAccordion({
                 aria-controls={panelId}
                 onClick={() => toggle(section.id)}
                 className={cn(
-                  'flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-medium',
+                  'flex w-full items-center justify-between gap-3 px-4 py-4 text-left text-sm font-medium',
                   'hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 )}
               >
