@@ -3,12 +3,11 @@ import { useSessionStore } from '@/store/session-store'
 
 import type { SectionStatus } from './StatusBadge'
 
-// Consistency threshold from UI_PLAN §5.2.2 and Chapter 1 (1.2): the
-// pairwise matrix is admissible iff CR <= 0.10. Above that, the matrix
+// The pairwise matrix is admissible iff CR <= 0.10. Above that, the matrix
 // section flips to attention so the operator can fix it before FAHP.
 const CR_THRESHOLD = 0.1
 
-export interface SidebarStatuses {
+export interface AccordionStatuses {
   profile: SectionStatus
   matrix: SectionStatus
   weights: SectionStatus
@@ -16,7 +15,7 @@ export interface SidebarStatuses {
   sensitivity: SectionStatus
 }
 
-export function useSidebarStatuses(): SidebarStatuses {
+export function useAccordionStatuses(): AccordionStatuses {
   const activeProfile = useProfileStore((s) => s.activeProfile)
   const pairwiseMatrix = useSessionStore((s) => s.pairwiseMatrix)
   const consistencyRatio = useSessionStore((s) => s.consistencyRatio)

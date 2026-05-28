@@ -1,11 +1,21 @@
-import { Link } from 'react-router-dom'
-import { Calculator, Pencil } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Calculator, HelpCircle, RotateCcw } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from '@/components/ui/use-toast'
-import { type PairwiseMatrix } from '@/features/calculate/saaty-scale'
+import { AhpMatrix } from '@/features/calculate/AhpMatrix'
+import {
+  computeConsistencyStats,
+  findInconsistentPairs,
+} from '@/features/calculate/consistency'
+import {
+  identityMatrix,
+  type PairwiseMatrix,
+} from '@/features/calculate/saaty-scale'
 import { useCreateEvaluation } from '@/features/calculate/useCreateEvaluation'
 import { useCriteria } from '@/features/calculate/useCriteria'
+import { TabularExportButtons } from '@/features/export/TabularExportButtons'
 import { ValidationError } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { useProfileStore } from '@/store/profile-store'
@@ -13,20 +23,20 @@ import { useSessionStore } from '@/store/session-store'
 
 const CR_THRESHOLD = 0.1
 const CR_WARN_LIMIT = 0.15
+const INCONSISTENT_PAIRS_COUNT = 3
 
-// Count upper-triangle pairs whose modal value differs from 1 — those are the
-// pairs the operator has actively set away from the «однакова важливість»
-// default. Diagonal and lower triangle are skipped.
-function countSetPairs(matrix: PairwiseMatrix): number {
-  let count = 0
-  for (let i = 0; i < matrix.length; i += 1) {
-    for (let j = i + 1; j < matrix.length; j += 1) {
-      if (Math.abs(matrix[i][j].m - 1) > 1e-9) {
-        count += 1
-      }
-    }
-  }
-  return count
+const SAATY_LEGEND: ReadonlyArray<readonly [string, string]> = [
+  ['1', 'однакова важливість'],
+  ['3', 'помірна перевага'],
+  ['5', 'істотна перевага'],
+  ['7', 'значна перевага'],
+  ['9', 'абсолютна перевага'],
+  ['1/3 … 1/9', 'обернені значення для протилежної переваги'],
+]
+
+function formatStat(value: number, fractionDigits = 3): string {
+  if (!Number.isFinite(value)) return '—'
+  return value.toFixed(fractionDigits)
 }
 
 function getCrColor(cr: number): string {
@@ -37,14 +47,74 @@ function getCrColor(cr: number): string {
 
 export function MatrixSection() {
   const activeProfile = useProfileStore((s) => s.activeProfile)
-  const pairwiseMatrix = useSessionStore((s) => s.pairwiseMatrix)
-  const consistencyRatio = useSessionStore((s) => s.consistencyRatio)
+  const storedMatrix = useSessionStore((s) => s.pairwiseMatrix)
+  const commitMatrix = useSessionStore((s) => s.commitMatrix)
   const setWeights = useSessionStore((s) => s.setWeights)
   const setRanking = useSessionStore((s) => s.setRanking)
   const setEvaluationId = useSessionStore((s) => s.setEvaluationId)
   const setError = useSessionStore((s) => s.setError)
   const criteria = useCriteria()
   const createEvaluation = useCreateEvaluation()
+
+  // Local matrix mirrors the session store until the operator commits a new
+  // edit by clicking "Обчислити ваги". Lazy seed: identity matrix if criteria
+  // are loaded but the session has no stored matrix yet.
+  const [matrix, setMatrix] = useState<PairwiseMatrix | null>(storedMatrix)
+  useEffect(() => {
+    if (matrix !== null) return
+    if (storedMatrix !== null) {
+      setMatrix(storedMatrix)
+      return
+    }
+    if (criteria.data) {
+      setMatrix(identityMatrix(criteria.data.length))
+    }
+  }, [matrix, storedMatrix, criteria.data])
+
+  const stats = useMemo(
+    () => (matrix ? computeConsistencyStats(matrix) : null),
+    [matrix],
+  )
+
+  const inconsistentPairs = useMemo(() => {
+    if (!matrix || !stats) return []
+    if (stats.cr <= CR_THRESHOLD) return []
+    return findInconsistentPairs(matrix, INCONSISTENT_PAIRS_COUNT)
+  }, [matrix, stats])
+
+  const highlightPairs = useMemo(
+    () => inconsistentPairs.map((p) => [p.i, p.j] as const),
+    [inconsistentPairs],
+  )
+
+  const csvRows = useMemo(() => {
+    if (!matrix || !criteria.data) {
+      return [] as ReadonlyArray<ReadonlyArray<string | number>>
+    }
+    const rows: Array<Array<string | number>> = [['i_code', 'j_code', 'l', 'm', 'u']]
+    for (let i = 0; i < matrix.length; i += 1) {
+      for (let j = 0; j < matrix.length; j += 1) {
+        const tfn = matrix[i][j]
+        rows.push([
+          criteria.data[i].code,
+          criteria.data[j].code,
+          tfn.l,
+          tfn.m,
+          tfn.u,
+        ])
+      }
+    }
+    return rows
+  }, [matrix, criteria.data])
+
+  const jsonPayload = useMemo(
+    () => ({
+      criteria: criteria.data?.map((c) => c.code) ?? [],
+      matrix,
+      consistencyRatio: stats?.cr ?? null,
+    }),
+    [criteria.data, matrix, stats],
+  )
 
   if (!activeProfile) {
     return (
@@ -58,23 +128,28 @@ export function MatrixSection() {
     return <p className="text-sm text-muted-foreground">Завантаження критеріїв…</p>
   }
 
-  const m = criteria.data.length
-  const totalPairs = (m * (m - 1)) / 2
-  const setPairs = pairwiseMatrix ? countSetPairs(pairwiseMatrix) : 0
-  const cr = consistencyRatio ?? 0
-  const canRunFahp = pairwiseMatrix !== null && cr <= CR_THRESHOLD
+  if (!matrix || !stats) {
+    return <Skeleton className="h-96 w-full" />
+  }
 
+  const handleReset = () => {
+    if (criteria.data) {
+      setMatrix(identityMatrix(criteria.data.length))
+    }
+  }
+
+  // Compute weights using the LOCAL matrix (whatever is in the editor right
+  // now). We commit it to the session store first so downstream consumers
+  // (status badges, MapPane, exports) see the same values as the API call.
   const handleRunFahp = async () => {
-    if (!pairwiseMatrix) return
+    if (!matrix || !stats) return
+    commitMatrix(matrix, stats.cr)
     try {
       const result = await createEvaluation.mutateAsync({
         profileId: activeProfile.id,
-        pairwiseMatrix: pairwiseMatrix as PairwiseMatrix,
+        pairwiseMatrix: matrix,
       })
-      // POST /api/evaluations computes FAHP and TOPSIS in one round-trip.
-      // We persist the CR currently in the session (computed by the editor)
-      // because the backend response does not echo it.
-      setWeights(result.weights, consistencyRatio ?? 0)
+      setWeights(result.weights, stats.cr)
       setRanking(result.ranking)
       setEvaluationId(result.evaluationId)
       setError(null)
@@ -92,44 +167,110 @@ export function MatrixSection() {
     }
   }
 
-  return (
-    <div className="space-y-3">
-      <div className="rounded-md border bg-background p-3">
-        <p className="text-sm">
-          <span className="font-medium">{setPairs}</span>
-          {' / '}
-          <span className="text-muted-foreground">{totalPairs}</span> пар задано
-        </p>
-        <p className="mt-1 text-sm">
-          CR ={' '}
-          <span className={cn('font-semibold tabular-nums', getCrColor(cr))}>
-            {pairwiseMatrix ? cr.toFixed(3) : '—'}
-          </span>
-        </p>
-        {!pairwiseMatrix && (
-          <p className="mt-2 text-xs text-muted-foreground">
-            Матриця ще не задана. Завантажте дефолт або відкрийте редактор.
-          </p>
-        )}
-      </div>
+  const canRunFahp = stats.cr <= CR_THRESHOLD
 
-      <div className="flex flex-wrap gap-2">
-        <Button asChild variant="outline" size="sm">
-          <Link to="/details#matrix">
-            <Pencil className="mr-2 h-4 w-4" aria-hidden="true" />
-            Редагувати матрицю
-          </Link>
-        </Button>
-        <Button
-          size="sm"
-          onClick={handleRunFahp}
-          disabled={!canRunFahp || createEvaluation.isPending}
-          title={canRunFahp ? undefined : 'Узгодженість CR перевищує 0,10'}
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">
+        Верхній трикутник редагується значеннями шкали Сааті; нижній –
+        автоматично обернений TFN за формулою (1.6); діагональ – (1, 1, 1).
+      </p>
+
+      <section
+        aria-label="Статистика узгодженості"
+        className="grid grid-cols-2 gap-3 rounded-md border bg-muted/40 p-3 text-sm sm:grid-cols-4"
+      >
+        <Stat label="λ_max" value={formatStat(stats.lambdaMax)} />
+        <Stat label="CI" value={formatStat(stats.ci)} />
+        <Stat label={`RI (n=${matrix.length})`} value={formatStat(stats.ri, 2)} />
+        <Stat
+          label="CR"
+          value={formatStat(stats.cr)}
+          className={cn('font-semibold tabular-nums', getCrColor(stats.cr))}
+        />
+      </section>
+
+      <details className="rounded-md border bg-background p-3 text-sm">
+        <summary className="flex cursor-pointer items-center gap-2 font-medium">
+          <HelpCircle className="h-4 w-4" aria-hidden="true" />
+          Шкала Сааті
+        </summary>
+        <dl className="mt-3 grid gap-1 text-xs sm:grid-cols-2">
+          {SAATY_LEGEND.map(([key, description]) => (
+            <div key={key} className="flex gap-2">
+              <dt className="font-mono font-medium">{key}</dt>
+              <dd className="text-muted-foreground">{description}</dd>
+            </div>
+          ))}
+        </dl>
+      </details>
+
+      <AhpMatrix
+        criteria={criteria.data}
+        matrix={matrix}
+        onChange={setMatrix}
+        highlightPairs={highlightPairs}
+      />
+
+      {stats.cr > CR_THRESHOLD && inconsistentPairs.length > 0 && (
+        <p
+          role="status"
+          className="rounded-md border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-100"
         >
-          <Calculator className="mr-2 h-4 w-4" aria-hidden="true" />
-          {createEvaluation.isPending ? 'Обчислення…' : 'Обчислити ваги'}
-        </Button>
+          CR перевищує 0,10. Найбільший внесок у неузгодженість дають пари:{' '}
+          {inconsistentPairs
+            .map(({ i, j }) => `${criteria.data[i].code}/${criteria.data[j].code}`)
+            .join(', ')}
+          . Перегляньте їх перед обчисленням.
+        </p>
+      )}
+
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <TabularExportButtons
+          csvRows={csvRows}
+          jsonData={jsonPayload}
+          filenameBase="pairwise-matrix"
+        />
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleReset}
+            aria-label="Скинути до дефолту"
+            title="Скинути до дефолту"
+          >
+            <RotateCcw className="h-4 w-4" aria-hidden="true" />
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleRunFahp}
+            disabled={!canRunFahp || createEvaluation.isPending}
+            title={canRunFahp ? undefined : 'Узгодженість CR перевищує 0,10'}
+          >
+            <Calculator className="mr-2 h-4 w-4" aria-hidden="true" />
+            {createEvaluation.isPending ? 'Обчислення…' : 'Обчислити ваги'}
+          </Button>
+        </div>
       </div>
+    </div>
+  )
+}
+
+interface StatProps {
+  label: string
+  value: string
+  className?: string
+}
+
+function Stat({ label, value, className }: StatProps) {
+  return (
+    <div>
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className={cn('mt-0.5 text-base font-semibold tabular-nums', className)}>
+        {value}
+      </p>
     </div>
   )
 }

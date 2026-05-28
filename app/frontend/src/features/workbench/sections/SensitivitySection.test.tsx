@@ -3,11 +3,20 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import MockAdapter from 'axios-mock-adapter'
 import type { ReactNode } from 'react'
-import { MemoryRouter } from 'react-router-dom'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { api } from '@/lib/api'
 import { useSessionStore } from '@/store/session-store'
+
+// Nivo charts render SVGs jsdom cannot lay out. Stub both so the surrounding
+// section logic (run mutation, store writes, toggles) can be tested in
+// isolation from the visualisation layer.
+vi.mock('@/features/sensitivity/ConfidenceIntervalsChart', () => ({
+  ConfidenceIntervalsChart: () => <div data-testid="ci-chart" />,
+}))
+vi.mock('@/features/sensitivity/StabilityHeatmap', () => ({
+  StabilityHeatmap: () => <div data-testid="stability-heatmap" />,
+}))
 
 import { SensitivitySection } from './SensitivitySection'
 
@@ -18,11 +27,7 @@ const LOCATIONS = [
 
 function renderSection(node: ReactNode = <SensitivitySection />) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(
-    <QueryClientProvider client={client}>
-      <MemoryRouter>{node}</MemoryRouter>
-    </QueryClientProvider>,
-  )
+  return render(<QueryClientProvider client={client}>{node}</QueryClientProvider>)
 }
 
 describe('SensitivitySection', () => {
@@ -42,7 +47,7 @@ describe('SensitivitySection', () => {
     mock.restore()
   })
 
-  it('runs MC, writes the result to the store, and shows summaries', async () => {
+  it('runs MC, writes the result to the store, and shows the full analytical view', async () => {
     useSessionStore.getState().setEvaluationId(42)
 
     const responseBody = {
@@ -68,9 +73,12 @@ describe('SensitivitySection', () => {
     await waitFor(() => {
       expect(useSessionStore.getState().sensitivity).not.toBeNull()
     })
-    expect(screen.getByText(/95 % ДІ для топ-2/)).toBeInTheDocument()
-    expect(screen.getByText(/p_i\(k\)/)).toBeInTheDocument()
+    expect(screen.getByText(/95 % довірчі інтервали/)).toBeInTheDocument()
+    expect(screen.getByTestId('ci-chart')).toBeInTheDocument()
+    expect(screen.getByTestId('stability-heatmap')).toBeInTheDocument()
+    expect(screen.getByText(/Матриця стабільності p_i\(k\) \(теплова карта\)/)).toBeInTheDocument()
     expect(screen.getByText(/Шар стійкості на карті/)).toBeInTheDocument()
+    expect(screen.getByText(/ADR-0001/)).toBeInTheDocument()
     mock.restore()
   })
 

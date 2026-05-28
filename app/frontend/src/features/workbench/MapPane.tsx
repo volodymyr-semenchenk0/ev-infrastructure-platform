@@ -6,10 +6,10 @@ import { useLocations } from '@/features/locations/useLocations'
 import { LocationMap, type RankInfo } from '@/features/map/LocationMap'
 import { useSessionStore } from '@/store/session-store'
 
-// MapPane fills the right half of the workbench. Ranking colouring is wired
-// in task 9; for now `rankByLocationId` stays empty whenever the session
-// store has no ranking yet, so markers render in the neutral colour from
-// `marker-color.ts`.
+// MapPane renders the location map and lets the parent control sizing
+// (embedded vs fullscreen). The outer section fills its container so the
+// caller decides whether that container is a 480px panel inside the ranking
+// accordion or a fixed inset overlay covering the viewport.
 export function MapPane() {
   const locations = useLocations()
   const criteria = useCriteria()
@@ -29,9 +29,9 @@ export function MapPane() {
     )
   }, [ranking])
 
-  // Per UI_PLAN §5.2.5 the shading uses p_i(1) — the top-1 acceptability
-  // index from formula (1.17). The session stores the cumulative top-k
-  // payload keyed by stringified location id and k value.
+  // The shading uses p_i(1) — the top-1 acceptability index from formula
+  // (1.17). The session stores the cumulative top-k payload keyed by
+  // stringified location id and k value.
   const stabilityByLocationId = useMemo<Map<number, number>>(() => {
     if (!sensitivity) return new Map()
     const map = new Map<number, number>()
@@ -53,7 +53,7 @@ export function MapPane() {
   return (
     <section
       aria-label="Карта локацій-кандидатів"
-      className="relative flex flex-1 items-stretch bg-muted"
+      className="relative flex h-full w-full items-stretch bg-muted"
     >
       {isLoading && <LoadingOverlay />}
       {!isLoading && isError && <ErrorOverlay />}

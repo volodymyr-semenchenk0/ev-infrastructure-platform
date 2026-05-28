@@ -1,13 +1,17 @@
-import { useMemo } from 'react'
-import { Link } from 'react-router-dom'
-import { ExternalLink, Loader2, Play } from 'lucide-react'
+import { useMemo, useRef } from 'react'
+import { Loader2, Play } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import { toast } from '@/components/ui/use-toast'
+import { ChartExportButtons } from '@/features/export/ChartExportButtons'
+import { TabularExportButtons } from '@/features/export/TabularExportButtons'
 import { useLocations } from '@/features/locations/useLocations'
+import { IntermediatesGapNote } from '@/features/results/IntermediatesGapNote'
+import { ConfidenceIntervalsChart } from '@/features/sensitivity/ConfidenceIntervalsChart'
+import { StabilityHeatmap } from '@/features/sensitivity/StabilityHeatmap'
 import {
   useSensitivity,
   type SensitivityResponse,
@@ -23,8 +27,10 @@ import { ValidationError } from '@/lib/api'
 import { useSessionStore } from '@/store/session-store'
 
 // Monte Carlo seed is fixed in the backend (DEFAULT_SEED = 42). We surface it
-// so the operator can verify reproducibility per UI_PLAN §6.
+// so the operator can verify reproducibility.
 const DEFAULT_SEED = 42
+
+const K_VALUES = [1, 3, 5] as const
 
 export function SensitivitySection() {
   const evaluationId = useSessionStore((s) => s.evaluationId)
@@ -38,10 +44,35 @@ export function SensitivitySection() {
   const form = useSensitivityForm()
   const mutation = useSensitivity()
 
+  const ciChartRef = useRef<HTMLDivElement>(null)
+  const heatmapRef = useRef<HTMLDivElement>(null)
+
   const nameByLocationId = useMemo<Record<number, string>>(() => {
     if (!locations.data) return {}
     return Object.fromEntries(locations.data.map((l) => [l.id, l.name]))
   }, [locations.data])
+
+  const sortedStability = useMemo(() => {
+    if (!sensitivity) return []
+    return Object.entries(sensitivity.stabilityMatrix)
+      .map(([idStr, perK]) => ({
+        locationId: Number(idStr),
+        perK: perK as Record<string, number>,
+      }))
+      .sort((a, b) => (b.perK['1'] ?? 0) - (a.perK['1'] ?? 0))
+  }, [sensitivity])
+
+  const stabilityCsv = useMemo(() => {
+    if (!sensitivity) return [] as ReadonlyArray<ReadonlyArray<string | number>>
+    return [
+      ['location_id', 'name', ...K_VALUES.map((k) => `p_${k}`)],
+      ...sortedStability.map(({ locationId, perK }) => [
+        locationId,
+        nameByLocationId[locationId] ?? `#${locationId}`,
+        ...K_VALUES.map((k) => perK[String(k)] ?? 0),
+      ]),
+    ]
+  }, [sensitivity, sortedStability, nameByLocationId])
 
   if (evaluationId === null) {
     return (
@@ -75,6 +106,8 @@ export function SensitivitySection() {
       toast({ title: 'Помилка чутливості', description, variant: 'destructive' })
     }
   }
+
+  const filenameBase = `monte-carlo-${evaluationId ?? 'session'}`
 
   return (
     <div className="space-y-4">
@@ -147,20 +180,100 @@ export function SensitivitySection() {
       </Button>
 
       {sensitivity && (
-        <div className="space-y-3 border-t pt-3">
-          <ConfidenceSummary
-            confidenceIntervals={sensitivity.confidenceIntervals}
-            nameByLocationId={nameByLocationId}
-          />
-          <StabilitySummary
-            stabilityMatrix={sensitivity.stabilityMatrix}
-            nameByLocationId={nameByLocationId}
-          />
+        <div className="space-y-6 border-t pt-4">
+          <div className="flex justify-end">
+            <TabularExportButtons
+              csvRows={stabilityCsv}
+              jsonData={{
+                evaluationId,
+                params: {
+                  iterations: form.iterations,
+                  perturbation: form.perturbation,
+                },
+                seed: DEFAULT_SEED,
+                stabilityMatrix: sensitivity.stabilityMatrix,
+                confidenceIntervals: sensitivity.confidenceIntervals,
+              }}
+              filenameBase={filenameBase}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold">
+              95 % довірчі інтервали C* для топ-{sensitivity.confidenceIntervals.length}
+            </h3>
+            <div ref={ciChartRef}>
+              <ConfidenceIntervalsChart
+                confidenceIntervals={sensitivity.confidenceIntervals}
+                nameByLocationId={nameByLocationId}
+              />
+            </div>
+            <ChartExportButtons
+              containerRef={ciChartRef}
+              filenameBase={`${filenameBase}-ci`}
+              label="Експорт ДІ:"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold">
+              Матриця стабільності p_i(k) (теплова карта)
+            </h3>
+            <div ref={heatmapRef}>
+              <StabilityHeatmap
+                stabilityMatrix={sensitivity.stabilityMatrix}
+                nameByLocationId={nameByLocationId}
+              />
+            </div>
+            <ChartExportButtons
+              containerRef={heatmapRef}
+              filenameBase={`${filenameBase}-heatmap`}
+              label="Експорт теплової карти:"
+            />
+          </div>
+
+          <div>
+            <h3 className="mb-2 text-sm font-semibold">
+              Матриця стабільності p_i(k) (таблиця)
+            </h3>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-left text-muted-foreground">
+                  <th className="py-2 pr-3 font-medium">Локація</th>
+                  {K_VALUES.map((k) => (
+                    <th key={k} className="py-2 pr-3 text-right font-medium">
+                      p_i({k})
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {sortedStability.map(({ locationId, perK }) => {
+                  const label = nameByLocationId[locationId] ?? `#${locationId}`
+                  return (
+                    <tr key={locationId} className="border-b last:border-b-0">
+                      <td className="py-2 pr-3">{label}</td>
+                      {K_VALUES.map((k) => (
+                        <td
+                          key={k}
+                          className="py-2 pr-3 text-right font-mono tabular-nums"
+                        >
+                          {((perK[String(k)] ?? 0) * 100).toFixed(1)}%
+                        </td>
+                      ))}
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
 
           <label className="flex items-center justify-between gap-3 rounded-md border bg-background p-3 text-sm">
             <span>
               <span className="font-medium">Шар стійкості на карті</span>
-              <span className="ml-1 text-muted-foreground">— забарвлення за p_i(1)</span>
+              <span className="ml-1 text-muted-foreground">
+                — забарвлення за p_i(1); застосовується, коли карта показана
+              </span>
             </span>
             <input
               type="checkbox"
@@ -172,111 +285,12 @@ export function SensitivitySection() {
             />
           </label>
 
-          <Button asChild variant="ghost" size="sm" className="w-full">
-            <Link to="/details#mc">
-              <ExternalLink className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
-              Деталі чутливості
-            </Link>
-          </Button>
+          <IntermediatesGapNote
+            items={['повна матриця p_i(k) для всіх k', 'гістограми C*']}
+            formulas="формули (1.15)-(1.17)"
+          />
         </div>
       )}
-    </div>
-  )
-}
-
-interface SensitivitySharedProps {
-  nameByLocationId: Record<number, string>
-}
-
-interface ConfidenceSummaryProps extends SensitivitySharedProps {
-  confidenceIntervals: SensitivityResponse['confidenceIntervals']
-}
-
-function ConfidenceSummary({
-  confidenceIntervals,
-  nameByLocationId,
-}: ConfidenceSummaryProps) {
-  if (confidenceIntervals.length === 0) {
-    return null
-  }
-  return (
-    <div>
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        95 % ДІ для топ-{confidenceIntervals.length}
-      </p>
-      <ul className="mt-1 space-y-1 text-sm">
-        {confidenceIntervals.map((ci, idx) => {
-          const label = nameByLocationId[ci.locationId] ?? `#${ci.locationId}`
-          const mean = (ci.lower + ci.upper) / 2
-          return (
-            <li key={ci.locationId} className="flex justify-between gap-2">
-              <span>
-                {idx + 1}. {label}
-              </span>
-              <span className="font-mono text-xs tabular-nums">
-                {mean.toFixed(3)} ± {(ci.upper - mean).toFixed(3)}
-              </span>
-            </li>
-          )
-        })}
-      </ul>
-    </div>
-  )
-}
-
-interface StabilitySummaryProps extends SensitivitySharedProps {
-  stabilityMatrix: SensitivityResponse['stabilityMatrix']
-}
-
-const K_VALUES = [1, 3, 5] as const
-
-function StabilitySummary({
-  stabilityMatrix,
-  nameByLocationId,
-}: StabilitySummaryProps) {
-  const entries = Object.entries(stabilityMatrix)
-  if (entries.length === 0) return null
-
-  // Sort by p_i(1) descending so the most stable location surfaces first.
-  const sorted = entries
-    .map(([idStr, perK]) => ({
-      locationId: Number(idStr),
-      perK: perK as Record<string, number>,
-    }))
-    .sort((a, b) => (b.perK['1'] ?? 0) - (a.perK['1'] ?? 0))
-
-  return (
-    <div>
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        p_i(k) для k ∈ {'{'}1, 3, 5{'}'}
-      </p>
-      <table className="mt-1 w-full text-xs">
-        <thead>
-          <tr className="border-b text-muted-foreground">
-            <th className="py-1 text-left font-medium">Локація</th>
-            {K_VALUES.map((k) => (
-              <th key={k} className="py-1 text-right font-medium">
-                k={k}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {sorted.map(({ locationId, perK }) => {
-            const label = nameByLocationId[locationId] ?? `#${locationId}`
-            return (
-              <tr key={locationId} className="border-b last:border-b-0">
-                <td className="py-1 pr-2 truncate">{label}</td>
-                {K_VALUES.map((k) => (
-                  <td key={k} className="py-1 text-right font-mono tabular-nums">
-                    {((perK[String(k)] ?? 0) * 100).toFixed(1)}%
-                  </td>
-                ))}
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
     </div>
   )
 }

@@ -3,11 +3,20 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import MockAdapter from 'axios-mock-adapter'
 import type { ReactNode } from 'react'
-import { MemoryRouter } from 'react-router-dom'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { api } from '@/lib/api'
 import { useSessionStore } from '@/store/session-store'
+
+// Nivo scatter plot and the map embed both need real SVG / WebGL stacks we
+// cannot give them in jsdom. Stub both so the surrounding section can be
+// asserted independently.
+vi.mock('@/features/results/ClosenessScatterPlot', () => ({
+  ClosenessScatterPlot: () => <div data-testid="closeness-scatter" />,
+}))
+vi.mock('@/features/workbench/RankingMapEmbed', () => ({
+  RankingMapEmbed: () => <div data-testid="ranking-map-embed" />,
+}))
 
 import { RankingSection } from './RankingSection'
 
@@ -19,11 +28,7 @@ const LOCATIONS = [
 
 function renderSection(node: ReactNode = <RankingSection />) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(
-    <QueryClientProvider client={client}>
-      <MemoryRouter>{node}</MemoryRouter>
-    </QueryClientProvider>,
-  )
+  return render(<QueryClientProvider client={client}>{node}</QueryClientProvider>)
 }
 
 describe('RankingSection', () => {
@@ -41,7 +46,7 @@ describe('RankingSection', () => {
     mock.restore()
   })
 
-  it('renders the ranking table joined with location names, top-3 highlighted', async () => {
+  it('renders the ranking table, scatter plot and inline export buttons', async () => {
     useSessionStore.getState().setRanking([
       { locationId: 2, rank: 1, closeness: 0.91, sPlus: 0.1, sMinus: 0.5 },
       { locationId: 1, rank: 2, closeness: 0.72, sPlus: 0.2, sMinus: 0.4 },
@@ -56,6 +61,10 @@ describe('RankingSection', () => {
     expect(await screen.findByText('Alpha')).toBeInTheDocument()
     expect(screen.getByText('Beta')).toBeInTheDocument()
     expect(screen.getByText('Gamma')).toBeInTheDocument()
+    expect(screen.getByTestId('closeness-scatter')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^CSV$/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^JSON$/ })).toBeInTheDocument()
+    expect(screen.getByText(/ADR-0001/)).toBeInTheDocument()
     mock.restore()
   })
 
@@ -86,25 +95,26 @@ describe('RankingSection', () => {
     mock.restore()
   })
 
-  it('renders export buttons once evaluationId is set', async () => {
+  it('toggles the embedded map on the «Показати на карті» button', async () => {
     useSessionStore.getState().setRanking([
       { locationId: 1, rank: 1, closeness: 0.5, sPlus: 0.2, sMinus: 0.2 },
     ])
-    useSessionStore.getState().setEvaluationId(42)
 
     const mock = new MockAdapter(api)
     mock.onGet('/locations').reply(200, LOCATIONS)
 
+    const user = userEvent.setup()
     renderSection()
 
     await screen.findByText('Alpha')
-    expect(screen.getByRole('link', { name: /CSV/ })).toHaveAttribute(
-      'href',
-      expect.stringContaining('/evaluations/42/export?format=csv'),
-    )
-    expect(screen.getByRole('link', { name: /JSON/ })).toHaveAttribute(
-      'href',
-      expect.stringContaining('/evaluations/42/export?format=json'),
+    expect(screen.queryByTestId('ranking-map-embed')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /Показати на карті/ }))
+    expect(await screen.findByTestId('ranking-map-embed')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /Приховати карту/ }))
+    await waitFor(() =>
+      expect(screen.queryByTestId('ranking-map-embed')).not.toBeInTheDocument(),
     )
     mock.restore()
   })

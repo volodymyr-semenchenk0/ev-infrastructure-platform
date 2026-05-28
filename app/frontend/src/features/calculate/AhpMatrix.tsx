@@ -169,10 +169,6 @@ export function AhpMatrix({
           ))}
         </tbody>
       </table>
-      <p className="mt-2 text-xs text-muted-foreground">
-        Шкала Saaty: m ∈ {'{'}1/9, 1/7, 1/5, 1/3, 1, 3, 5, 7, 9{'}'}. Верхній
-        трикутник редагується, нижній — авто-reciprocal.
-      </p>
       <p className="sr-only">Розмір матриці: {n}×{n}</p>
     </div>
   )

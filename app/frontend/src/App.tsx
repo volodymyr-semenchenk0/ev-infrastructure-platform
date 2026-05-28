@@ -1,15 +1,12 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
 import { WorkbenchLayout } from '@/components/layout/WorkbenchLayout'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
-import { DetailsPage } from '@/pages/DetailsPage'
-import { WorkbenchPage } from '@/pages/WorkbenchPage'
+import { HomePage } from '@/pages/HomePage'
 
-// Single-page workbench per UI_PLAN §5. The legacy page-based shell
-// (CalculatePage, ResultsPage, …) was retired in task 11 after the
-// fullscreen /details view absorbed the matrix editor and the analytical
-// tables. Profile comparison stays parked in features/comparison/ per
-// UI_PLAN §3.6.
+// Single-page workbench: every step of the operator's workflow lives on the
+// root route as a stack of accordions. The legacy /details route is kept as a
+// redirect so bookmarks like /details#topsis still resolve to a usable page.
 
 export default function App() {
   return (
@@ -17,8 +14,9 @@ export default function App() {
       <ErrorBoundary>
         <Routes>
           <Route element={<WorkbenchLayout />}>
-            <Route index element={<WorkbenchPage />} />
-            <Route path="details" element={<DetailsPage />} />
+            <Route index element={<HomePage />} />
+            <Route path="details" element={<Navigate to="/" replace />} />
+            <Route path="details/*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
       </ErrorBoundary>
