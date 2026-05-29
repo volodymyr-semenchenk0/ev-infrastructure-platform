@@ -32,17 +32,16 @@ EXPECTED_CRITERION_CODES = [
     "Traffic",
     "Grid_cap",
     "Dist_sub",
-    "Revenue",
     "Land_cost",
     "Parking",
     "Income",
     "Green",
-    "Env_qual",
+    "Sat_dist",
 ]
 
 
 def _criteria() -> list[_StubCriterion]:
-    """Return the 10 seeded criteria in id order (matches seed_reference_data)."""
+    """Return the 9 seeded criteria in id order (matches seed_reference_data)."""
     return [_StubCriterion(id=i + 1, code=code) for i, code in enumerate(EXPECTED_CRITERION_CODES)]
 
 
@@ -128,9 +127,9 @@ class TestBuildDefaultPairwiseMatrix:
     def test_matrix_has_correct_shape_and_diagonal(self) -> None:
         matrix = build_default_pairwise_matrix("municipal", _criteria())
         assert matrix is not None
-        assert len(matrix) == 10
+        assert len(matrix) == 9
         for i, row in enumerate(matrix):
-            assert len(row) == 10
+            assert len(row) == 9
             cell = row[i]
             assert (cell.l, cell.m, cell.u) == (1.0, 1.0, 1.0), (
                 f"Diagonal [{i}][{i}] must be crisp 1, got ({cell.l}, {cell.m}, {cell.u})"
@@ -151,8 +150,8 @@ class TestBuildDefaultPairwiseMatrix:
     def test_priorities_table_covers_both_seeded_profiles(self) -> None:
         assert set(PAIRWISE_PRIORITIES.keys()) == {"municipal", "investor"}
         for profile_code, priorities in PAIRWISE_PRIORITIES.items():
-            assert len(priorities) == 10, (
-                f"Profile {profile_code} priorities must cover all 10 criteria"
+            assert len(priorities) == 9, (
+                f"Profile {profile_code} priorities must cover all 9 criteria"
             )
 
     def test_each_profile_default_satisfies_cr_threshold(self) -> None:

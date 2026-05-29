@@ -62,7 +62,7 @@ class TestLocations:
     async def test_list_locations_includes_criteria_values(self, api_client: AsyncClient) -> None:
         """GET /api/locations items include criteriaValues: dict[str, float].
 
-        Each seeded location has 10 criterion values (Pop_dens, Traffic, …).
+        Each seeded location has 9 criterion values (Pop_dens, Traffic, …).
         Reference: plan partitioned-kindling-cosmos.md — Etap 6.0.
         """
         resp = await api_client.get("/api/locations")
@@ -74,7 +74,7 @@ class TestLocations:
         for loc in data:
             cv = loc.get("criteriaValues")
             assert cv is not None, f"location id={loc['id']} missing criteriaValues"
-            assert len(cv) == 10, f"expected 10 criteria, got {len(cv)} for id={loc['id']}"
+            assert len(cv) == 9, f"expected 9 criteria, got {len(cv)} for id={loc['id']}"
             for code, val in cv.items():
                 assert isinstance(code, str) and len(code) > 0
                 assert isinstance(val, float) and val >= 0, (

@@ -25,27 +25,25 @@ from schemas.evaluation import FuzzyNumber
 PAIRWISE_PRIORITIES: dict[str, dict[str, int]] = {
     "municipal": {
         "Pop_dens": 9,
-        "Env_qual": 7,
         "Green": 7,
         "Grid_cap": 5,
         "Traffic": 5,
+        "Sat_dist": 5,
         "Dist_sub": 3,
         "Parking": 3,
         "Land_cost": 3,
         "Income": 1,
-        "Revenue": 1,
     },
     "investor": {
-        "Revenue": 9,
         "Traffic": 7,
         "Income": 7,
+        "Sat_dist": 7,
         "Grid_cap": 5,
         "Land_cost": 5,
         "Dist_sub": 3,
         "Pop_dens": 3,
         "Parking": 3,
         "Green": 1,
-        "Env_qual": 1,
     },
 }
 
@@ -121,7 +119,7 @@ def build_default_pairwise_matrix(
     profile_code: str,
     criteria: list[_CriterionLike],
 ) -> list[list[FuzzyNumber]] | None:
-    """Build the 10x10 default Ã for `profile_code` ordered by `criteria`.
+    """Build the n×n default Ã for `profile_code` ordered by `criteria`.
 
     Returns `None` if the profile has no priority dict (UI then falls back
     to the identity matrix per UI_PLAN §4). Diagonal cells are crisp 1; the

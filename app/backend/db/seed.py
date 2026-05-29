@@ -1,4 +1,4 @@
-"""Reference-data seed: 2 profiles, 10 criteria, decision matrix.
+"""Reference-data seed: 2 profiles, 9 criteria, decision matrix.
 
 Дані відповідають таблицям 3.1 і 3.3 курсової. Локації вносяться через API або
 окремим скриптом для конкретного аналізу в межах міста. Ідемпотентність забезпечена
@@ -24,12 +24,11 @@ CRITERION_RANGES: dict[str, tuple[float, float]] = {
     "Traffic": (5000.0, 60000.0),  # vehicles/day
     "Grid_cap": (100.0, 800.0),  # kW
     "Dist_sub": (0.1, 3.5),  # km
-    "Revenue": (3.0, 9.0),  # score 1–10
     "Land_cost": (3.0, 9.0),  # score 1–10
     "Parking": (5.0, 50.0),  # places
     "Income": (3.0, 8.0),  # score 1–10
     "Green": (5.0, 60.0),  # %
-    "Env_qual": (3.0, 8.0),  # score 1–10
+    "Sat_dist": (0.2, 5.0),  # km to nearest existing station
 }
 
 
@@ -52,7 +51,7 @@ PROFILES: list[dict[str, str]] = [
     },
 ]
 
-# 10 criteria (master.md Table 3.3; spec 2.2.2 §2)
+# 9 criteria (master.md Table 3.3; spec 2.2.2 §2)
 CRITERIA: list[dict[str, str]] = [
     {
         "code": "Pop_dens",
@@ -83,13 +82,6 @@ CRITERIA: list[dict[str, str]] = [
         "scale": "ratio",
     },
     {
-        "code": "Revenue",
-        "name": "Потенційна рентабельність",
-        "unit": "score 1-10",
-        "optimization_type": "max",
-        "scale": "ordinal",
-    },
-    {
         "code": "Land_cost",
         "name": "Вартість земельної ділянки",
         "unit": "score 1-10",
@@ -118,11 +110,11 @@ CRITERIA: list[dict[str, str]] = [
         "scale": "ratio",
     },
     {
-        "code": "Env_qual",
-        "name": "Екологічна привабливість",
-        "unit": "score 1-10",
+        "code": "Sat_dist",
+        "name": "Відстань до найближчої наявної станції",
+        "unit": "km",
         "optimization_type": "max",
-        "scale": "ordinal",
+        "scale": "ratio",
     },
 ]
 
@@ -148,7 +140,7 @@ async def seed_reference_data(session: AsyncSession) -> None:
 async def seed_decision_matrix(session: AsyncSession, rng_seed: int = 42) -> None:
     """Idempotently populate location_criterion_values with synthetic data.
 
-    Generates 10 criterion values for each location currently in the DB using
+    Generates 9 criterion values for each location currently in the DB using
     uniform sampling within per-criterion ranges.  Called after seed_reference_data
     and after locations have been added, so that criteria and locations already exist.
 

@@ -47,7 +47,7 @@ async def api_client(db_session: AsyncSession) -> AsyncClient:
     """ASGI client with the test DB session injected via dependency_overrides.
 
     Seeds the reference data and decision matrix so every endpoint test starts
-    from a consistent state: 2 profiles, 10 criteria, 12 locations, 120 X-values.
+    from a consistent state: 2 profiles, 9 criteria, 12 locations, 120 X-values.
     """
     from tests.conftest import _seed_test_locations
 
@@ -120,9 +120,9 @@ class TestProfiles:
         data = response.json()
         matrix = data.get("pairwiseMatrix")
         assert matrix is not None, "pairwiseMatrix must be present after seed_pairwise_matrices ran"
-        assert len(matrix) == 10
+        assert len(matrix) == 9
         for row in matrix:
-            assert len(row) == 10
+            assert len(row) == 9
         for i, row in enumerate(matrix):
             for j, cell in enumerate(row):
                 assert {"l", "m", "u"}.issubset(cell.keys())
@@ -141,18 +141,18 @@ class TestCriteria:
     Reference: spec 2.1.6 §3 — criteria catalog endpoint.
     """
 
-    async def test_list_criteria_returns_10_items(self, api_client: AsyncClient) -> None:
-        """GET /api/criteria must return 10 items matching master.md Table 3.3.
+    async def test_list_criteria_returns_9_items(self, api_client: AsyncClient) -> None:
+        """GET /api/criteria must return 9 items matching master.md Table 3.3.
 
         Each item must expose the camelCase keys id, code, name, unit,
         optimizationType, scale — no snake_case leakage.
-        Reference: master.md Table 3.3 — 10 evaluation criteria.
+        Reference: master.md Table 3.3 — 9 evaluation criteria.
         """
         response = await api_client.get("/api/criteria")
 
         assert response.status_code == 200
         data = response.json()
-        assert len(data) == 10
+        assert len(data) == 9
 
         item = data[0]
         expected_keys = {"id", "code", "name", "unit", "optimizationType", "scale"}
@@ -253,10 +253,10 @@ class TestEvaluations:
     async def test_post_evaluation_with_identity_matrix_returns_200(
         self, api_client: AsyncClient
     ) -> None:
-        """POST /api/evaluations with an identity 10×10 TFN matrix must return 200.
+        """POST /api/evaluations with an identity 9×9 TFN matrix must return 200.
 
-        The identity matrix has CR = 0 and yields equal weights (1/10 each).
-        Response must contain evaluationId (int), weights (dict with 10 keys),
+        The identity matrix has CR = 0 and yields equal weights (1/9 each).
+        Response must contain evaluationId (int), weights (dict with 9 keys),
         and ranking (list of 12 items, each with locationId, rank, closeness,
         sPlus, sMinus).
 
@@ -268,7 +268,7 @@ class TestEvaluations:
         municipal = next(p for p in profiles if p["code"] == "municipal")
         municipal_id = municipal["id"]
 
-        pwm = _identity_pairwise_matrix(10)
+        pwm = _identity_pairwise_matrix(9)
         payload = {"profileId": municipal_id, "pairwiseMatrix": pwm}
 
         response = await api_client.post("/api/evaluations", json=payload)
@@ -281,8 +281,8 @@ class TestEvaluations:
         )
 
         weights = data.get("weights", {})
-        assert len(weights) == 10, (
-            f"Expected 10 weight entries (one per criterion), got {len(weights)}"
+        assert len(weights) == 9, (
+            f"Expected 9 weight entries (one per criterion), got {len(weights)}"
         )
 
         ranking = data.get("ranking", [])
@@ -297,7 +297,7 @@ class TestEvaluations:
     async def test_post_evaluation_size_mismatch_returns_422(self, api_client: AsyncClient) -> None:
         """POST /api/evaluations with a 5×5 matrix must return 422.
 
-        The DB has 10 criteria after seed; EvaluationService raises ValueError
+        The DB has 9 criteria after seed; EvaluationService raises ValueError
         when the matrix dimension does not match the criterion count.  The global
         ValueError exception handler added in Task #17 maps that to HTTP 422.
 
@@ -305,7 +305,7 @@ class TestEvaluations:
         within Saaty bounds) so the error is a domain-level size mismatch, not a
         Pydantic validation error.
 
-        Reference: spec 2.1.6 §6 — matrix size must equal criteria count (10).
+        Reference: spec 2.1.6 §6 — matrix size must equal criteria count (9).
         """
         profiles_resp = await api_client.get("/api/profiles")
         profiles = profiles_resp.json()
@@ -332,7 +332,7 @@ class TestEvaluations:
         municipal = next(p for p in profiles if p["code"] == "municipal")
         municipal_id = municipal["id"]
 
-        pwm = _identity_pairwise_matrix(10)
+        pwm = _identity_pairwise_matrix(9)
         create_resp = await api_client.post(
             "/api/evaluations",
             json={"profileId": municipal_id, "pairwiseMatrix": pwm},
@@ -382,7 +382,7 @@ class TestSensitivity:
         municipal = next(p for p in profiles if p["code"] == "municipal")
         municipal_id = municipal["id"]
 
-        pwm = _identity_pairwise_matrix(10)
+        pwm = _identity_pairwise_matrix(9)
         create_resp = await api_client.post(
             "/api/evaluations",
             json={"profileId": municipal_id, "pairwiseMatrix": pwm},
@@ -437,7 +437,7 @@ class TestSensitivity:
             "/api/evaluations",
             json={
                 "profileId": municipal_id,
-                "pairwiseMatrix": _identity_pairwise_matrix(10),
+                "pairwiseMatrix": _identity_pairwise_matrix(9),
             },
         )
         evaluation_id = create_resp.json()["evaluationId"]

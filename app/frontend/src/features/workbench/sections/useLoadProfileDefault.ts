@@ -30,7 +30,7 @@ export function useLoadProfileDefault() {
 
   return useCallback(
     async (profileId: number, opts: LoadOptions = {}): Promise<LoadOutcome> => {
-      const fallbackSize = criteria.data?.length ?? 10
+      const fallbackSize = criteria.data?.length ?? 9
 
       const commitIdentity = (reason: 'no-default' | 'not-found' | 'error') => {
         commitMatrix(identityMatrix(fallbackSize), 0)

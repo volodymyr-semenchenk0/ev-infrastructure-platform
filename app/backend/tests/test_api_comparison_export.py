@@ -46,7 +46,7 @@ async def api_client(db_session: AsyncSession) -> AsyncClient:
     """ASGI client with the test DB session injected via dependency_overrides.
 
     Seeds reference data and decision matrix so every endpoint test starts
-    from a consistent state: 2 profiles, 10 criteria, 12 locations, 120 X-values.
+    from a consistent state: 2 profiles, 9 criteria, 12 locations, 120 X-values.
     """
     from tests.conftest import _seed_test_locations
 
@@ -69,7 +69,7 @@ async def _create_evaluation(api_client: AsyncClient, profile_code: str = "munic
     """POST /api/evaluations with an identity matrix; return the created evaluationId."""
     profiles = (await api_client.get("/api/profiles")).json()
     profile = next(p for p in profiles if p["code"] == profile_code)
-    payload = {"profileId": profile["id"], "pairwiseMatrix": _identity_pairwise_matrix(10)}
+    payload = {"profileId": profile["id"], "pairwiseMatrix": _identity_pairwise_matrix(9)}
     resp = await api_client.post("/api/evaluations", json=payload)
     assert resp.status_code == 200
     return resp.json()["evaluationId"]

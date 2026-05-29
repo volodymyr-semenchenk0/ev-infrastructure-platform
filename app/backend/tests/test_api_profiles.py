@@ -29,7 +29,7 @@ class TestProfiles:
     ) -> None:
         """GET /api/profiles/{id} returns 200 with criteria list for valid id.
 
-        ProfileDetailRead must include a 'criteria' list (seeded: 10 items).
+        ProfileDetailRead must include a 'criteria' list (seeded: 9 items).
         Reference: spec 2.1.6 §2 — profile detail endpoint.
         """
         profiles = (await api_client.get("/api/profiles")).json()
