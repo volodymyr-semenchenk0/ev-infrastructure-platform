@@ -17,7 +17,7 @@ db/
 │   ├── env.py                   # Alembic env з фільтрами PostGIS-системних таблиць
 │   └── versions/
 │       └── 209b1504f634_initial_schema.py
-├── seed.py                      # seed_reference_data(session) – 2 профілі / 10 критеріїв
+├── seed.py                      # seed_reference_data(session) – 2 профілі / 9 критеріїв
 └── seed_cli.py                  # python -m db.seed_cli
 ```
 
@@ -47,7 +47,7 @@ db/
 ```bash
 make db-up          # docker compose up -d db
 make migrate        # alembic upgrade head
-make seed           # python -m db.seed_cli → 2 профілі / 10 критеріїв
+make seed           # python -m db.seed_cli → 2 профілі / 9 критеріїв
 
 # Перевірка (локації додаються через API або окремий скрипт)
 docker exec ev-charging-dss-db-1 psql -U postgres -d ev_charging \
@@ -100,5 +100,5 @@ make test           # pytest -v
 ## Джерела даних seed
 
 - **2 профілі** (Table 3.1 курсової): `municipal`, `investor`
-- **10 критеріїв** (Table 3.3): Pop_dens, Traffic, Grid_cap, Dist_sub, Revenue, Land_cost, Parking, Income, Green, Env_qual
+- **9 критеріїв** (Table 3.3): Pop_dens, Traffic, Grid_cap, Dist_sub, Land_cost, Parking, Income, Green, Sat_dist
 - **Локації** вносяться через API або окремий скрипт для конкретного аналізу в межах м. Київ

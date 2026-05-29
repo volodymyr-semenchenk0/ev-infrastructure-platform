@@ -17,7 +17,7 @@ def _identity_pairwise_matrix(n: int) -> list[list[dict[str, float]]]:
     return [[{"l": 1.0, "m": 1.0, "u": 1.0} for _ in range(n)] for _ in range(n)]
 
 
-async def _create_evaluation(client: AsyncClient, n_criteria: int = 10) -> dict:
+async def _create_evaluation(client: AsyncClient, n_criteria: int = 9) -> dict:
     """POST /api/evaluations with an identity matrix; return the JSON response."""
     profiles = (await client.get("/api/profiles")).json()
     profile_id = profiles[0]["id"]
@@ -86,7 +86,7 @@ class TestEvaluationFailures:
     ) -> None:
         """POST /api/evaluations with CR > 0.1 returns 422 (not 500).
 
-        Constructed inconsistent 10×10 matrix:
+        Constructed inconsistent 9×9 matrix:
           - crit_0 vs crit_1 → 9 (strongly prefers 0)
           - crit_1 vs crit_2 → 9 (strongly prefers 1)
           - crit_0 vs crit_2 → 1/9 (contradicts transitivity)
@@ -98,7 +98,7 @@ class TestEvaluationFailures:
         profiles = (await api_client.get("/api/profiles")).json()
         profile_id = profiles[0]["id"]
 
-        n = 10
+        n = 9
         matrix = [[{"l": 1.0, "m": 1.0, "u": 1.0} for _ in range(n)] for _ in range(n)]
         matrix[0][1] = {"l": 8.0, "m": 9.0, "u": 9.0}
         matrix[1][0] = {"l": 1 / 9, "m": 1 / 9, "u": 1 / 8}

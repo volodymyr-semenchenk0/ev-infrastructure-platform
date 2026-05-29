@@ -97,13 +97,13 @@ class TestRepositories:
 
         assert result is None
 
-    async def test_criterion_repository_list_ordered_returns_10_criteria_after_seed(
+    async def test_criterion_repository_list_ordered_returns_9_criteria_after_seed(
         self, db_session: AsyncSession
     ) -> None:
-        """CriterionRepository.list_ordered() must return 10 criteria sorted by id ASC.
+        """CriterionRepository.list_ordered() must return 9 criteria sorted by id ASC.
 
-        The first criterion code must be one of the 10 defined in master.md Table 3.3.
-        Reference: master.md Table 3.3 — 10 evaluation criteria.
+        The first criterion code must be one of the 9 defined in master.md Table 3.3.
+        Reference: master.md Table 3.3 — 9 evaluation criteria.
         """
         await seed_reference_data(db_session)
         await db_session.flush()
@@ -111,19 +111,18 @@ class TestRepositories:
         repo = CriterionRepository(db_session)
         criteria = await repo.list_ordered()
 
-        assert len(criteria) == 10, f"Expected 10 criteria, got {len(criteria)}"
+        assert len(criteria) == 9, f"Expected 9 criteria, got {len(criteria)}"
 
         valid_codes = {
             "Pop_dens",
             "Traffic",
             "Grid_cap",
             "Dist_sub",
-            "Revenue",
             "Land_cost",
             "Parking",
             "Income",
             "Green",
-            "Env_qual",
+            "Sat_dist",
         }
         assert criteria[0].code in valid_codes, (
             f"First criterion code '{criteria[0].code}' not in expected set {valid_codes}"
@@ -132,16 +131,16 @@ class TestRepositories:
         ids = [c.id for c in criteria]
         assert ids == sorted(ids), f"Criteria not sorted ascending by id: {ids}"
 
-    async def test_decision_matrix_repository_load_returns_n_locations_x_10_shape(
+    async def test_decision_matrix_repository_load_returns_n_locations_x_9_shape(
         self, db_session: AsyncSession
     ) -> None:
-        """DecisionMatrixRepository.load_matrix must return ndarray of shape (n_locations, 10).
+        """DecisionMatrixRepository.load_matrix must return ndarray of shape (n_locations, 9).
 
         All values must be >= 0 (enforced by DB CHECK constraint).
         The first cell X[0, 0] must equal the CriterionValue row
         (location_ids[0], criterion_ids[0]) seeded with rng_seed=42.
 
-        Reference: spec 2.2.2 §9 — decision matrix shape (n_locations × 10 criteria),
+        Reference: spec 2.2.2 §9 — decision matrix shape (n_locations × 9 criteria),
         all values non-negative.
         """
         import numpy as np
@@ -159,7 +158,7 @@ class TestRepositories:
         criterion_ids = [c.id for c in await crit_repo.list_ordered()]
         location_ids = [loc.id for loc in await loc_repo.list_ordered()]
 
-        assert len(criterion_ids) == 10, f"Expected 10 criteria, got {len(criterion_ids)}"
+        assert len(criterion_ids) == 9, f"Expected 9 criteria, got {len(criterion_ids)}"
         assert len(location_ids) == N_TEST_LOCATIONS, (
             f"Expected {N_TEST_LOCATIONS} test locations, got {len(location_ids)}"
         )
@@ -168,8 +167,8 @@ class TestRepositories:
         X = await repo.load_matrix(criterion_ids, location_ids)
 
         assert isinstance(X, np.ndarray), f"Expected ndarray, got {type(X)}"
-        assert X.shape == (N_TEST_LOCATIONS, 10), (
-            f"Expected shape ({N_TEST_LOCATIONS}, 10), got {X.shape}"
+        assert X.shape == (N_TEST_LOCATIONS, 9), (
+            f"Expected shape ({N_TEST_LOCATIONS}, 9), got {X.shape}"
         )
         assert (X >= 0).all(), "Decision matrix contains negative values"
 
@@ -247,7 +246,7 @@ class TestEvaluationService:
     """Tests for EvaluationService.execute_full_cycle — the FAHP→TOPSIS pipeline.
 
     All tests start from a clean DB seeded with reference data + test locations
-    + decision matrix, so the service finds 10 criteria and N_TEST_LOCATIONS locations.
+    + decision matrix, so the service finds 9 criteria and N_TEST_LOCATIONS locations.
     """
 
     async def test_evaluation_service_full_cycle_persists_run_and_ranking_items(
@@ -271,7 +270,7 @@ class TestEvaluationService:
         service = EvaluationService(db_session)
         result = await service.execute_full_cycle(
             profile_id=profile.id,
-            pairwise_matrix=_identity_pairwise_matrix(10),
+            pairwise_matrix=_identity_pairwise_matrix(9),
         )
 
         assert isinstance(result, EvaluationRead), f"Expected EvaluationRead, got {type(result)}"
@@ -310,7 +309,7 @@ class TestEvaluationService:
         service = EvaluationService(db_session)
         result = await service.execute_full_cycle(
             profile_id=profile.id,
-            pairwise_matrix=_identity_pairwise_matrix(10),
+            pairwise_matrix=_identity_pairwise_matrix(9),
         )
 
         serialized = result.model_dump(by_alias=True)
@@ -329,7 +328,7 @@ class TestEvaluationService:
     @pytest.mark.skip(
         reason=(
             "CR-error path requires a test fixture with exactly 3 criteria. "
-            "The DB is seeded with 10 criteria, so a 3×3 inconsistent matrix "
+            "The DB is seeded with 9 criteria, so a 3×3 inconsistent matrix "
             "would fail on size validation first (covered by test 9). "
             "CR validation itself is covered by mcdm/tests/test_fahp.py."
         )
@@ -337,8 +336,8 @@ class TestEvaluationService:
     async def test_evaluation_service_propagates_cr_error(self, db_session: AsyncSession) -> None:
         """execute_full_cycle must propagate ValueError when CR > 0.10.
 
-        Skipped: with 10 seeded criteria, a 10×10 inconsistent matrix would be
-        required.  Constructing a reciprocal 10×10 TFN matrix with CR > 0.10 is
+        Skipped: with 9 seeded criteria, a 9×9 inconsistent matrix would be
+        required.  Constructing a reciprocal 9×9 TFN matrix with CR > 0.10 is
         non-trivial to do reliably here; the CR code path is already exercised
         by mcdm/tests/test_fahp.py::TestFAHP::test_inconsistent_matrix_raises.
         Task #14 implementer should add a dedicated fixture if needed.
@@ -349,8 +348,8 @@ class TestEvaluationService:
     ) -> None:
         """execute_full_cycle must raise ValueError when matrix n != criteria count.
 
-        The DB has 10 criteria after seed; passing a 5×5 matrix must fail.
-        The error message must reference the expected count (10) or the words
+        The DB has 9 criteria after seed; passing a 5×5 matrix must fail.
+        The error message must reference the expected count (9) or the words
         'size', 'criteria', or 'matrix'.
 
         Reference: spec 2.1.6 §6 — matrix dimensions must match criterion count.
@@ -371,7 +370,7 @@ class TestEvaluationService:
             )
 
         error_msg = str(exc_info.value).lower()
-        assert any(token in error_msg for token in ("10", "size", "criteria", "matrix")), (
+        assert any(token in error_msg for token in ("9", "size", "criteria", "matrix")), (
             f"Error message does not reference the size mismatch: '{exc_info.value}'"
         )
 
@@ -393,7 +392,7 @@ class TestEvaluationService:
         service = EvaluationService(db_session)
         result = await service.execute_full_cycle(
             profile_id=profile.id,
-            pairwise_matrix=_identity_pairwise_matrix(10),
+            pairwise_matrix=_identity_pairwise_matrix(9),
         )
 
         total = sum(result.weights.values())
@@ -425,7 +424,7 @@ class TestSensitivityService:
         service = EvaluationService(db_session)
         result = await service.execute_full_cycle(
             profile_id=profile.id,
-            pairwise_matrix=_identity_pairwise_matrix(10),
+            pairwise_matrix=_identity_pairwise_matrix(9),
         )
         return profile.id, result.evaluation_id
 
@@ -533,9 +532,9 @@ class TestEndToEndHwangYoon:
     verifies that the service pipeline selects the expected best alternative.
 
     The test is marked xfail because EvaluationService is expected to read
-    ALL criteria and locations from the DB.  When seeded reference data (10
+    ALL criteria and locations from the DB.  When seeded reference data (9
     criteria, 12 locations) coexists with the 3 ad-hoc criteria added here,
-    the service would see 13 criteria and fail on matrix-size validation with
+    the service would see 12 criteria and fail on matrix-size validation with
     the provided 3×3 pairwise matrix.
 
     The implementer of Task #14 must decide how to scope the service
@@ -549,7 +548,7 @@ class TestEndToEndHwangYoon:
     @pytest.mark.xfail(
         reason=(
             "EvaluationService currently reads all criteria in DB. "
-            "With 10 seeded criteria + 3 ad-hoc criteria = 13 total, "
+            "With 9 seeded criteria + 3 ad-hoc criteria = 12 total, "
             "the 3×3 pairwise matrix will fail size validation. "
             "Task #14 must add scoping support (criterion_ids override or "
             "profile-scoped criteria) before this test can pass."

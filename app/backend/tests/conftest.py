@@ -120,7 +120,7 @@ def _identity_pairwise_matrix(n: int) -> list[list[dict[str, float]]]:
 
 @pytest_asyncio.fixture
 async def api_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
-    """Seeded ASGI client: 2 profiles / 10 criteria / N_TEST_LOCATIONS locations within Kyiv."""
+    """Seeded ASGI client: 2 profiles / 9 criteria / N_TEST_LOCATIONS locations within Kyiv."""
     from api.deps import get_db
     from db.seed import seed_decision_matrix, seed_reference_data
     from main import app

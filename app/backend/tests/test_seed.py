@@ -27,12 +27,11 @@ EXPECTED_CRITERION_CODES = {
     "Traffic",
     "Grid_cap",
     "Dist_sub",
-    "Revenue",
     "Land_cost",
     "Parking",
     "Income",
     "Green",
-    "Env_qual",
+    "Sat_dist",
 }
 
 
@@ -63,10 +62,10 @@ class TestSeedReferenceData:
         )
         await db_session.rollback()
 
-    async def test_seed_creates_ten_criteria(self, db_session: AsyncSession) -> None:
-        """seed_reference_data must insert exactly 10 criteria with the expected codes.
+    async def test_seed_creates_nine_criteria(self, db_session: AsyncSession) -> None:
+        """seed_reference_data must insert exactly 9 criteria with the expected codes.
 
-        Reference: master.md Table 3.3 — 10 критеріїв оцінювання локацій.
+        Reference: master.md Table 3.3 — 9 критеріїв оцінювання локацій.
         """
         await seed_reference_data(db_session)
         await db_session.flush()
@@ -74,8 +73,8 @@ class TestSeedReferenceData:
         result = await db_session.execute(select(Criterion))
         criteria = result.scalars().all()
 
-        assert len(criteria) == 10, (
-            f"Expected 10 criteria, got {len(criteria)}: {[c.code for c in criteria]}"
+        assert len(criteria) == 9, (
+            f"Expected 9 criteria, got {len(criteria)}: {[c.code for c in criteria]}"
         )
         actual_codes = {c.code for c in criteria}
         assert actual_codes == EXPECTED_CRITERION_CODES, (
@@ -88,8 +87,8 @@ class TestSeedReferenceData:
     async def test_seed_is_idempotent(self, db_session: AsyncSession) -> None:
         """Calling seed_reference_data twice must not duplicate rows.
 
-        After two calls the counts must still be 2 profiles and 10 criteria
-        — not 4 / 20.  Locations are not seeded by seed_reference_data; they
+        After two calls the counts must still be 2 profiles and 9 criteria
+        — not 4 / 18.  Locations are not seeded by seed_reference_data; they
         are added separately for each analysis within the city limits.
 
         Reference: spec 2.2.2 — seed must be safe to re-run (INSERT … ON CONFLICT DO NOTHING
@@ -110,7 +109,7 @@ class TestSeedReferenceData:
         assert profile_count == 2, (
             f"Idempotency broken: {profile_count} profiles after 2 seed calls"
         )
-        assert criterion_count == 10, (
+        assert criterion_count == 9, (
             f"Idempotency broken: {criterion_count} criteria after 2 seed calls"
         )
 
