@@ -9,7 +9,6 @@
 
 ```bash
 make install          # pip + npm + pre-commit
-make install-skills   # локальні скіли (.claude/skills) через npx skills
 make dev-backend      # uvicorn :8000
 make dev-frontend     # vite :5173
 make db-up            # PostgreSQL + PostGIS у Docker
@@ -106,7 +105,7 @@ docs/
   - **`engineering-debug`** – для діагностики (типові баги math-ядра, PostGIS, CORS вже в скілі)
   - **`engineering-system-design`** – перед новою фічею (API endpoint, нова таблиця БД, мапа)
 - Скіли тексту курсової в `.claude/skills/`: **`coursework-formatting`** (форматування за вимогами) і **`coursework-docx-build`** (збірка `.docx`)
-- Інші встановлені скіли (`make install-skills`): робочий процес (`brainstorming`, `test-driven-development`, `systematic-debugging`, `writing-plans`, `executing-plans`, `verification-before-completion`, `finishing-a-development-branch`) і фронтенд (`frontend-design`, `webapp-testing`)
+- Решта робочих скілів — з плагінів Claude Code (зафіксовано в `.claude/settings.json` → `enabledPlugins` + `extraKnownMarketplaces`, кеш `~/.claude/plugins/`), викликати з префіксом плагіна: `superpowers:` (робочий процес — `brainstorming`, `test-driven-development`, `systematic-debugging`, `writing-plans`, `executing-plans`, `verification-before-completion`, `finishing-a-development-branch` та ін.), `frontend-design:frontend-design` (фронтенд), `code-review:`, `claude-md-management:`. Встановлення/оновлення — через `/plugin`, не через Makefile
 - У відповіді про завершення задачі завжди вказувати: які тести запускалися та їх результат, чи проходить `ruff` і `mypy --strict mcdm/`, чи піднімається `uvicorn` / `vite`
 
 ## Доступні агенти проекту (`.claude/agents/`)
