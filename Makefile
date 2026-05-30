@@ -31,9 +31,7 @@ install-skills:
 		--skill verification-before-completion
 	npx skills add https://github.com/anthropics/skills \
 		--skill webapp-testing \
-		--skill frontend-design \
-		--skill docx \
-		--skill xlsx
+		--skill frontend-design
 
 # ─── Розробка ─────────────────────────────────────────────────
 dev-backend:
