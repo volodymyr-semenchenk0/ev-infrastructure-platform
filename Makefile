@@ -30,14 +30,10 @@ install-skills:
 		--skill test-driven-development \
 		--skill verification-before-completion
 	npx skills add https://github.com/anthropics/skills \
-		--skill skill-creator \
 		--skill webapp-testing \
 		--skill frontend-design \
 		--skill docx \
 		--skill xlsx
-	npx skills add https://github.com/juliusbrussee/caveman \
-		--skill caveman \
-		--skill caveman-commit
 
 # ─── Розробка ─────────────────────────────────────────────────
 dev-backend:
