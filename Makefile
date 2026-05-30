@@ -23,21 +23,14 @@ install-skills:
 		--skill using-superpowers \
 		--skill writing-plans \
 		--skill brainstorming \
-		--skill dispatching-parallel-agents \
 		--skill executing-plans \
 		--skill finishing-a-development-branch \
 		--skill systematic-debugging \
 		--skill test-driven-development \
 		--skill verification-before-completion
 	npx skills add https://github.com/anthropics/skills \
-		--skill skill-creator \
 		--skill webapp-testing \
-		--skill frontend-design \
-		--skill docx \
-		--skill xlsx
-	npx skills add https://github.com/juliusbrussee/caveman \
-		--skill caveman \
-		--skill caveman-commit
+		--skill frontend-design
 
 # ─── Розробка ─────────────────────────────────────────────────
 dev-backend:

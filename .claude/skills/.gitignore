@@ -1,4 +1,9 @@
-# Symlinks генеруються npx skills – відновлюються через: make install-skills
+# Зовнішні скіли тут — симлінки, генеровані npx skills (відновлюються через
+# make install-skills), тому ігноруються. Власні проєктні скіли (engineering-*,
+# coursework-*) — це реальні каталоги, їх та їхній вміст тримаємо у git.
 *
-!engineering-*/
 !.gitignore
+!engineering-*/
+!engineering-*/**
+!coursework-*/
+!coursework-*/**

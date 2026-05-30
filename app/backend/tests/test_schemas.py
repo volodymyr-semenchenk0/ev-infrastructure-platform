@@ -211,8 +211,8 @@ class TestSensitivityRequest:
     def test_sensitivity_request_defaults(self):
         """SensitivityRequest() with no arguments must use documented defaults.
 
-        Default iterations=10000, perturbation=0.15 match the MC parameters
-        from master.md Table 3.8 (seed=42, N=10000, delta=0.15).
+        Default iterations=10000, perturbation=0.15 are the documented MC
+        defaults (seed=42, N=10000, delta=0.15).
         """
         req = SensitivityRequest()
         assert req.iterations == 10_000
