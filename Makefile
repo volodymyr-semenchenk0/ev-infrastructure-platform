@@ -23,7 +23,6 @@ install-skills:
 		--skill using-superpowers \
 		--skill writing-plans \
 		--skill brainstorming \
-		--skill dispatching-parallel-agents \
 		--skill executing-plans \
 		--skill finishing-a-development-branch \
 		--skill systematic-debugging \

@@ -101,14 +101,12 @@ docs/
 - Нетривіальні задачі у `mcdm/` або зміни архітектури – спочатку plan mode, погодити підхід, потім код
 - Інструкції агентів і скілів посилаються на джерело істини (тест, `docs/sources/EV Charging.bib`, текст Розділу 3), а не дублюють у собі числа, bib-ключі чи номери рядків – будь-яка скопійована величина протухає й нікого не сповіщає
 - Локальні скіли в `.claude/skills/engineering-*` – викликати без префікса плагіна:
-  - **`engineering-code-review`** – перед мержем у `master`
   - **`engineering-testing-strategy`** – перед написанням нових тестів (особливо у `mcdm/`)
   - **`engineering-architecture`** – для ADR у `docs/adr/NNNN-назва.md`
   - **`engineering-debug`** – для діагностики (типові баги math-ядра, PostGIS, CORS вже в скілі)
-  - **`engineering-documentation`** – для README, docstrings у `mcdm/`, OpenAPI описів; **не** для тексту курсової
   - **`engineering-system-design`** – перед новою фічею (API endpoint, нова таблиця БД, мапа)
 - Скіли тексту курсової в `.claude/skills/`: **`coursework-formatting`** (форматування за вимогами) і **`coursework-docx-build`** (збірка `.docx`)
-- Інші встановлені скіли (`make install-skills`): робочий процес (`brainstorming`, `test-driven-development`, `systematic-debugging`, `executing-plans`, `verification-before-completion`, `finishing-a-development-branch`, `dispatching-parallel-agents`) і фронтенд (`frontend-design`, `webapp-testing`)
+- Інші встановлені скіли (`make install-skills`): робочий процес (`brainstorming`, `test-driven-development`, `systematic-debugging`, `writing-plans`, `executing-plans`, `verification-before-completion`, `finishing-a-development-branch`) і фронтенд (`frontend-design`, `webapp-testing`)
 - У відповіді про завершення задачі завжди вказувати: які тести запускалися та їх результат, чи проходить `ruff` і `mypy --strict mcdm/`, чи піднімається `uvicorn` / `vite`
 
 ## Доступні агенти проекту (`.claude/agents/`)
@@ -122,13 +120,10 @@ docs/
 | **`devops`** | Docker, docker-compose, Alembic, Vercel/Railway/Supabase, healthchecks; «налаштувати docker», «deploy», «CI failing», «PostGIS migration» | Read, Edit, Write, Bash, Grep, Glob |
 | **`frontend`** | Розробка React+TS у `app/frontend/`; «додати компонент», «MapLibre», «AHPMatrix», «Tailwind», «Zustand» | Read, Edit, Write, Bash, Grep, Glob |
 | **`tester`** | Створення pytest/vitest, TDD у `mcdm/`, integration tests API; «написати тести», «test plan», «перед реалізацією функції» | Read, Write, Edit, Bash, Grep, Glob |
-| **`debugger`** | Систематична діагностика (Reproduce → Isolate → Diagnose → Fix) з каталогом типових багів проекту: TOPSIS NaN, CR не сходиться, SRID mismatch, CORS, Vite HMR | Read, Bash, Grep, Glob, Edit |
 
 Правила вибору агент vs скіл:
-- **Скіл `engineering-code-review`** — швидкий чек-лист у поточному контексті
-- **Агент `mcdm-verifier`** — повна верифікація з запуском тестів і звіркою з еталонними числами (ізольований контекст)
-- **Скіл `engineering-debug`** — інструкція для діагностики у поточному контексті
-- **Агент `debugger`** — глибока діагностика з власним контекстом, коли проблема не очевидна
+- **Агент `mcdm-verifier`** — повна верифікація з запуском тестів і перевіркою інваріантів (ізольований контекст)
+- **Скіл `engineering-debug`** — інструкція для діагностики у поточному контексті (для глибшої діагностики викликати в основному чаті)
 - **Агент `coursework-editor`** — для будь-якої роботи з текстом курсової (замість прямого редагування)
 
 ## Тести та перевірка якості
