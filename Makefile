@@ -1,4 +1,4 @@
-.PHONY: install install-skills dev-backend dev-frontend test lint typecheck all db-up db-down migrate seed \
+.PHONY: install dev-backend dev-frontend test lint typecheck all db-up db-down migrate seed \
         frontend-install frontend-test frontend-lint frontend-typecheck frontend-build frontend-types \
         frontend-e2e frontend-preview
 
@@ -17,20 +17,6 @@ install:
 	$(PIP) install -e "app/backend[dev]"
 	cd app/frontend && npm install
 	pre-commit install
-
-install-skills:
-	npx skills add https://github.com/obra/superpowers \
-		--skill using-superpowers \
-		--skill writing-plans \
-		--skill brainstorming \
-		--skill executing-plans \
-		--skill finishing-a-development-branch \
-		--skill systematic-debugging \
-		--skill test-driven-development \
-		--skill verification-before-completion
-	npx skills add https://github.com/anthropics/skills \
-		--skill webapp-testing \
-		--skill frontend-design
 
 # ─── Розробка ─────────────────────────────────────────────────
 dev-backend:
