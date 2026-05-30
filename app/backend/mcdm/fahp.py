@@ -1,4 +1,8 @@
-"""Fuzzy Analytic Hierarchy Process – нечіткі вагові коефіцієнти критеріїв."""
+"""Fuzzy Analytic Hierarchy Process – нечіткі вагові коефіцієнти критеріїв.
+
+Ваги виводяться методом Buckley (1985): середнє геометричне рядків нечіткої
+матриці парних порівнянь з центроїдною дефаззифікацією.
+"""
 
 from __future__ import annotations
 
@@ -37,17 +41,13 @@ def _consistency_ratio(modal: np.ndarray) -> float:
     return float(ci / ri)
 
 
-def _degree_of_possibility(m2: np.ndarray, m1: np.ndarray) -> float:
-    """V(M2 >= M1) for two TFN arrays [l, m, u] — Chang (1996) eq. (1.8)."""
-    if m2[1] >= m1[1]:
-        return 1.0
-    if m1[0] >= m2[2]:
-        return 0.0
-    return float((m1[0] - m2[2]) / ((m2[1] - m2[2]) - (m1[1] - m1[0])))
-
-
 def fahp_weights(matrix: np.ndarray) -> np.ndarray:
-    """Обчислити ваги критеріїв методом нечіткого AHP (Chang, 1996 extent analysis).
+    """Обчислити ваги критеріїв методом нечіткого AHP (Buckley, 1985).
+
+    Середнє геометричне рядків нечіткої матриці з центроїдною дефаззифікацією
+    (Center of Area). На відміну від екстент-аналізу Чанга, геометричне середнє
+    не обнуляє домінованих критеріїв — усі ваги додатні й монотонні за
+    пріоритетами.
 
     Args:
         matrix: Матриця парних порівнянь розміру (n, n, 3), де третя вісь –
@@ -59,34 +59,22 @@ def fahp_weights(matrix: np.ndarray) -> np.ndarray:
     Raises:
         ValueError: якщо CR > 0.1 (матриця не є консистентною).
     """
-    n = matrix.shape[0]
-
-    # CR check on modal (middle) values before fuzzy extent analysis
+    # CR check on modal (middle) values; consistency is a property of the
+    # judgments, independent of how weights are derived from them.
     cr = _consistency_ratio(matrix[:, :, 1])
     if cr > 0.1:
         raise ValueError(f"inconsistent matrix: CR={cr:.3f} > 0.10")
 
-    # (1.7) fuzzy synthetic extent S_i
-    row_sums = matrix.sum(axis=1)  # (n, 3): sum over columns j
-    total = matrix.sum(axis=(0, 1))  # (3,): grand total [l, m, u]
-    # TFN inverse: (l,m,u)^-1 = (1/u, 1/m, 1/l)
-    inv_total = np.array([1.0 / total[2], 1.0 / total[1], 1.0 / total[0]])
-    s = row_sums * inv_total  # (n, 3)
+    # Row geometric mean z_i = (prod_j a_ij)^(1/n), elementwise over (l, m, u).
+    n = matrix.shape[0]
+    z = np.prod(matrix, axis=1) ** (1.0 / n)  # (n, 3)
 
-    # (1.8)+(1.9) d'(A_i) = min_{k≠i} V(S_i >= S_k)
-    d_prime = np.zeros(n)
-    for i in range(n):
-        min_v = 1.0
-        for k in range(n):
-            if k != i:
-                v = _degree_of_possibility(s[i], s[k])
-                if v < min_v:
-                    min_v = v
-        d_prime[i] = min_v
+    # Fuzzy weight w_i = z_i (x) (1/Su, 1/Sm, 1/Sl); the inverse of a TFN sum
+    # reverses the bounds, so the upper sum normalises the lower component.
+    s_l, s_m, s_u = z.sum(axis=0)
+    w = z * np.array([1.0 / s_u, 1.0 / s_m, 1.0 / s_l])  # (n, 3)
 
-    # (1.9) normalize; guard against all-zero (degenerate matrix)
-    total_d = float(d_prime.sum())
-    if total_d == 0.0:
-        return np.full(n, 1.0 / n)
-    weights: np.ndarray = d_prime / total_d
+    # Centroid defuzzification (l+m+u)/3, then normalise to sum 1.
+    centroid = w.mean(axis=1)  # (n,)
+    weights: np.ndarray = centroid / centroid.sum()
     return weights
