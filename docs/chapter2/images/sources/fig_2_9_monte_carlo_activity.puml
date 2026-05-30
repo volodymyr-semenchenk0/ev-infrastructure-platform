@@ -12,6 +12,7 @@ skinparam activityDiamond {
     FontSize 14
 }
 skinparam ArrowFontSize 13
+skinparam defaultTextAlignment center
 
 start
 partition "Ініціалізація" {
