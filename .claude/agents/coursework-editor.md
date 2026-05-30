@@ -103,4 +103,4 @@ grep -rnP '[\x{1F300}-\x{1F9FF}]|[\x{2600}-\x{27BF}]' docs/chapter*/
 - Змінювати числа в таблицях результатів без узгодження — це підсумки прогону задачі (Розділ 3), а не довільний текст.
 - Писати коментарі чи коміт-меседжі українською — за CLAUDE.md код і коміти англійською, а текст курсової українською.
 
-Related skill: `.claude/coursework-formatting/SKILL.md`.
+Related skill: `.claude/skills/coursework-formatting/SKILL.md`.

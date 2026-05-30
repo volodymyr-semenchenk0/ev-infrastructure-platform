@@ -107,7 +107,7 @@ docs/
   - **`engineering-debug`** – для діагностики (типові баги math-ядра, PostGIS, CORS вже в скілі)
   - **`engineering-documentation`** – для README, docstrings у `mcdm/`, OpenAPI описів; **не** для тексту курсової
   - **`engineering-system-design`** – перед новою фічею (API endpoint, нова таблиця БД, мапа)
-- Скіли тексту курсової в `.claude/`: **`coursework-formatting`** (форматування за вимогами) і **`coursework-docx-build`** (збірка `.docx`)
+- Скіли тексту курсової в `.claude/skills/`: **`coursework-formatting`** (форматування за вимогами) і **`coursework-docx-build`** (збірка `.docx`)
 - Інші встановлені скіли (`make install-skills`): робочий процес (`brainstorming`, `test-driven-development`, `systematic-debugging`, `executing-plans`, `verification-before-completion`, `finishing-a-development-branch`, `dispatching-parallel-agents`) і фронтенд (`frontend-design`, `webapp-testing`)
 - У відповіді про завершення задачі завжди вказувати: які тести запускалися та їх результат, чи проходить `ruff` і `mypy --strict mcdm/`, чи піднімається `uvicorn` / `vite`
 
