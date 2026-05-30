@@ -95,3 +95,7 @@ app/backend/.pytest_cache/
 *.log
 *.tmp
 build/tools/
+
+# Google Drive sync artifacts (тимчасові теки синхронізації docs/)
+.tmp.driveupload/
+.tmp.drivedownload/
