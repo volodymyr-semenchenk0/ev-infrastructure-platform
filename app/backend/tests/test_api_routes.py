@@ -81,7 +81,7 @@ class TestProfiles:
         """GET /api/profiles must return status 200 and exactly the 2 seeded profiles.
 
         Both 'municipal' and 'investor' codes must appear in the response.
-        Reference: master.md Table 3.1 — two decision-maker profiles.
+        Reference: two decision-maker profiles.
         """
         response = await api_client.get("/api/profiles")
 
@@ -142,11 +142,11 @@ class TestCriteria:
     """
 
     async def test_list_criteria_returns_9_items(self, api_client: AsyncClient) -> None:
-        """GET /api/criteria must return 9 items matching master.md Table 3.3.
+        """GET /api/criteria must return the 9 defined evaluation criteria.
 
         Each item must expose the camelCase keys id, code, name, unit,
         optimizationType, scale — no snake_case leakage.
-        Reference: master.md Table 3.3 — 9 evaluation criteria.
+        Reference: 9 evaluation criteria.
         """
         response = await api_client.get("/api/criteria")
 

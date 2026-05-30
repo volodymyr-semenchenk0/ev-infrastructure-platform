@@ -1,8 +1,8 @@
 """Reference-data seed: 2 profiles, 9 criteria, decision matrix.
 
-Дані відповідають таблицям 3.1 і 3.3 курсової. Локації вносяться через API або
-окремим скриптом для конкретного аналізу в межах міста. Ідемпотентність забезпечена
-через INSERT ... ON CONFLICT DO NOTHING по UNIQUE-ключах.
+Профілі та критерії є довідковими константами задачі. Локації вносяться через API
+або окремим скриптом для конкретного аналізу в межах міста. Ідемпотентність
+забезпечена через INSERT ... ON CONFLICT DO NOTHING по UNIQUE-ключах.
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ from db.models import Criterion, CriterionValue, Location, Profile
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
 
-# Synthetic data — replace with chapter 3.2 Appendix D values when finalised.
+# Synthetic placeholder ranges — replace with finalised analysis values later.
 CRITERION_RANGES: dict[str, tuple[float, float]] = {
     "Pop_dens": (1000.0, 8000.0),  # persons/km²
     "Traffic": (5000.0, 60000.0),  # vehicles/day
@@ -32,7 +32,7 @@ CRITERION_RANGES: dict[str, tuple[float, float]] = {
 }
 
 
-# 2 profiles (master.md Table 3.1)
+# 2 decision-maker profiles
 PROFILES: list[dict[str, str]] = [
     {
         "code": "municipal",
@@ -51,7 +51,7 @@ PROFILES: list[dict[str, str]] = [
     },
 ]
 
-# 9 criteria (master.md Table 3.3; spec 2.2.2 §2)
+# 9 evaluation criteria
 CRITERIA: list[dict[str, str]] = [
     {
         "code": "Pop_dens",

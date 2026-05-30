@@ -102,8 +102,7 @@ class TestRepositories:
     ) -> None:
         """CriterionRepository.list_ordered() must return 9 criteria sorted by id ASC.
 
-        The first criterion code must be one of the 9 defined in master.md Table 3.3.
-        Reference: master.md Table 3.3 — 9 evaluation criteria.
+        The first criterion code must be one of the 9 defined evaluation criteria.
         """
         await seed_reference_data(db_session)
         await db_session.flush()

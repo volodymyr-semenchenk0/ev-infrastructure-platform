@@ -17,7 +17,7 @@ from db.models import Criterion, Profile
 from db.seed import seed_reference_data
 
 # ---------------------------------------------------------------------------
-# Expected reference constants (source: master.md Table 3.1, Table 3.3)
+# Expected reference constants: 2 profiles, 9 criteria.
 # ---------------------------------------------------------------------------
 
 EXPECTED_PROFILE_CODES = {"municipal", "investor"}
@@ -38,14 +38,13 @@ EXPECTED_CRITERION_CODES = {
 class TestSeedReferenceData:
     """Tests for db/seed.py::seed_reference_data.
 
-    Reference: spec 2.2.2 seed requirements; master.md Table 3.1 (profiles),
-    Table 3.3 (criteria codes).
+    Reference: spec 2.2.2 seed requirements (2 profiles, 9 criteria codes).
     """
 
     async def test_seed_creates_two_profiles(self, db_session: AsyncSession) -> None:
         """seed_reference_data must insert exactly 2 profiles: 'municipal' and 'investor'.
 
-        Reference: master.md Table 3.1 — два профілі прийняття рішень.
+        Reference: два профілі прийняття рішень (municipal, investor).
         """
         await seed_reference_data(db_session)
         await db_session.flush()
@@ -65,7 +64,7 @@ class TestSeedReferenceData:
     async def test_seed_creates_nine_criteria(self, db_session: AsyncSession) -> None:
         """seed_reference_data must insert exactly 9 criteria with the expected codes.
 
-        Reference: master.md Table 3.3 — 9 критеріїв оцінювання локацій.
+        Reference: 9 критеріїв оцінювання локацій.
         """
         await seed_reference_data(db_session)
         await db_session.flush()
