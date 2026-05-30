@@ -105,7 +105,7 @@ docs/
   - **`engineering-debug`** – для діагностики (типові баги math-ядра, PostGIS, CORS вже в скілі)
   - **`engineering-system-design`** – перед новою фічею (API endpoint, нова таблиця БД, мапа)
 - Скіли тексту курсової в `.claude/skills/`: **`coursework-formatting`** (форматування за вимогами) і **`coursework-docx-build`** (збірка `.docx`)
-- Решта робочих скілів — з плагінів Claude Code (увімкнено в `.claude/settings.local.json`, кеш `~/.claude/plugins/`), викликати з префіксом плагіна: `superpowers:` (робочий процес — `brainstorming`, `test-driven-development`, `systematic-debugging`, `writing-plans`, `executing-plans`, `verification-before-completion`, `finishing-a-development-branch` та ін.), `frontend-design:frontend-design` (фронтенд), `code-review:`, `claude-md-management:`. Встановлення/оновлення — через `/plugin`, не через Makefile
+- Решта робочих скілів — з плагінів Claude Code (зафіксовано в `.claude/settings.json` → `enabledPlugins` + `extraKnownMarketplaces`, кеш `~/.claude/plugins/`), викликати з префіксом плагіна: `superpowers:` (робочий процес — `brainstorming`, `test-driven-development`, `systematic-debugging`, `writing-plans`, `executing-plans`, `verification-before-completion`, `finishing-a-development-branch` та ін.), `frontend-design:frontend-design` (фронтенд), `code-review:`, `claude-md-management:`. Встановлення/оновлення — через `/plugin`, не через Makefile
 - У відповіді про завершення задачі завжди вказувати: які тести запускалися та їх результат, чи проходить `ruff` і `mypy --strict mcdm/`, чи піднімається `uvicorn` / `vite`
 
 ## Доступні агенти проекту (`.claude/agents/`)
