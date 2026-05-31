@@ -3,7 +3,6 @@ import { useMemo, useRef } from 'react'
 import { useCriteria } from '@/features/calculate/useCriteria'
 import { ChartExportButtons } from '@/features/export/ChartExportButtons'
 import { TabularExportButtons } from '@/features/export/TabularExportButtons'
-import { IntermediatesGapNote } from '@/features/results/IntermediatesGapNote'
 import { WeightsBarChart } from '@/features/results/WeightsBarChart'
 import { useSessionStore } from '@/store/session-store'
 
@@ -114,11 +113,6 @@ export function WeightsSection() {
           ))}
         </tbody>
       </table>
-
-      <IntermediatesGapNote
-        items={['S_i = (l, m, u)', 'V(S_i ≥ S_k)', "d'(A_i)"]}
-        formulas="формули (1.7)-(1.9)"
-      />
     </div>
   )
 }

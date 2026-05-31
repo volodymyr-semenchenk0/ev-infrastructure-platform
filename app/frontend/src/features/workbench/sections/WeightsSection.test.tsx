@@ -49,7 +49,7 @@ describe('WeightsSection', () => {
     mock.restore()
   })
 
-  it('renders the chart, sorted table with rank, CR, and gap note when weights are present', async () => {
+  it('renders the chart, sorted table with rank, and CR when weights are present', async () => {
     useSessionStore.getState().setWeights({ B: 0.5, A: 0.3, C: 0.2 }, 0.07)
     useSessionStore.getState().setEvaluationId(7)
 
@@ -76,8 +76,6 @@ describe('WeightsSection', () => {
     // Chart export buttons (PNG/SVG).
     expect(screen.getByRole('button', { name: /PNG/ })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /SVG/ })).toBeInTheDocument()
-    // Gap note signpost.
-    expect(screen.getByText(/ADR-0001/)).toBeInTheDocument()
     mock.restore()
   })
 })

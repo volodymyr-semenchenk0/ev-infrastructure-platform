@@ -64,7 +64,6 @@ describe('RankingSection', () => {
     expect(screen.getByTestId('closeness-scatter')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^CSV$/ })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^JSON$/ })).toBeInTheDocument()
-    expect(screen.getByText(/ADR-0001/)).toBeInTheDocument()
     mock.restore()
   })
 

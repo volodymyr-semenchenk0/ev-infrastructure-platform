@@ -78,7 +78,6 @@ describe('SensitivitySection', () => {
     expect(screen.getByTestId('stability-heatmap')).toBeInTheDocument()
     expect(screen.getByText(/Матриця стабільності p_i\(k\) \(теплова карта\)/)).toBeInTheDocument()
     expect(screen.getByText(/Шар стійкості на карті/)).toBeInTheDocument()
-    expect(screen.getByText(/ADR-0001/)).toBeInTheDocument()
     mock.restore()
   })
 
