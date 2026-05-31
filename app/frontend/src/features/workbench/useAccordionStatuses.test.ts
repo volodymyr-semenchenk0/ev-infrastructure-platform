@@ -72,12 +72,15 @@ describe('useAccordionStatuses', () => {
     const { result } = renderHook(() => useAccordionStatuses())
     act(() => {
       useSessionStore.getState().setWeights({ A: 1 }, 0)
-      useSessionStore.getState().setRanking([
-        { locationId: 1, rank: 1, closeness: 0.9, sPlus: 0.1, sMinus: 0.5 },
-      ])
+      useSessionStore
+        .getState()
+        .setRanking([{ locationId: 1, rank: 1, closeness: 0.9, sPlus: 0.1, sMinus: 0.5 }])
       useSessionStore.getState().setSensitivity({
         stabilityMatrix: { '1': { '1': 1, '3': 1, '5': 1 } },
         confidenceIntervals: [{ locationId: 1, mean: 0.9, lower: 0.88, upper: 0.92 }],
+        rankingIntervals: [{ locationId: 1, mean: 0.9, lower: 0.88, upper: 0.92 }],
+        cstarHistogram: { binEdges: [0, 0.5, 1], countsByLocation: { '1': [10, 90] } },
+        convergence: { iterations: [1, 10, 100], meanByLocation: { '1': [0.9, 0.9, 0.9] } },
       })
     })
     expect(result.current.weights).toBe('ready')

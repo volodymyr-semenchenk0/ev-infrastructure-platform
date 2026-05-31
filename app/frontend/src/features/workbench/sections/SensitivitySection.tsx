@@ -8,10 +8,10 @@ import { Slider } from '@/components/ui/slider'
 import { toast } from '@/components/ui/use-toast'
 import { TabularExportButtons } from '@/features/export/TabularExportButtons'
 import { useLocations } from '@/features/locations/useLocations'
-import {
-  useSensitivity,
-  type SensitivityResponse,
-} from '@/features/sensitivity/useSensitivity'
+import { ConvergenceChart } from '@/features/sensitivity/ConvergenceChart'
+import { CstarHistogram } from '@/features/sensitivity/CstarHistogram'
+import { RankingForestPlot } from '@/features/sensitivity/RankingForestPlot'
+import { useSensitivity, type SensitivityResponse } from '@/features/sensitivity/useSensitivity'
 import {
   ITERATIONS_MAX,
   ITERATIONS_MIN,
@@ -92,9 +92,7 @@ export function SensitivitySection() {
       })
     } catch (error) {
       const description =
-        error instanceof ValidationError
-          ? error.detail
-          : 'Не вдалося виконати аналіз чутливості.'
+        error instanceof ValidationError ? error.detail : 'Не вдалося виконати аналіз чутливості.'
       setError({ message: description, source: 'sensitivity' })
       toast({ title: 'Помилка чутливості', description, variant: 'destructive' })
     }
@@ -109,8 +107,7 @@ export function SensitivitySection() {
           <Label htmlFor="sens-iterations" className="text-xs font-medium">
             Кількість ітерацій N
             <span className="ml-1 text-muted-foreground">
-              ({ITERATIONS_MIN.toLocaleString('uk-UA')}–
-              {ITERATIONS_MAX.toLocaleString('uk-UA')})
+              ({ITERATIONS_MIN.toLocaleString('uk-UA')}–{ITERATIONS_MAX.toLocaleString('uk-UA')})
             </span>
           </Label>
           <Input
@@ -129,9 +126,7 @@ export function SensitivitySection() {
         <div className="space-y-1">
           <Label htmlFor="sens-perturbation" className="text-xs font-medium">
             Амплітуда збурення δ ={' '}
-            <span className="font-mono tabular-nums">
-              {form.perturbation.toFixed(2)}
-            </span>
+            <span className="font-mono tabular-nums">{form.perturbation.toFixed(2)}</span>
             <span className="ml-1 text-muted-foreground">
               ({PERTURBATION_MIN.toFixed(2)}–{PERTURBATION_MAX.toFixed(2)})
             </span>
@@ -153,12 +148,7 @@ export function SensitivitySection() {
         </p>
       </div>
 
-      <Button
-        size="sm"
-        onClick={handleRun}
-        disabled={mutation.isPending}
-        className="w-full"
-      >
+      <Button size="sm" onClick={handleRun} disabled={mutation.isPending} className="w-full">
         {mutation.isPending ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
@@ -191,10 +181,37 @@ export function SensitivitySection() {
             />
           </div>
 
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold">Крок 1 – розподіл C* для локації</h3>
+            <CstarHistogram
+              histogram={sensitivity.cstarHistogram}
+              rankingIntervals={sensitivity.rankingIntervals}
+              nameByLocationId={nameByLocationId}
+              filenameBase={filenameBase}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold">Крок 2 – інтервали рангів за C*</h3>
+            <RankingForestPlot
+              rankingIntervals={sensitivity.rankingIntervals}
+              nameByLocationId={nameByLocationId}
+              filenameBase={filenameBase}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold">Крок 3 – збіжність середнього C*</h3>
+            <ConvergenceChart
+              convergence={sensitivity.convergence}
+              rankingIntervals={sensitivity.rankingIntervals}
+              nameByLocationId={nameByLocationId}
+              filenameBase={filenameBase}
+            />
+          </div>
+
           <div>
-            <h3 className="mb-2 text-sm font-semibold">
-              Матриця стабільності p_i(k) (таблиця)
-            </h3>
+            <h3 className="mb-2 text-sm font-semibold">Матриця стабільності p_i(k) (таблиця)</h3>
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b text-left text-muted-foreground">
@@ -213,10 +230,7 @@ export function SensitivitySection() {
                     <tr key={locationId} className="border-b last:border-b-0">
                       <td className="py-2 pr-3">{label}</td>
                       {K_VALUES.map((k) => (
-                        <td
-                          key={k}
-                          className="py-2 pr-3 text-right font-mono tabular-nums"
-                        >
+                        <td key={k} className="py-2 pr-3 text-right font-mono tabular-nums">
                           {((perK[String(k)] ?? 0) * 100).toFixed(1)}%
                         </td>
                       ))}

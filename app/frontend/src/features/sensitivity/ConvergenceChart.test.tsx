@@ -1,0 +1,37 @@
+import { render, screen } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
+
+import { ConvergenceChart } from './ConvergenceChart'
+
+describe('ConvergenceChart', () => {
+  it('renders export buttons for the running-mean series', () => {
+    render(
+      <ConvergenceChart
+        convergence={{
+          iterations: [1, 10, 100],
+          meanByLocation: { '1': [0.5, 0.55, 0.6], '2': [0.3, 0.32, 0.33] },
+        }}
+        rankingIntervals={[
+          { locationId: 1, mean: 0.6, lower: 0.4, upper: 0.8 },
+          { locationId: 2, mean: 0.33, lower: 0.2, upper: 0.45 },
+        ]}
+        nameByLocationId={{ 1: 'Alpha', 2: 'Beta' }}
+        filenameBase="mc-test"
+      />
+    )
+
+    expect(screen.getByRole('button', { name: 'PNG' })).toBeInTheDocument()
+  })
+
+  it('renders nothing when no locations are provided', () => {
+    const { container } = render(
+      <ConvergenceChart
+        convergence={{ iterations: [], meanByLocation: {} }}
+        rankingIntervals={[]}
+        filenameBase="mc-test"
+      />
+    )
+
+    expect(container).toBeEmptyDOMElement()
+  })
+})

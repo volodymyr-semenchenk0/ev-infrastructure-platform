@@ -3,10 +3,23 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import MockAdapter from 'axios-mock-adapter'
 import type { ReactNode } from 'react'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { api } from '@/lib/api'
 import { useSessionStore } from '@/store/session-store'
+
+// Nivo charts render SVGs jsdom cannot lay out. Stub the three storyline charts
+// so the section logic (run mutation, store writes, headings, toggle) is tested
+// in isolation from the visualisation layer.
+vi.mock('@/features/sensitivity/CstarHistogram', () => ({
+  CstarHistogram: () => <div data-testid="cstar-histogram" />,
+}))
+vi.mock('@/features/sensitivity/RankingForestPlot', () => ({
+  RankingForestPlot: () => <div data-testid="forest-plot" />,
+}))
+vi.mock('@/features/sensitivity/ConvergenceChart', () => ({
+  ConvergenceChart: () => <div data-testid="convergence-chart" />,
+}))
 
 import { SensitivitySection } from './SensitivitySection'
 
@@ -31,9 +44,7 @@ describe('SensitivitySection', () => {
 
     renderSection()
 
-    expect(
-      await screen.findByText(/Спочатку обчисліть ваги/),
-    ).toBeInTheDocument()
+    expect(await screen.findByText(/Спочатку обчисліть ваги/)).toBeInTheDocument()
     mock.restore()
   })
 
@@ -49,6 +60,18 @@ describe('SensitivitySection', () => {
         { locationId: 1, mean: 0.82, lower: 0.7, upper: 0.9 },
         { locationId: 2, mean: 0.39, lower: 0.3, upper: 0.5 },
       ],
+      rankingIntervals: [
+        { locationId: 1, mean: 0.82, lower: 0.7, upper: 0.9 },
+        { locationId: 2, mean: 0.39, lower: 0.3, upper: 0.5 },
+      ],
+      cstarHistogram: {
+        binEdges: [0, 0.5, 1],
+        countsByLocation: { '1': [40, 60], '2': [70, 30] },
+      },
+      convergence: {
+        iterations: [1, 10, 100],
+        meanByLocation: { '1': [0.8, 0.81, 0.82], '2': [0.4, 0.39, 0.39] },
+      },
     }
 
     const mock = new MockAdapter(api)
@@ -63,9 +86,13 @@ describe('SensitivitySection', () => {
     await waitFor(() => {
       expect(useSessionStore.getState().sensitivity).not.toBeNull()
     })
-    expect(
-      screen.getByText(/Матриця стабільності p_i\(k\) \(таблиця\)/),
-    ).toBeInTheDocument()
+    expect(screen.getByTestId('cstar-histogram')).toBeInTheDocument()
+    expect(screen.getByTestId('forest-plot')).toBeInTheDocument()
+    expect(screen.getByTestId('convergence-chart')).toBeInTheDocument()
+    expect(screen.getByText(/Крок 1/)).toBeInTheDocument()
+    expect(screen.getByText(/Крок 2/)).toBeInTheDocument()
+    expect(screen.getByText(/Крок 3/)).toBeInTheDocument()
+    expect(screen.getByText(/Матриця стабільності p_i\(k\) \(таблиця\)/)).toBeInTheDocument()
     expect(screen.getByText(/Шар стійкості на карті/)).toBeInTheDocument()
     mock.restore()
   })
@@ -75,6 +102,9 @@ describe('SensitivitySection', () => {
     useSessionStore.getState().setSensitivity({
       stabilityMatrix: { '1': { '1': 0.8, '3': 1, '5': 1 } },
       confidenceIntervals: [{ locationId: 1, mean: 0.82, lower: 0.7, upper: 0.9 }],
+      rankingIntervals: [{ locationId: 1, mean: 0.82, lower: 0.7, upper: 0.9 }],
+      cstarHistogram: { binEdges: [0, 0.5, 1], countsByLocation: { '1': [40, 60] } },
+      convergence: { iterations: [1, 10, 100], meanByLocation: { '1': [0.8, 0.81, 0.82] } },
     })
 
     const mock = new MockAdapter(api)
