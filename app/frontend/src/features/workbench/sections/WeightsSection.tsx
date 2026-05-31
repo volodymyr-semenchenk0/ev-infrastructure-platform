@@ -74,28 +74,21 @@ export function WeightsSection() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
-        <div className="flex flex-wrap gap-4">
-          {evaluationId !== null && (
-            <span>
-              ID розрахунку:{' '}
-              <span className="font-mono text-foreground">{evaluationId}</span>
+      <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+        {evaluationId !== null && (
+          <span>
+            ID розрахунку:{' '}
+            <span className="font-mono text-foreground">{evaluationId}</span>
+          </span>
+        )}
+        {consistencyRatio !== null && (
+          <span>
+            CR:{' '}
+            <span className="font-mono text-foreground">
+              {consistencyRatio.toFixed(3)}
             </span>
-          )}
-          {consistencyRatio !== null && (
-            <span>
-              CR:{' '}
-              <span className="font-mono text-foreground">
-                {consistencyRatio.toFixed(3)}
-              </span>
-            </span>
-          )}
-        </div>
-        <TabularExportButtons
-          csvRows={csvRows}
-          jsonData={jsonPayload}
-          filenameBase={filenameBase}
-        />
+          </span>
+        )}
       </div>
 
       <div ref={chartRef}>
@@ -111,36 +104,47 @@ export function WeightsSection() {
         label="Експорт діаграми:"
       />
 
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b text-left text-muted-foreground">
-            <th className="py-2 pr-3 font-medium">#</th>
-            <th className="py-2 pr-3 font-medium">Критерій</th>
-            <th className="py-2 pr-3 font-medium">Код</th>
-            <th className="py-2 pr-3 text-right font-medium">l_j</th>
-            <th className="py-2 pr-3 text-right font-medium">w_j</th>
-            <th className="py-2 text-right font-medium">u_j</th>
-          </tr>
-        </thead>
-        <tbody>
-          {sortedRows.map((row, idx) => (
-            <tr key={row.code} className="border-b last:border-b-0">
-              <td className="py-2 pr-3 tabular-nums">{idx + 1}</td>
-              <td className="py-2 pr-3">{row.name}</td>
-              <td className="py-2 pr-3 font-mono text-muted-foreground">{row.code}</td>
-              <td className="py-2 pr-3 text-right font-mono tabular-nums text-muted-foreground">
-                {row.lower !== null ? row.lower.toFixed(4) : '–'}
-              </td>
-              <td className="py-2 pr-3 text-right font-mono tabular-nums">
-                {row.weight.toFixed(4)}
-              </td>
-              <td className="py-2 text-right font-mono tabular-nums text-muted-foreground">
-                {row.upper !== null ? row.upper.toFixed(4) : '–'}
-              </td>
+      <div className="overflow-hidden rounded-md border border-border">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b text-left text-muted-foreground">
+              <th className="px-4 py-2 font-medium">#</th>
+              <th className="px-4 py-2 font-medium">Критерій</th>
+              <th className="px-4 py-2 font-medium">Код</th>
+              <th className="px-4 py-2 text-right font-medium">l_j</th>
+              <th className="px-4 py-2 text-right font-medium">w_j</th>
+              <th className="px-4 py-2 text-right font-medium">u_j</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {sortedRows.map((row, idx) => (
+              <tr key={row.code} className="border-b last:border-b-0">
+                <td className="px-4 py-2 tabular-nums">{idx + 1}</td>
+                <td className="px-4 py-2">{row.name}</td>
+                <td className="px-4 py-2 font-mono text-muted-foreground">{row.code}</td>
+                <td className="px-4 py-2 text-right font-mono tabular-nums text-muted-foreground">
+                  {row.lower !== null ? row.lower.toFixed(4) : '–'}
+                </td>
+                <td className="px-4 py-2 text-right font-mono tabular-nums">
+                  {row.weight.toFixed(4)}
+                </td>
+                <td className="px-4 py-2 text-right font-mono tabular-nums text-muted-foreground">
+                  {row.upper !== null ? row.upper.toFixed(4) : '–'}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="flex">
+        <TabularExportButtons
+          csvRows={csvRows}
+          jsonData={jsonPayload}
+          filenameBase={filenameBase}
+          label="Експорт таблиці:"
+        />
+      </div>
 
       {ranking === null ? (
         <div className="flex justify-end border-t pt-4">
