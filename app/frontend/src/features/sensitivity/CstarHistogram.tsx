@@ -150,7 +150,6 @@ export function CstarHistogram({
       <ChartExportButtons
         containerRef={containerRef}
         filenameBase={`${filenameBase}-histogram`}
-        label="Експорт гістограми:"
       />
     </div>
   )

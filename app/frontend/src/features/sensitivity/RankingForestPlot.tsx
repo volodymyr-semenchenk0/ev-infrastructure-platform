@@ -124,7 +124,6 @@ export function RankingForestPlot({
       <ChartExportButtons
         containerRef={containerRef}
         filenameBase={`${filenameBase}-forest`}
-        label="Експорт forest-plot:"
       />
     </div>
   )

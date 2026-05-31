@@ -107,7 +107,6 @@ export function ConvergenceChart({
       <ChartExportButtons
         containerRef={containerRef}
         filenameBase={`${filenameBase}-convergence`}
-        label="Експорт збіжності:"
       />
     </div>
   )
