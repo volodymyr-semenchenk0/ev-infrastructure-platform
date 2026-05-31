@@ -6,12 +6,12 @@ import {
   ToastTitle,
   ToastViewport,
 } from './toast'
-import { useToast } from './use-toast'
+import { useToast, TOAST_DURATION } from './use-toast'
 
 export function Toaster() {
   const { toasts } = useToast()
   return (
-    <ToastProvider>
+    <ToastProvider duration={TOAST_DURATION}>
       {toasts.map(({ id, title, description, ...props }) => (
         <Toast key={id} {...props}>
           <div className="grid gap-1">

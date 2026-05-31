@@ -8,7 +8,12 @@ type ToasterToast = ToastProps & {
 }
 
 const TOAST_LIMIT = 3
-const TOAST_REMOVE_DELAY = 5000
+// How long Radix keeps a toast open before auto-dismissing it (paused on
+// hover/focus). Manual close (the X) dismisses immediately.
+const TOAST_DURATION = 1500
+// Grace period after a toast is dismissed (open=false) before it is removed
+// from the array, so the exit animation can play. Not the visible lifetime.
+const TOAST_REMOVE_DELAY = 300
 
 type ActionType =
   | { type: 'ADD_TOAST'; toast: ToasterToast }
@@ -22,6 +27,19 @@ interface State {
 const listeners: Array<(state: State) => void> = []
 let memoryState: State = { toasts: [] }
 
+// After a toast is dismissed (open=false), schedule its removal from the array
+// so the exit animation can finish. Keyed by id to avoid stacking timers.
+const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
+
+function addToRemoveQueue(toastId: string) {
+  if (toastTimeouts.has(toastId)) return
+  const timeout = setTimeout(() => {
+    toastTimeouts.delete(toastId)
+    dispatch({ type: 'REMOVE_TOAST', toastId })
+  }, TOAST_REMOVE_DELAY)
+  toastTimeouts.set(toastId, timeout)
+}
+
 function reducer(state: State, action: ActionType): State {
   switch (action.type) {
     case 'ADD_TOAST':
@@ -29,15 +47,24 @@ function reducer(state: State, action: ActionType): State {
         ...state,
         toasts: [action.toast, ...state.toasts].slice(0, TOAST_LIMIT),
       }
-    case 'DISMISS_TOAST':
+    case 'DISMISS_TOAST': {
+      const { toastId } = action
+      // Side effect: queue removal once the toast starts closing. Auto-dismiss
+      // (Radix duration) and manual close both flow through here.
+      if (toastId) {
+        addToRemoveQueue(toastId)
+      } else {
+        state.toasts.forEach((t) => addToRemoveQueue(t.id))
+      }
       return {
         ...state,
         toasts: state.toasts.map((t) =>
-          t.id === action.toastId || action.toastId === undefined
+          t.id === toastId || toastId === undefined
             ? { ...t, open: false }
             : t,
         ),
       }
+    }
     case 'REMOVE_TOAST':
       if (action.toastId === undefined) return { ...state, toasts: [] }
       return {
@@ -73,7 +100,6 @@ function toast({ ...props }: ToastInput) {
       },
     },
   })
-  setTimeout(() => dispatch({ type: 'REMOVE_TOAST', toastId: id }), TOAST_REMOVE_DELAY)
   return { id }
 }
 
@@ -93,4 +119,4 @@ function useToast() {
   }
 }
 
-export { useToast, toast }
+export { useToast, toast, TOAST_DURATION }
