@@ -36,7 +36,7 @@ N_SIM = 500
 
 
 def test_sensitivity_returns_required_keys() -> None:
-    """Return value must contain 'scores_mean', 'scores_std', 'rank_freq'.
+    """Return value must contain the public-contract keys.
 
     These keys form the public contract of sensitivity_analysis().
     """
@@ -44,6 +44,50 @@ def test_sensitivity_returns_required_keys() -> None:
     assert "scores_mean" in result
     assert "scores_std" in result
     assert "rank_freq" in result
+    assert "ci_lower" in result
+    assert "ci_upper" in result
+
+
+def test_sensitivity_ci_match_percentiles_of_sample() -> None:
+    """ci_lower/ci_upper are the 2.5 and 97.5 percentiles of the C* sample.
+
+    Subsection 2.3.3 fixes percentile-based confidence intervals (2.5 % and
+    97.5 % of the accumulated C* sample), not a normal approximation. A scorer
+    that records every C* vector real TOPSIS returns lets the test reconstruct
+    the exact sample in RNG order and compare against np.percentile directly.
+
+    Reference: subsection 2.3.3 (formulas 1.15-1.17), Appendix A.9.
+    """
+    recorded: list[np.ndarray] = []
+
+    def recording_scorer(
+        matrix: np.ndarray, weights: np.ndarray, types: np.ndarray
+    ) -> tuple[np.ndarray, np.ndarray]:
+        scores, ranking = topsis(matrix, weights, types)
+        recorded.append(scores.copy())
+        return scores, ranking
+
+    result = sensitivity_analysis(
+        DM, WEIGHTS, TYPES, recording_scorer, n_simulations=N_SIM, delta=0.15, seed=0
+    )
+    sample = np.array(recorded)
+    expected_lower = np.percentile(sample, 2.5, axis=0)
+    expected_upper = np.percentile(sample, 97.5, axis=0)
+
+    np.testing.assert_allclose(result["ci_lower"], expected_lower, atol=1e-12)
+    np.testing.assert_allclose(result["ci_upper"], expected_upper, atol=1e-12)
+
+
+def test_sensitivity_ci_collapse_to_mean_when_delta_zero() -> None:
+    """With delta=0 every C* sample is identical, so the percentile band is degenerate.
+
+    Then ci_lower == ci_upper == scores_mean for every alternative.
+    """
+    result = sensitivity_analysis(
+        DM, WEIGHTS, TYPES, topsis, n_simulations=N_SIM, delta=0.0, seed=0
+    )
+    np.testing.assert_allclose(result["ci_lower"], result["scores_mean"], atol=1e-12)
+    np.testing.assert_allclose(result["ci_upper"], result["scores_mean"], atol=1e-12)
 
 
 def test_sensitivity_rank_freq_shape() -> None:

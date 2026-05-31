@@ -432,8 +432,9 @@ class TestSensitivityService:
     ) -> None:
         """Result contains a CI per top-N alternative ordered by mean C* descending.
 
-        Per Appendix A.9, only the top-3 alternatives carry confidence intervals;
-        midpoints must be monotonically non-increasing. CI fields are `lower`/`upper`.
+        Per Appendix A.9, only the top-3 alternatives carry confidence intervals,
+        ordered by mean C* descending. Bounds are percentile-based (2.3.3) and
+        generally asymmetric, so ordering is asserted on `mean`, not the midpoint.
 
         Reference: subsection 2.3.3 + Appendix A.9.
         """
@@ -449,10 +450,14 @@ class TestSensitivityService:
             f"Expected {TOP_N_FOR_CONFIDENCE_INTERVALS} CIs (top-N only), "
             f"got {len(result.confidence_intervals)}"
         )
-        midpoints = [(ci.lower + ci.upper) / 2 for ci in result.confidence_intervals]
-        assert midpoints == sorted(midpoints, reverse=True), (
+        means = [ci.mean for ci in result.confidence_intervals]
+        assert means == sorted(means, reverse=True), (
             "Confidence intervals must be ordered by mean C* descending"
         )
+        for ci in result.confidence_intervals:
+            assert ci.lower <= ci.mean <= ci.upper, (
+                "mean C* must lie within its percentile confidence interval"
+            )
 
         rec = await db_session.scalar(
             select(SensitivityRecord).where(SensitivityRecord.evaluation_id == eval_id)

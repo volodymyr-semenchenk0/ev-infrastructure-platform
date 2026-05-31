@@ -77,7 +77,7 @@ describe('useAccordionStatuses', () => {
       ])
       useSessionStore.getState().setSensitivity({
         stabilityMatrix: { '1': { '1': 1, '3': 1, '5': 1 } },
-        confidenceIntervals: [{ locationId: 1, lower: 0.88, upper: 0.92 }],
+        confidenceIntervals: [{ locationId: 1, mean: 0.9, lower: 0.88, upper: 0.92 }],
       })
     })
     expect(result.current.weights).toBe('ready')

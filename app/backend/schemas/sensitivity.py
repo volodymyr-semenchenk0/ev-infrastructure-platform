@@ -26,10 +26,14 @@ class SensitivityRequest(CamelModel):
 class ConfidenceInterval(CamelModel):
     """95 % confidence interval for the closeness coefficient of one location.
 
-    Field names match Appendix A.9 (`lower`, `upper`).
+    Bounds are the 2.5/97.5 percentiles of the accumulated C* sample (2.3.3),
+    so the interval is generally asymmetric and `mean` does not equal the
+    midpoint. `mean` is the per-alternative average C* that orders the top-N
+    (Appendix A.9). Field names match Appendix A.9 (`mean`, `lower`, `upper`).
     """
 
     location_id: int
+    mean: float
     lower: float
     upper: float
 

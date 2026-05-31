@@ -195,11 +195,14 @@ export interface components {
         /**
          * ConfidenceInterval
          * @description 95 % confidence interval for the closeness coefficient of one location.
-         * Field names match Appendix A.9.
+         * Bounds are the 2.5/97.5 percentiles of the C* sample (2.3.3), so the interval is
+         * generally asymmetric and `mean` does not equal the midpoint. Field names match Appendix A.9.
          */
         ConfidenceInterval: {
             /** Locationid */
             locationId: number;
+            /** Mean */
+            mean: number;
             /** Lower */
             lower: number;
             /** Upper */

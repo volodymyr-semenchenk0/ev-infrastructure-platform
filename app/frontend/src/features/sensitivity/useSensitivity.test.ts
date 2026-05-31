@@ -14,8 +14,8 @@ describe('useSensitivity payload contract', () => {
         '2': { '1': 0.2, '3': 0.6, '5': 1.0 },
       },
       confidenceIntervals: [
-        { locationId: 1, lower: 0.4, upper: 0.6 },
-        { locationId: 2, lower: 0.1, upper: 0.3 },
+        { locationId: 1, mean: 0.52, lower: 0.4, upper: 0.6 },
+        { locationId: 2, mean: 0.18, lower: 0.1, upper: 0.3 },
       ],
     }
     mock.onPost('/evaluations/7/sensitivity').reply(200, responseBody)

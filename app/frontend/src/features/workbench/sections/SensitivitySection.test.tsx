@@ -56,8 +56,8 @@ describe('SensitivitySection', () => {
         '2': { '1': 0.2, '3': 0.6, '5': 1 },
       },
       confidenceIntervals: [
-        { locationId: 1, lower: 0.7, upper: 0.9 },
-        { locationId: 2, lower: 0.3, upper: 0.5 },
+        { locationId: 1, mean: 0.82, lower: 0.7, upper: 0.9 },
+        { locationId: 2, mean: 0.39, lower: 0.3, upper: 0.5 },
       ],
     }
 
@@ -86,7 +86,7 @@ describe('SensitivitySection', () => {
     useSessionStore.getState().setEvaluationId(42)
     useSessionStore.getState().setSensitivity({
       stabilityMatrix: { '1': { '1': 0.8, '3': 1, '5': 1 } },
-      confidenceIntervals: [{ locationId: 1, lower: 0.7, upper: 0.9 }],
+      confidenceIntervals: [{ locationId: 1, mean: 0.82, lower: 0.7, upper: 0.9 }],
     })
 
     const mock = new MockAdapter(api)
