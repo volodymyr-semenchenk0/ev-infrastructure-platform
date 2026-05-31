@@ -8,14 +8,21 @@ interface ProfileCardProps {
   profile: Profile
   isActive: boolean
   onSelect: () => void
+  className?: string
 }
 
-export function ProfileCard({ profile, isActive, onSelect }: ProfileCardProps) {
+export function ProfileCard({
+  profile,
+  isActive,
+  onSelect,
+  className,
+}: ProfileCardProps) {
   return (
     <Card
       className={cn(
-        'transition-shadow',
+        'flex flex-col transition-shadow',
         isActive && 'border-primary ring-2 ring-primary/40',
+        className,
       )}
     >
       <CardHeader>
@@ -24,8 +31,8 @@ export function ProfileCard({ profile, isActive, onSelect }: ProfileCardProps) {
           {isActive && <Check className="h-5 w-5 text-primary" />}
         </div>
       </CardHeader>
-      <CardContent>
-        <p className="mb-4 text-sm text-muted-foreground">
+      <CardContent className="flex flex-1 flex-col">
+        <p className="mb-4 flex-1 text-sm text-muted-foreground">
           {profile.description ?? '—'}
         </p>
         <Button

@@ -75,14 +75,17 @@ export function ProfileSection() {
       <p className="text-xs text-muted-foreground">
         Оберіть профіль ОПР, щоб задати початкові ваги критеріїв.
       </p>
-      {profiles.data.map((profile) => (
-        <ProfileCard
-          key={profile.id}
-          profile={profile}
-          isActive={activeProfile?.id === profile.id}
-          onSelect={() => handleSelect(profile)}
-        />
-      ))}
+      <div className="flex flex-col gap-3 sm:flex-row">
+        {profiles.data.map((profile) => (
+          <ProfileCard
+            key={profile.id}
+            profile={profile}
+            isActive={activeProfile?.id === profile.id}
+            onSelect={() => handleSelect(profile)}
+            className="flex-1"
+          />
+        ))}
+      </div>
       {activeProfile && (
         <Button variant="ghost" size="sm" onClick={() => setExpanded(false)}>
           Скасувати
