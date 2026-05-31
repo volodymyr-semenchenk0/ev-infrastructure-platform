@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -62,12 +62,13 @@ describe('Stepper', () => {
     expect(onSelect).toHaveBeenCalledWith('weights')
   })
 
-  it('renders a divider before the optional step', () => {
-    const { container } = render(
-      <Stepper steps={makeSteps()} activeId="setup" onSelect={() => {}} />,
-    )
-    // The optional step is separated from the mandatory group by a hidden
-    // divider list item rather than a connector.
-    expect(container.querySelector('li[aria-hidden="true"]')).toBeInTheDocument()
+  it('renders the optional step in a separate container from the mandatory group', () => {
+    render(<Stepper steps={makeSteps()} activeId="setup" onSelect={() => {}} />)
+    const mandatory = screen.getByRole('group', { name: /Обовʼязков/ })
+    const analytical = screen.getByRole('group', { name: /Аналітичн/ })
+    expect(within(mandatory).getByRole('button', { name: /Профіль і матриця/ })).toBeInTheDocument()
+    expect(within(analytical).getByRole('button', { name: /Чутливість/ })).toBeInTheDocument()
+    // The optional step is not inside the mandatory group.
+    expect(within(mandatory).queryByRole('button', { name: /Чутливість/ })).toBeNull()
   })
 })
