@@ -6,7 +6,6 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { TabularExportButtons } from '@/features/export/TabularExportButtons'
 import { useLocations } from '@/features/locations/useLocations'
 import { ClosenessScatterPlot } from '@/features/results/ClosenessScatterPlot'
-import { IntermediatesGapNote } from '@/features/results/IntermediatesGapNote'
 import { RankingTable, type RankingRow } from '@/features/results/RankingTable'
 import { RankingMapEmbed } from '@/features/workbench/RankingMapEmbed'
 import { useSessionStore } from '@/store/session-store'
@@ -105,10 +104,6 @@ export function RankingSection() {
         }
       />
       <ClosenessScatterPlot rows={rows} />
-      <IntermediatesGapNote
-        items={['r_ij', 'v_ij', 'A^+', 'A^-']}
-        formulas="формули (1.10)-(1.13)"
-      />
     </div>
   )
 }

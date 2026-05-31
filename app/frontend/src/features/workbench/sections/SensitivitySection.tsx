@@ -9,7 +9,6 @@ import { toast } from '@/components/ui/use-toast'
 import { ChartExportButtons } from '@/features/export/ChartExportButtons'
 import { TabularExportButtons } from '@/features/export/TabularExportButtons'
 import { useLocations } from '@/features/locations/useLocations'
-import { IntermediatesGapNote } from '@/features/results/IntermediatesGapNote'
 import { ConfidenceIntervalsChart } from '@/features/sensitivity/ConfidenceIntervalsChart'
 import { StabilityHeatmap } from '@/features/sensitivity/StabilityHeatmap'
 import {
@@ -284,11 +283,6 @@ export function SensitivitySection() {
               className="h-4 w-7 cursor-pointer appearance-none rounded-full bg-muted transition-colors checked:bg-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </label>
-
-          <IntermediatesGapNote
-            items={['повна матриця p_i(k) для всіх k', 'гістограми C*']}
-            formulas="формули (1.15)-(1.17)"
-          />
         </div>
       )}
     </div>
