@@ -39,6 +39,13 @@ export function CstarHistogram({
     count: counts[i] ?? 0,
   }))
 
+  // Label the X axis denser than before: aim for ~15 evenly spaced ticks and
+  // derive the step from the actual bin count, so few-bin histograms show every
+  // edge and many-bin ones stay legible. Rotated -45° labels keep them apart.
+  const TARGET_TICKS = 15
+  const tickStep = Math.max(1, Math.ceil(data.length / TARGET_TICKS))
+  const xTickValues = data.filter((_, i) => i % tickStep === 0).map((d) => d.bin)
+
   const selected = rankingIntervals.find((r) => r.locationId === selectedId)
   // Bins are uniform width, so a C* value maps linearly to a pixel x across the
   // plot area; this lets the reference lines sit at exact C* values rather than
@@ -117,8 +124,7 @@ export function CstarHistogram({
             tickSize: 0,
             tickPadding: 8,
             tickRotation: -45,
-            // Show roughly every fifth edge so 30 bins stay readable.
-            tickValues: data.filter((_, i) => i % 5 === 0).map((d) => d.bin),
+            tickValues: xTickValues,
             legend: 'C*',
             legendOffset: 44,
             legendPosition: 'middle',
