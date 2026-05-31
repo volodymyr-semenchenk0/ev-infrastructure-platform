@@ -4,18 +4,10 @@ import { ArrowRight, HelpCircle, Info as InfoIcon, RotateCcw } from 'lucide-reac
 import { Button } from '@/components/ui/button'
 import { Info } from '@/components/ui/info'
 import { Skeleton } from '@/components/ui/skeleton'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { toast } from '@/components/ui/use-toast'
 import { AhpMatrix } from '@/features/calculate/AhpMatrix'
-import {
-  computeConsistencyStats,
-  findInconsistentPairs,
-} from '@/features/calculate/consistency'
+import { computeConsistencyStats, findInconsistentPairs } from '@/features/calculate/consistency'
 import { type PairwiseMatrix } from '@/features/calculate/saaty-scale'
 import { useCreateEvaluation } from '@/features/calculate/useCreateEvaluation'
 import { useCriteria } from '@/features/calculate/useCriteria'
@@ -97,10 +89,7 @@ export function MatrixSection() {
     void loadProfileDefault(activeProfile.id, { silentSuccess: true })
   }, [activeProfile, storedMatrix, loadProfileDefault])
 
-  const stats = useMemo(
-    () => (matrix ? computeConsistencyStats(matrix) : null),
-    [matrix],
-  )
+  const stats = useMemo(() => (matrix ? computeConsistencyStats(matrix) : null), [matrix])
 
   const inconsistentPairs = useMemo(() => {
     if (!matrix || !stats) return []
@@ -110,7 +99,7 @@ export function MatrixSection() {
 
   const highlightPairs = useMemo(
     () => inconsistentPairs.map((p) => [p.i, p.j] as const),
-    [inconsistentPairs],
+    [inconsistentPairs]
   )
 
   const csvRows = useMemo(() => {
@@ -121,13 +110,7 @@ export function MatrixSection() {
     for (let i = 0; i < matrix.length; i += 1) {
       for (let j = 0; j < matrix.length; j += 1) {
         const tfn = matrix[i][j]
-        rows.push([
-          criteria.data[i].code,
-          criteria.data[j].code,
-          tfn.l,
-          tfn.m,
-          tfn.u,
-        ])
+        rows.push([criteria.data[i].code, criteria.data[j].code, tfn.l, tfn.m, tfn.u])
       }
     }
     return rows
@@ -139,13 +122,11 @@ export function MatrixSection() {
       matrix,
       consistencyRatio: stats?.cr ?? null,
     }),
-    [criteria.data, matrix, stats],
+    [criteria.data, matrix, stats]
   )
 
   if (!activeProfile) {
-    return (
-      <Info>Оберіть профіль ОПР для переходу до матриці нечітких попарних порівнянь.</Info>
-    )
+    return <Info>Оберіть профіль ОПР для переходу до матриці нечітких попарних порівнянь.</Info>
   }
 
   if (criteria.isLoading || !criteria.data) {
@@ -201,8 +182,13 @@ export function MatrixSection() {
       <div className="max-w-[600px]">
         <h3 className="text-sm font-semibold">Нечітка матриця попарних порівнянь</h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Верхній трикутник редагується значеннями шкали Сааті, нижній заповнюється
-          автоматично оберненим TFN, а діагональ дорівнює (1, 1, 1).
+          Значення в клітинці a_ij показує, наскільки критерій рядка важливіший за критерій колонки
+          (читається «рядок відносно колонки»). Якщо число більше за 1 – критерій рядка переважає,
+          якщо менше 1 – переважає критерій колонки, а 1 означає рівнозначність. Уся головна
+          діагональ дорівнює 1, оскільки критерій порівнюється сам із собою. Матриця
+          обернено-симетрична: значення в дзеркальній клітинці a_ji дорівнює 1/a_ij, тому при зміні
+          одного відношення зворотне перераховується автоматично. Оцінки задаються за шкалою Сааті
+          від 1 (рівнозначність) до 9 (абсолютна перевага).
         </p>
       </div>
 
@@ -329,9 +315,7 @@ function Stat({ label, value, info, className }: StatProps) {
           <TooltipContent>{info}</TooltipContent>
         </Tooltip>
       </p>
-      <p className={cn('mt-0.5 text-base font-semibold tabular-nums', className)}>
-        {value}
-      </p>
+      <p className={cn('mt-0.5 text-base font-semibold tabular-nums', className)}>{value}</p>
     </div>
   )
 }
