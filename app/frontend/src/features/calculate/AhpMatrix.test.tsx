@@ -11,7 +11,7 @@ const criteria = ['A', 'B', 'C'].map((code, i) => ({
 }))
 
 describe('AhpMatrix', () => {
-  it('renders header row and column for each criterion code', () => {
+  it('renders header row and column with each criterion name', () => {
     render(
       <AhpMatrix
         criteria={criteria}
@@ -20,8 +20,8 @@ describe('AhpMatrix', () => {
       />,
     )
     for (const c of criteria) {
-      const headers = screen.getAllByText(c.code)
-      // each code appears at least twice (row header + column header)
+      const headers = screen.getAllByText(c.name)
+      // each name appears at least twice (row header + column header)
       expect(headers.length).toBeGreaterThanOrEqual(2)
     }
   })
