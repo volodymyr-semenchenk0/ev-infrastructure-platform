@@ -5,8 +5,8 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { HomePage } from '@/pages/HomePage'
 
 // Single-page workbench: every step of the operator's workflow lives on the
-// root route as a stack of accordions. The legacy /details route is kept as a
-// redirect so bookmarks like /details#topsis still resolve to a usable page.
+// root route, navigated through a top stepper. The legacy /details route is
+// kept as a redirect so bookmarks like /details#topsis still resolve.
 
 export default function App() {
   return (
