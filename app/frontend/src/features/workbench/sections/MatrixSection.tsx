@@ -179,17 +179,33 @@ export function MatrixSection() {
 
   return (
     <div className="space-y-4">
-      <div className="max-w-[600px]">
-        <h3 className="text-sm font-semibold">Нечітка матриця попарних порівнянь</h3>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Значення в клітинці a_ij показує, наскільки критерій рядка важливіший за критерій колонки
-          (читається «рядок відносно колонки»). Якщо число більше за 1 – критерій рядка переважає,
-          якщо менше 1 – переважає критерій колонки, а 1 означає рівнозначність. Уся головна
-          діагональ дорівнює 1, оскільки критерій порівнюється сам із собою. Матриця
-          обернено-симетрична: значення в дзеркальній клітинці a_ji дорівнює 1/a_ij, тому при зміні
-          одного відношення зворотне перераховується автоматично. Оцінки задаються за шкалою Сааті
-          від 1 (рівнозначність) до 9 (абсолютна перевага).
-        </p>
+      <div className="flex flex-col gap-4 md:flex-row md:items-start">
+        <div className="max-w-[600px]">
+          <h3 className="text-sm font-semibold">Нечітка матриця попарних порівнянь</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Значення в клітинці a_ij показує, наскільки критерій рядка важливіший за критерій
+            колонки (читається «рядок відносно колонки»). Якщо число більше за 1 – критерій рядка
+            переважає, якщо менше 1 – переважає критерій колонки, а 1 означає рівнозначність. Уся
+            головна діагональ дорівнює 1, оскільки критерій порівнюється сам із собою. Матриця
+            обернено-симетрична: значення в дзеркальній клітинці a_ji дорівнює 1/a_ij, тому при
+            зміні одного відношення зворотне перераховується автоматично. Оцінки задаються за шкалою
+            Сааті від 1 (рівнозначність) до 9 (абсолютна перевага).
+          </p>
+        </div>
+        <div className="border-t pt-4 md:border-l md:border-t-0 md:pl-4 md:pt-0">
+          <h4 className="flex items-center gap-2 text-sm font-medium">
+            <HelpCircle className="h-4 w-4" aria-hidden="true" />
+            Шкала Сааті
+          </h4>
+          <dl className="mt-3 grid gap-1 text-xs">
+            {SAATY_LEGEND.map(([key, description]) => (
+              <div key={key} className="flex gap-2">
+                <dt className="font-mono font-medium">{key}</dt>
+                <dd className="text-muted-foreground">{description}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
       </div>
 
       <TooltipProvider delayDuration={150}>
@@ -220,21 +236,6 @@ export function MatrixSection() {
           />
         </section>
       </TooltipProvider>
-
-      <details className="rounded-md border bg-background p-3 text-sm">
-        <summary className="flex cursor-pointer items-center gap-2 font-medium">
-          <HelpCircle className="h-4 w-4" aria-hidden="true" />
-          Шкала Сааті
-        </summary>
-        <dl className="mt-3 grid gap-1 text-xs sm:grid-cols-2">
-          {SAATY_LEGEND.map(([key, description]) => (
-            <div key={key} className="flex gap-2">
-              <dt className="font-mono font-medium">{key}</dt>
-              <dd className="text-muted-foreground">{description}</dd>
-            </div>
-          ))}
-        </dl>
-      </details>
 
       <AhpMatrix
         criteria={criteria.data}
