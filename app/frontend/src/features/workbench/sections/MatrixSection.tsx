@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowRight, HelpCircle, Info as InfoIcon, RotateCcw } from 'lucide-react'
+import { AlertTriangle, ArrowRight, HelpCircle, Info as InfoIcon, RotateCcw } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Info } from '@/components/ui/info'
@@ -245,16 +245,23 @@ export function MatrixSection() {
       />
 
       {stats.cr > CR_THRESHOLD && inconsistentPairs.length > 0 && (
-        <p
+        <div
           role="status"
-          className="rounded-md border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-100"
+          className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-100"
         >
-          CR перевищує 0,10. Найбільший внесок у неузгодженість дають пари:{' '}
-          {inconsistentPairs
-            .map(({ i, j }) => `${criteria.data[i].code}/${criteria.data[j].code}`)
-            .join(', ')}
-          . Перегляньте їх перед обчисленням.
-        </p>
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" aria-hidden="true" />
+          <p>
+            CR перевищує 0,10. Найбільший внесок у неузгодженість дають пари:{' '}
+            {inconsistentPairs.map(({ i, j }, idx) => (
+              <span key={`${i}-${j}`}>
+                {idx > 0 ? ', ' : ''}
+                <span className="font-semibold">{criteria.data[i].name}</span> /{' '}
+                <span className="font-semibold">{criteria.data[j].name}</span>
+              </span>
+            ))}
+            . Перегляньте їх перед обчисленням.
+          </p>
+        </div>
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-2">
