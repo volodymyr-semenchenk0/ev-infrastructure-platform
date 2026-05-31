@@ -81,14 +81,14 @@ export function AhpMatrix({
       <table className="w-full table-fixed border-collapse text-xs">
         <thead>
           <tr>
-            <th className="w-20 border bg-muted/40 p-1.5"></th>
+            <th className="w-40 border bg-muted/40 p-1.5"></th>
             {criteria.map((c) => (
               <th
                 key={c.id}
-                title={c.name}
+                title={c.code}
                 className="border bg-muted/40 px-2 py-1.5 font-semibold"
               >
-                {c.code}
+                {c.name ?? c.code}
               </th>
             ))}
           </tr>
@@ -97,10 +97,10 @@ export function AhpMatrix({
           {criteria.map((rowCrit, i) => (
             <tr key={rowCrit.id}>
               <th
-                title={rowCrit.name}
+                title={rowCrit.code}
                 className="border bg-muted/40 px-2 py-1.5 text-left font-semibold"
               >
-                {rowCrit.code}
+                {rowCrit.name ?? rowCrit.code}
               </th>
               {criteria.map((_, j) => {
                 if (i === j) {
