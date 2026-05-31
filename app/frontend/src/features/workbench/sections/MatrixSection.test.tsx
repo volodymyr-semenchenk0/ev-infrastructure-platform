@@ -106,6 +106,9 @@ describe('MatrixSection', () => {
     // λ_max stat card is the consistency block; presence confirms the merged
     // editor (not just the old summary card) is rendered.
     expect(screen.getByText('λ_max')).toBeInTheDocument()
+    // Each consistency stat carries an info trigger with an explanatory tooltip.
+    expect(screen.getByRole('button', { name: 'Що таке λ_max' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Що таке CR' })).toBeInTheDocument()
     mock.restore()
   })
 
