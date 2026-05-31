@@ -28,4 +28,10 @@ describe('WorkbenchLayout', () => {
     const main = screen.getByRole('main', { name: 'Робоча область' })
     expect(main).toContainElement(screen.getByTestId('content'))
   })
+
+  it('renders the attribution footer', () => {
+    renderLayout()
+    const footer = screen.getByRole('contentinfo')
+    expect(footer).toHaveTextContent('© 2026 Developed by Volodymyr Semenchenko')
+  })
 })
