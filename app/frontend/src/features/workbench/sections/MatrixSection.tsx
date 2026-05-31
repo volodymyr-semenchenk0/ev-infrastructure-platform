@@ -4,18 +4,10 @@ import { ArrowRight, HelpCircle, Info as InfoIcon, RotateCcw } from 'lucide-reac
 import { Button } from '@/components/ui/button'
 import { Info } from '@/components/ui/info'
 import { Skeleton } from '@/components/ui/skeleton'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { toast } from '@/components/ui/use-toast'
 import { AhpMatrix } from '@/features/calculate/AhpMatrix'
-import {
-  computeConsistencyStats,
-  findInconsistentPairs,
-} from '@/features/calculate/consistency'
+import { computeConsistencyStats, findInconsistentPairs } from '@/features/calculate/consistency'
 import { type PairwiseMatrix } from '@/features/calculate/saaty-scale'
 import { useCreateEvaluation } from '@/features/calculate/useCreateEvaluation'
 import { useCriteria } from '@/features/calculate/useCriteria'
@@ -97,10 +89,7 @@ export function MatrixSection() {
     void loadProfileDefault(activeProfile.id, { silentSuccess: true })
   }, [activeProfile, storedMatrix, loadProfileDefault])
 
-  const stats = useMemo(
-    () => (matrix ? computeConsistencyStats(matrix) : null),
-    [matrix],
-  )
+  const stats = useMemo(() => (matrix ? computeConsistencyStats(matrix) : null), [matrix])
 
   const inconsistentPairs = useMemo(() => {
     if (!matrix || !stats) return []
@@ -110,7 +99,7 @@ export function MatrixSection() {
 
   const highlightPairs = useMemo(
     () => inconsistentPairs.map((p) => [p.i, p.j] as const),
-    [inconsistentPairs],
+    [inconsistentPairs]
   )
 
   const csvRows = useMemo(() => {
@@ -121,13 +110,7 @@ export function MatrixSection() {
     for (let i = 0; i < matrix.length; i += 1) {
       for (let j = 0; j < matrix.length; j += 1) {
         const tfn = matrix[i][j]
-        rows.push([
-          criteria.data[i].code,
-          criteria.data[j].code,
-          tfn.l,
-          tfn.m,
-          tfn.u,
-        ])
+        rows.push([criteria.data[i].code, criteria.data[j].code, tfn.l, tfn.m, tfn.u])
       }
     }
     return rows
@@ -139,13 +122,11 @@ export function MatrixSection() {
       matrix,
       consistencyRatio: stats?.cr ?? null,
     }),
-    [criteria.data, matrix, stats],
+    [criteria.data, matrix, stats]
   )
 
   if (!activeProfile) {
-    return (
-      <Info>Оберіть профіль ОПР для переходу до матриці нечітких попарних порівнянь.</Info>
-    )
+    return <Info>Оберіть профіль ОПР для переходу до матриці нечітких попарних порівнянь.</Info>
   }
 
   if (criteria.isLoading || !criteria.data) {
@@ -198,12 +179,33 @@ export function MatrixSection() {
 
   return (
     <div className="space-y-4">
-      <div className="max-w-[600px]">
-        <h3 className="text-sm font-semibold">Нечітка матриця попарних порівнянь</h3>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Верхній трикутник редагується значеннями шкали Сааті, нижній заповнюється
-          автоматично оберненим TFN, а діагональ дорівнює (1, 1, 1).
-        </p>
+      <div className="flex flex-col gap-4 md:flex-row md:items-start">
+        <div className="max-w-[600px]">
+          <h3 className="text-sm font-semibold">Нечітка матриця попарних порівнянь</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Значення в клітинці a_ij показує, наскільки критерій рядка важливіший за критерій
+            колонки (читається «рядок відносно колонки»). Якщо число більше за 1 – критерій рядка
+            переважає, якщо менше 1 – переважає критерій колонки, а 1 означає рівнозначність. Уся
+            головна діагональ дорівнює 1, оскільки критерій порівнюється сам із собою. Матриця
+            обернено-симетрична: значення в дзеркальній клітинці a_ji дорівнює 1/a_ij, тому при
+            зміні одного відношення зворотне перераховується автоматично. Оцінки задаються за шкалою
+            Сааті від 1 (рівнозначність) до 9 (абсолютна перевага).
+          </p>
+        </div>
+        <div className="border-t pt-4 md:border-l md:border-t-0 md:pl-4 md:pt-0">
+          <h4 className="flex items-center gap-2 text-sm font-medium">
+            <HelpCircle className="h-4 w-4" aria-hidden="true" />
+            Шкала Сааті
+          </h4>
+          <dl className="mt-3 grid gap-1 text-xs">
+            {SAATY_LEGEND.map(([key, description]) => (
+              <div key={key} className="flex gap-2">
+                <dt className="font-mono font-medium">{key}</dt>
+                <dd className="text-muted-foreground">{description}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
       </div>
 
       <TooltipProvider delayDuration={150}>
@@ -234,21 +236,6 @@ export function MatrixSection() {
           />
         </section>
       </TooltipProvider>
-
-      <details className="rounded-md border bg-background p-3 text-sm">
-        <summary className="flex cursor-pointer items-center gap-2 font-medium">
-          <HelpCircle className="h-4 w-4" aria-hidden="true" />
-          Шкала Сааті
-        </summary>
-        <dl className="mt-3 grid gap-1 text-xs sm:grid-cols-2">
-          {SAATY_LEGEND.map(([key, description]) => (
-            <div key={key} className="flex gap-2">
-              <dt className="font-mono font-medium">{key}</dt>
-              <dd className="text-muted-foreground">{description}</dd>
-            </div>
-          ))}
-        </dl>
-      </details>
 
       <AhpMatrix
         criteria={criteria.data}
@@ -329,9 +316,7 @@ function Stat({ label, value, info, className }: StatProps) {
           <TooltipContent>{info}</TooltipContent>
         </Tooltip>
       </p>
-      <p className={cn('mt-0.5 text-base font-semibold tabular-nums', className)}>
-        {value}
-      </p>
+      <p className={cn('mt-0.5 text-base font-semibold tabular-nums', className)}>{value}</p>
     </div>
   )
 }
