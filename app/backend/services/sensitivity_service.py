@@ -11,6 +11,8 @@ from schemas.sensitivity import (
     STABILITY_K_VALUES,
     TOP_N_FOR_CONFIDENCE_INTERVALS,
     ConfidenceInterval,
+    ConvergenceTrace,
+    CstarHistogram,
     SensitivityRead,
 )
 from services.repository import (
@@ -91,6 +93,37 @@ class SensitivityService:
             for i in top_indices
         ]
 
+        # Return-only storyline payloads (not persisted). Step 2 forest-plot:
+        # mean + 2.5/97.5 percentile band for ALL locations, best-to-worst.
+        ranking_intervals = [
+            ConfidenceInterval(
+                location_id=location_ids[i],
+                mean=float(scores_mean[i]),
+                lower=float(ci_lower[i]),
+                upper=float(ci_upper[i]),
+            )
+            for i in order_desc
+        ]
+
+        # Step 1 histogram: shared bins, C* counts per location.
+        hist_counts = mc_result["hist_counts"]
+        cstar_histogram = CstarHistogram(
+            bin_edges=[float(e) for e in mc_result["hist_bin_edges"]],
+            counts_by_location={
+                location_ids[i]: [int(c) for c in hist_counts[i]] for i in range(len(location_ids))
+            },
+        )
+
+        # Step 3 convergence: running mean of C* per location at each checkpoint.
+        conv_mean = mc_result["convergence_mean"]
+        convergence = ConvergenceTrace(
+            iterations=[int(t) for t in mc_result["convergence_iterations"]],
+            mean_by_location={
+                location_ids[i]: [float(v) for v in conv_mean[:, i]]
+                for i in range(len(location_ids))
+            },
+        )
+
         # Persist (idempotent overwrite if a record already exists).
         existing = await self.sens_repo.get(evaluation_id)
         if existing is not None:
@@ -114,4 +147,7 @@ class SensitivityService:
         return SensitivityRead(
             stability_matrix=stability_matrix,
             confidence_intervals=cis,
+            ranking_intervals=ranking_intervals,
+            cstar_histogram=cstar_histogram,
+            convergence=convergence,
         )

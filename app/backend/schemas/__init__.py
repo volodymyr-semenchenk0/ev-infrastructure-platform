@@ -19,6 +19,8 @@ from schemas.profile import (
 )
 from schemas.sensitivity import (
     ConfidenceInterval,
+    ConvergenceTrace,
+    CstarHistogram,
     SensitivityRead,
     SensitivityRequest,
 )
@@ -27,8 +29,10 @@ __all__ = [
     "CamelModel",
     "ComparisonRead",
     "ConfidenceInterval",
+    "ConvergenceTrace",
     "CriterionRead",
     "CriterionWithWeight",
+    "CstarHistogram",
     "EvaluationCreate",
     "EvaluationRead",
     "FuzzyNumber",

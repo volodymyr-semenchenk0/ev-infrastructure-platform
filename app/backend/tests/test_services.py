@@ -523,6 +523,40 @@ class TestSensitivityService:
             "SensitivityService must use a fixed seed (42) for reproducibility."
         )
 
+    async def test_sensitivity_service_returns_storyline_payloads(
+        self, db_session: AsyncSession
+    ) -> None:
+        """Storyline charts: ranking_intervals (all, desc), histogram, convergence.
+
+        ranking_intervals carries every location (unlike confidence_intervals,
+        top-N only) ordered by mean C* descending; the histogram counts of each
+        location sum to N; the convergence iterations end at N.
+        """
+        _, eval_id = await self._create_evaluation(db_session)
+
+        sens = SensitivityService(db_session)
+        result = await sens.run(evaluation_id=eval_id, iterations=200, perturbation=0.1)
+
+        n_loc = len(result.stability_matrix)
+        assert len(result.ranking_intervals) == n_loc
+        means = [ri.mean for ri in result.ranking_intervals]
+        assert means == sorted(means, reverse=True)
+        for ri in result.ranking_intervals:
+            assert ri.lower <= ri.mean <= ri.upper
+
+        hist = result.cstar_histogram
+        assert len(hist.bin_edges) >= 2
+        assert len(hist.counts_by_location) == n_loc
+        for counts in hist.counts_by_location.values():
+            assert len(counts) == len(hist.bin_edges) - 1
+            assert sum(counts) == 200
+
+        conv = result.convergence
+        assert conv.iterations[-1] == 200
+        assert all(b > a for a, b in zip(conv.iterations, conv.iterations[1:], strict=False))
+        for series in conv.mean_by_location.values():
+            assert len(series) == len(conv.iterations)
+
 
 # ---------------------------------------------------------------------------
 # D. TestEndToEndHwangYoon

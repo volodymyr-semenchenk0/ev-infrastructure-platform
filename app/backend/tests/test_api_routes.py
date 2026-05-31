@@ -455,3 +455,45 @@ class TestSensitivity:
                 f"CI list not sorted desc: mean[{i}]={means[i]:.4f} "
                 f"< mean[{i + 1}]={means[i + 1]:.4f}"
             )
+
+    async def test_post_sensitivity_returns_storyline_payloads(
+        self, api_client: AsyncClient
+    ) -> None:
+        """Response carries rankingIntervals (all, desc), cstarHistogram, convergence.
+
+        These three return-only fields back the sensitivity storyline charts and
+        are recomputed each request (never persisted).
+        """
+        profiles_resp = await api_client.get("/api/profiles")
+        municipal_id = next(p for p in profiles_resp.json() if p["code"] == "municipal")["id"]
+        create_resp = await api_client.post(
+            "/api/evaluations",
+            json={"profileId": municipal_id, "pairwiseMatrix": _identity_pairwise_matrix(9)},
+        )
+        evaluation_id = create_resp.json()["evaluationId"]
+
+        sens_resp = await api_client.post(
+            f"/api/evaluations/{evaluation_id}/sensitivity",
+            json={"iterations": 200, "perturbation": 0.1},
+        )
+        assert sens_resp.status_code == 200
+        data = sens_resp.json()
+
+        ri = data["rankingIntervals"]
+        assert len(ri) == len(data["stabilityMatrix"])
+        ri_means = [r["mean"] for r in ri]
+        assert ri_means == sorted(ri_means, reverse=True)
+        for r in ri:
+            assert r["lower"] <= r["mean"] <= r["upper"]
+
+        hist = data["cstarHistogram"]
+        assert len(hist["binEdges"]) >= 2
+        for counts in hist["countsByLocation"].values():
+            assert len(counts) == len(hist["binEdges"]) - 1
+            assert sum(counts) == 200
+
+        conv = data["convergence"]
+        assert conv["iterations"][-1] == 200
+        assert all(b > a for a, b in zip(conv["iterations"], conv["iterations"][1:], strict=False))
+        for series in conv["meanByLocation"].values():
+            assert len(series) == len(conv["iterations"])
