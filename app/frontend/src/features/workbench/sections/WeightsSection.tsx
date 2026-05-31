@@ -74,25 +74,28 @@ export function WeightsSection() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-        {consistencyRatio !== null && (
-          <span>
-            CR:{' '}
-            <span className="font-mono text-foreground">
-              {consistencyRatio.toFixed(3)}
-            </span>
-          </span>
-        )}
+      <div className="rounded-md border border-border p-3">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <h3 className="text-sm font-semibold">Ваги критеріїв (FAHP)</h3>
+          <ChartExportButtons containerRef={chartRef} filenameBase={filenameBase} />
+        </div>
+        <div ref={chartRef}>
+          <WeightsBarChart
+            weights={weights}
+            weightsFuzzy={weightsFuzzy}
+            criteriaNames={criteriaNames}
+          />
+        </div>
       </div>
 
-      <div ref={chartRef}>
-        <WeightsBarChart
-          weights={weights}
-          weightsFuzzy={weightsFuzzy}
-          criteriaNames={criteriaNames}
-        />
+      <div>
+        <h3 className="text-sm font-semibold">Вагові коефіцієнти критеріїв</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          w_j — дефазифікована вага критерію (центроїд нечіткого трикутника), а l_j та
+          u_j — нижня й верхня межі відповідного нечіткого числа. Рядки впорядковано за
+          спаданням ваги.
+        </p>
       </div>
-      <ChartExportButtons containerRef={chartRef} filenameBase={filenameBase} />
 
       <div className="overflow-hidden rounded-md border border-border">
         <table className="w-full text-sm">

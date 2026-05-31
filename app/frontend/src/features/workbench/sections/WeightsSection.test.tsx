@@ -54,7 +54,7 @@ describe('WeightsSection', () => {
     mock.restore()
   })
 
-  it('renders the chart, sorted table with rank, and CR when weights are present', async () => {
+  it('renders the chart and the sorted table with rank when weights are present', async () => {
     useSessionStore.getState().setWeights({ B: 0.5, A: 0.3, C: 0.2 }, 0.07)
     useSessionStore.getState().setEvaluationId(7)
 
@@ -66,13 +66,13 @@ describe('WeightsSection', () => {
     expect(await screen.findByTestId('weights-chart')).toHaveTextContent('3 bars')
 
     const rows = screen.getAllByRole('row').slice(1) // skip header row
-    // Columns are: #, Критерій, Код, w_j — code is the third <td>.
+    // Columns are: #, Критерій, Код, l_j, w_j, u_j — code is the third <td>.
     const codeColumn = rows.map((row) => row.querySelectorAll('td')[2]?.textContent)
     expect(codeColumn).toEqual(['B', 'A', 'C'])
 
-    // CR is rendered in the top metadata row, alongside the evaluationId.
-    expect(screen.getByText(/CR:/)).toBeInTheDocument()
-    expect(screen.getByText('0.070')).toBeInTheDocument()
+    // The weights step no longer surfaces CR or the evaluation id; CR lives on
+    // the matrix step instead.
+    expect(screen.queryByText(/CR:/)).not.toBeInTheDocument()
     expect(screen.queryByText(/ID розрахунку/)).not.toBeInTheDocument()
 
     // Inline export buttons (CSV/JSON) come from TabularExportButtons.
