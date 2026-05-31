@@ -198,7 +198,7 @@ export function MatrixSection() {
 
   return (
     <div className="space-y-4">
-      <div>
+      <div className="max-w-[600px]">
         <h3 className="text-sm font-semibold">Нечітка матриця попарних порівнянь</h3>
         <p className="mt-1 text-sm text-muted-foreground">
           Верхній трикутник редагується значеннями шкали Сааті, нижній заповнюється
