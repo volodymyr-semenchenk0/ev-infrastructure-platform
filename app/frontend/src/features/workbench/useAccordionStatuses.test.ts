@@ -79,7 +79,10 @@ describe('useAccordionStatuses', () => {
         stabilityMatrix: { '1': { '1': 1, '3': 1, '5': 1 } },
         confidenceIntervals: [{ locationId: 1, mean: 0.9, lower: 0.88, upper: 0.92 }],
         rankingIntervals: [{ locationId: 1, mean: 0.9, lower: 0.88, upper: 0.92 }],
-        cstarHistogram: { binEdges: [0, 0.5, 1], countsByLocation: { '1': [10, 90] } },
+        cstarHistogram: {
+          edgesByLocation: { '1': [0.88, 0.9, 0.92] },
+          countsByLocation: { '1': [10, 90] },
+        },
         convergence: { iterations: [1, 10, 100], meanByLocation: { '1': [0.9, 0.9, 0.9] } },
       })
     })

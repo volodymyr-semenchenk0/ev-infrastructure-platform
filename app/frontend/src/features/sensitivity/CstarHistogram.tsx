@@ -31,7 +31,8 @@ export function CstarHistogram({
   // Default to the top-1 location (rankingIntervals is sorted by mean desc).
   const [selectedId, setSelectedId] = useState<number>(() => rankingIntervals[0]?.locationId ?? 0)
 
-  const edges = histogram.binEdges
+  // Bins are auto-zoomed per location, so read this location's own edges.
+  const edges = histogram.edgesByLocation[String(selectedId)] ?? []
   const counts = histogram.countsByLocation[String(selectedId)] ?? []
   const data: BinDatum[] = edges.slice(0, -1).map((edge, i) => ({
     bin: edge.toFixed(3),

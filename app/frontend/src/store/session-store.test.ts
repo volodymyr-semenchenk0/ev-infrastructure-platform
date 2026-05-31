@@ -27,7 +27,10 @@ const SAMPLE_SENSITIVITY: SensitivityResult = {
   stabilityMatrix: { '1': { '1': 0.9, '3': 0.99, '5': 1 } },
   confidenceIntervals: [{ locationId: 1, mean: 0.82, lower: 0.78, upper: 0.86 }],
   rankingIntervals: [{ locationId: 1, mean: 0.82, lower: 0.78, upper: 0.86 }],
-  cstarHistogram: { binEdges: [0, 0.5, 1], countsByLocation: { '1': [40, 60] } },
+  cstarHistogram: {
+    edgesByLocation: { '1': [0.78, 0.82, 0.86] },
+    countsByLocation: { '1': [40, 60] },
+  },
   convergence: { iterations: [1, 10, 100], meanByLocation: { '1': [0.8, 0.81, 0.82] } },
 }
 

@@ -65,7 +65,7 @@ describe('SensitivitySection', () => {
         { locationId: 2, mean: 0.39, lower: 0.3, upper: 0.5 },
       ],
       cstarHistogram: {
-        binEdges: [0, 0.5, 1],
+        edgesByLocation: { '1': [0.7, 0.8, 0.9], '2': [0.3, 0.4, 0.5] },
         countsByLocation: { '1': [40, 60], '2': [70, 30] },
       },
       convergence: {

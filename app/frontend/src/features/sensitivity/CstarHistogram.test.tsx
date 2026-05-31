@@ -8,7 +8,7 @@ describe('CstarHistogram', () => {
     render(
       <CstarHistogram
         histogram={{
-          binEdges: [0, 0.5, 1],
+          edgesByLocation: { '1': [0.4, 0.6, 0.8], '2': [0.3, 0.45, 0.6] },
           countsByLocation: { '1': [100, 100], '2': [120, 80] },
         }}
         rankingIntervals={[
