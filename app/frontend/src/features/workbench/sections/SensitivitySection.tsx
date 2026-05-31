@@ -180,7 +180,6 @@ export function SensitivitySection() {
           </div>
 
           <div className="space-y-2">
-            <h3 className="text-sm font-semibold">Крок 1 – розподіл C* для локації</h3>
             <CstarHistogram
               histogram={sensitivity.cstarHistogram}
               rankingIntervals={sensitivity.rankingIntervals}
@@ -190,7 +189,6 @@ export function SensitivitySection() {
           </div>
 
           <div className="space-y-2">
-            <h3 className="text-sm font-semibold">Крок 2 – інтервали рангів за C*</h3>
             <RankingForestPlot
               rankingIntervals={sensitivity.rankingIntervals}
               nameByLocationId={nameByLocationId}
@@ -199,7 +197,6 @@ export function SensitivitySection() {
           </div>
 
           <div className="space-y-2">
-            <h3 className="text-sm font-semibold">Крок 3 – збіжність середнього C*</h3>
             <ConvergenceChart
               convergence={sensitivity.convergence}
               rankingIntervals={sensitivity.rankingIntervals}
