@@ -138,7 +138,7 @@ export function WeightsSection() {
             ))}
           </tbody>
           <tfoot>
-            <tr className="border-t font-medium">
+            <tr className="border-t bg-muted/40 font-medium">
               <td className="px-4 py-2" />
               <td className="px-4 py-2">Сума</td>
               <td className="px-4 py-2" />
