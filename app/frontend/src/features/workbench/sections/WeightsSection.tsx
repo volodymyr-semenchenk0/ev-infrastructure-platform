@@ -72,15 +72,10 @@ export function WeightsSection() {
 
   const filenameBase = `fahp-weights-${evaluationId ?? 'session'}`
 
-  // Column totals for the footer row. Σw_j is 1 by construction; the bound sums
-  // are shown only when every row carries bounds (legacy runs have none).
+  // Footer total for the crisp weights only; Σw_j is 1 by construction. The
+  // fuzzy bound columns are left without a total — their raw sums are not 1 and
+  // carry no useful interpretation here.
   const weightSum = sortedRows.reduce((acc, r) => acc + r.weight, 0)
-  const lowerSum = sortedRows.every((r) => r.lower !== null)
-    ? sortedRows.reduce((acc, r) => acc + (r.lower ?? 0), 0)
-    : null
-  const upperSum = sortedRows.every((r) => r.upper !== null)
-    ? sortedRows.reduce((acc, r) => acc + (r.upper ?? 0), 0)
-    : null
 
   return (
     <div className="space-y-4">
@@ -100,7 +95,7 @@ export function WeightsSection() {
 
       <div>
         <h3 className="text-sm font-semibold">Вагові коефіцієнти критеріїв</h3>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 max-w-[600px] text-sm text-muted-foreground">
           w_j — дефазифікована вага критерію (центроїд нечіткого трикутника), а l_j та
           u_j — нижня й верхня межі відповідного нечіткого числа. Рядки впорядковано за
           спаданням ваги.
@@ -142,15 +137,11 @@ export function WeightsSection() {
               <td className="px-4 py-2" />
               <td className="px-4 py-2">Сума</td>
               <td className="px-4 py-2" />
-              <td className="px-4 py-2 text-right font-mono tabular-nums text-muted-foreground">
-                {lowerSum !== null ? lowerSum.toFixed(4) : '–'}
-              </td>
+              <td className="px-4 py-2" />
               <td className="px-4 py-2 text-right font-mono tabular-nums">
                 {weightSum.toFixed(4)}
               </td>
-              <td className="px-4 py-2 text-right font-mono tabular-nums text-muted-foreground">
-                {upperSum !== null ? upperSum.toFixed(4) : '–'}
-              </td>
+              <td className="px-4 py-2" />
             </tr>
           </tfoot>
         </table>
