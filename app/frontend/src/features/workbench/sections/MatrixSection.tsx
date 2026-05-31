@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Calculator, HelpCircle, Info as InfoIcon, RotateCcw } from 'lucide-react'
+import { ArrowRight, HelpCircle, Info as InfoIcon, RotateCcw } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Info } from '@/components/ui/info'
@@ -198,10 +198,13 @@ export function MatrixSection() {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        Верхній трикутник редагується значеннями шкали Сааті; нижній –
-        автоматично обернений TFN за формулою (1.6); діагональ – (1, 1, 1).
-      </p>
+      <div>
+        <h3 className="text-sm font-semibold">Нечітка матриця попарних порівнянь</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Верхній трикутник редагується значеннями шкали Сааті, нижній заповнюється
+          автоматично оберненим TFN, а діагональ дорівнює (1, 1, 1).
+        </p>
+      </div>
 
       <TooltipProvider delayDuration={150}>
         <section
@@ -291,8 +294,8 @@ export function MatrixSection() {
             disabled={!canRunFahp || createEvaluation.isPending}
             title={canRunFahp ? undefined : 'Узгодженість CR перевищує 0,10'}
           >
-            <Calculator className="mr-2 h-4 w-4" aria-hidden="true" />
             {createEvaluation.isPending ? 'Обчислення…' : 'Обчислити ваги'}
+            <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
       </div>
