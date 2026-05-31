@@ -143,12 +143,12 @@ export function RankingTable({
               <TableCell className="text-muted-foreground">
                 {row.district ?? '—'}
               </TableCell>
-              <TableCell className="font-mono">{row.closeness.toFixed(3)}</TableCell>
+              <TableCell className="font-mono">{row.closeness.toFixed(4)}</TableCell>
               <TableCell className="font-mono text-muted-foreground">
-                {row.sPlus.toFixed(3)}
+                {row.sPlus.toFixed(4)}
               </TableCell>
               <TableCell className="font-mono text-muted-foreground">
-                {row.sMinus.toFixed(3)}
+                {row.sMinus.toFixed(4)}
               </TableCell>
             </TableRow>
           )
