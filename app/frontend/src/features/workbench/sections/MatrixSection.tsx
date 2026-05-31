@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Calculator, HelpCircle, RotateCcw } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -9,10 +9,7 @@ import {
   computeConsistencyStats,
   findInconsistentPairs,
 } from '@/features/calculate/consistency'
-import {
-  identityMatrix,
-  type PairwiseMatrix,
-} from '@/features/calculate/saaty-scale'
+import { type PairwiseMatrix } from '@/features/calculate/saaty-scale'
 import { useCreateEvaluation } from '@/features/calculate/useCreateEvaluation'
 import { useCriteria } from '@/features/calculate/useCriteria'
 import { TabularExportButtons } from '@/features/export/TabularExportButtons'
@@ -20,6 +17,8 @@ import { ValidationError } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { useProfileStore } from '@/store/profile-store'
 import { useSessionStore } from '@/store/session-store'
+
+import { useLoadProfileDefault } from './useLoadProfileDefault'
 
 const CR_THRESHOLD = 0.1
 const CR_WARN_LIMIT = 0.15
@@ -55,21 +54,41 @@ export function MatrixSection() {
   const setError = useSessionStore((s) => s.setError)
   const criteria = useCriteria()
   const createEvaluation = useCreateEvaluation()
+  const loadProfileDefault = useLoadProfileDefault()
 
-  // Local matrix mirrors the session store until the operator commits a new
-  // edit by clicking "Обчислити ваги". Lazy seed: identity matrix if criteria
-  // are loaded but the session has no stored matrix yet.
+  // Local matrix is the editor's working copy. Edits live here (via AhpMatrix
+  // onChange) and only reach the session store on "Обчислити ваги" or a
+  // default-load/reset — so editing never wipes downstream weights mid-session.
   const [matrix, setMatrix] = useState<PairwiseMatrix | null>(storedMatrix)
+
+  // Resync the working copy whenever the *stored* matrix reference changes
+  // (a fresh default load, a reset, or a commit). Local edits change only
+  // `matrix`, not `storedMatrix`, so they never trigger a resync and are never
+  // clobbered. Comparing by reference is what distinguishes "operator edited"
+  // from "a new matrix was committed to the session".
+  const lastSyncedRef = useRef<PairwiseMatrix | null>(storedMatrix)
   useEffect(() => {
-    if (matrix !== null) return
-    if (storedMatrix !== null) {
-      setMatrix(storedMatrix)
+    if (storedMatrix !== lastSyncedRef.current) {
+      lastSyncedRef.current = storedMatrix
+      if (storedMatrix !== null) setMatrix(storedMatrix)
+    }
+  }, [storedMatrix])
+
+  // Self-load the default Ã if the section mounts with a profile selected but
+  // no matrix in the session (e.g. re-selecting the same profile after a
+  // resetSession). ProfileSection also fires this on profile switch; the
+  // per-profile ref guard prevents a duplicate in-flight request.
+  const requestedRef = useRef<number | null>(null)
+  useEffect(() => {
+    if (!activeProfile) {
+      requestedRef.current = null
       return
     }
-    if (criteria.data) {
-      setMatrix(identityMatrix(criteria.data.length))
-    }
-  }, [matrix, storedMatrix, criteria.data])
+    if (storedMatrix !== null) return
+    if (requestedRef.current === activeProfile.id) return
+    requestedRef.current = activeProfile.id
+    void loadProfileDefault(activeProfile.id, { silentSuccess: true })
+  }, [activeProfile, storedMatrix, loadProfileDefault])
 
   const stats = useMemo(
     () => (matrix ? computeConsistencyStats(matrix) : null),
@@ -132,10 +151,11 @@ export function MatrixSection() {
     return <Skeleton className="h-96 w-full" />
   }
 
+  // Reset reloads the profile default Ã (built server-side from
+  // PAIRWISE_PRIORITIES). Non-silent so the operator gets a confirmation
+  // toast; the resync effect picks up the freshly committed matrix.
   const handleReset = () => {
-    if (criteria.data) {
-      setMatrix(identityMatrix(criteria.data.length))
-    }
+    void loadProfileDefault(activeProfile.id)
   }
 
   // Compute weights using the LOCAL matrix (whatever is in the editor right
