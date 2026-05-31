@@ -73,7 +73,7 @@ describe('WeightsSection', () => {
     // CR is rendered in the top metadata row, alongside the evaluationId.
     expect(screen.getByText(/CR:/)).toBeInTheDocument()
     expect(screen.getByText('0.070')).toBeInTheDocument()
-    expect(screen.getByText(/ID розрахунку/)).toBeInTheDocument()
+    expect(screen.queryByText(/ID розрахунку/)).not.toBeInTheDocument()
 
     // Inline export buttons (CSV/JSON) come from TabularExportButtons.
     expect(screen.getByRole('button', { name: /^CSV$/ })).toBeInTheDocument()
