@@ -61,11 +61,11 @@ export function ConvergenceChart({
     return null
   }
 
-  // X axis shows exactly three ticks: the first iteration (1), the midpoint
-  // (half of the iteration count), and the maximum. The iterations array is
-  // an ascending log-spaced sampling, so its last element is the max N.
+  // X axis shows exactly two ticks: the first iteration (1) and the maximum.
+  // The iterations array is an ascending log-spaced sampling, so its last
+  // element is the max N.
   const maxIter = convergence.iterations[convergence.iterations.length - 1] ?? 1
-  const xTickValues = [1, maxIter / 2, maxIter]
+  const xTickValues = [1, maxIter]
 
   return (
     <div className="space-y-2">
