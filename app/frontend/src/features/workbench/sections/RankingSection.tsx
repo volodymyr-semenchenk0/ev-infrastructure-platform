@@ -71,7 +71,21 @@ export function RankingSection() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <h3 className="text-sm font-semibold">Ранжування (TOPSIS)</h3>
+      <div className="overflow-hidden rounded-md border border-border">
+        <RankingTable
+          rows={rows}
+          selectedLocationId={selectedLocationId}
+          onRowClick={(id) => setSelectedLocationId(selectedLocationId === id ? null : id)}
+        />
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <TabularExportButtons
+          csvRows={csvRows}
+          jsonData={{ evaluationId, ranking: rows }}
+          filenameBase={filenameBase}
+        />
         <Button
           type="button"
           variant={mapVisible ? 'outline' : 'default'}
@@ -90,18 +104,8 @@ export function RankingSection() {
             </>
           )}
         </Button>
-        <TabularExportButtons
-          csvRows={csvRows}
-          jsonData={{ evaluationId, ranking: rows }}
-          filenameBase={filenameBase}
-        />
       </div>
       {mapVisible && <RankingMapEmbed />}
-      <RankingTable
-        rows={rows}
-        selectedLocationId={selectedLocationId}
-        onRowClick={(id) => setSelectedLocationId(selectedLocationId === id ? null : id)}
-      />
       <ChartCard title="Розподіл коефіцієнтів близькості" filenameBase={filenameBase}>
         <ClosenessScatterPlot rows={rows} />
       </ChartCard>
