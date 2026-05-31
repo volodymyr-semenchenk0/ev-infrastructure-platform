@@ -72,59 +72,54 @@ export function WeightsBarChart({ weights, weightsFuzzy, criteriaNames }: Weight
   }
 
   return (
-    <div>
-      <div style={{ height: 360 }}>
-        <ResponsiveBar<WeightDatum>
-          data={data}
-          keys={['weight']}
-          indexBy="code"
-          layout="horizontal"
-          margin={{ top: 8, right: 24, bottom: 32, left: 80 }}
-          padding={0.25}
-          maxValue={weightsFuzzy ? maxUpper * 1.02 : 'auto'}
-          valueFormat={(v) => Number(v).toFixed(4)}
-          colors={['hsl(var(--primary))']}
-          borderRadius={4}
-          enableLabel={false}
-          layers={weightsFuzzy ? ['grid', 'axes', 'bars', Whiskers, 'markers'] : undefined}
-          axisBottom={{
-            tickSize: 0,
-            tickPadding: 8,
-            format: (v) => Number(v).toFixed(2),
-          }}
-          axisLeft={{ tickSize: 0, tickPadding: 8 }}
-          theme={getNivoTheme()}
-          tooltip={({ indexValue, value }) => {
-            const row = data.find((d) => d.code === indexValue)
-            const f = weightsFuzzy?.[String(indexValue)]
-            return (
-              <div
-                style={{
-                  background: 'hsl(var(--background))',
-                  color: 'hsl(var(--foreground))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: 6,
-                  padding: '6px 10px',
-                  fontSize: 12,
-                }}
-              >
-                <strong>{row?.name ?? indexValue}</strong>
-                {f && (
-                  <div style={{ color: 'hsl(var(--muted-foreground))' }}>l = {f.l.toFixed(4)}</div>
-                )}
-                <div>w = {Number(value).toFixed(4)}</div>
-                {f && (
-                  <div style={{ color: 'hsl(var(--muted-foreground))' }}>u = {f.u.toFixed(4)}</div>
-                )}
-              </div>
-            )
-          }}
-          ariaLabel="Ваги критеріїв"
-        />
-      </div>
-      {weightsFuzzy && (
-        <p className="mt-1 text-xs text-muted-foreground">Вуса — нечіткі межі ваги [l; u].</p>
-      )}
+    <div style={{ height: 360 }}>
+      <ResponsiveBar<WeightDatum>
+        data={data}
+        keys={['weight']}
+        indexBy="code"
+        layout="horizontal"
+        margin={{ top: 8, right: 24, bottom: 32, left: 80 }}
+        padding={0.25}
+        maxValue={weightsFuzzy ? maxUpper * 1.02 : 'auto'}
+        valueFormat={(v) => Number(v).toFixed(4)}
+        colors={['hsl(var(--primary))']}
+        borderRadius={4}
+        enableLabel={false}
+        layers={weightsFuzzy ? ['grid', 'axes', 'bars', Whiskers, 'markers'] : undefined}
+        axisBottom={{
+          tickSize: 0,
+          tickPadding: 8,
+          format: (v) => Number(v).toFixed(2),
+        }}
+        axisLeft={{ tickSize: 0, tickPadding: 8 }}
+        theme={getNivoTheme()}
+        tooltip={({ indexValue, value }) => {
+          const row = data.find((d) => d.code === indexValue)
+          const f = weightsFuzzy?.[String(indexValue)]
+          return (
+            <div
+              style={{
+                background: 'hsl(var(--background))',
+                color: 'hsl(var(--foreground))',
+                border: '1px solid hsl(var(--border))',
+                borderRadius: 6,
+                padding: '6px 10px',
+                fontSize: 12,
+              }}
+            >
+              <strong>{row?.name ?? indexValue}</strong>
+              {f && (
+                <div style={{ color: 'hsl(var(--muted-foreground))' }}>l = {f.l.toFixed(4)}</div>
+              )}
+              <div>w = {Number(value).toFixed(4)}</div>
+              {f && (
+                <div style={{ color: 'hsl(var(--muted-foreground))' }}>u = {f.u.toFixed(4)}</div>
+              )}
+            </div>
+          )
+        }}
+        ariaLabel="Ваги критеріїв"
+      />
     </div>
   )
 }
