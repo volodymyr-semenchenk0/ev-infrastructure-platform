@@ -125,9 +125,6 @@ export function CstarHistogram({
             tickPadding: 8,
             tickRotation: -45,
             tickValues: xTickValues,
-            legend: 'C*',
-            legendOffset: 44,
-            legendPosition: 'middle',
           }}
           layers={['grid', 'axes', 'bars', ReferenceLines, 'markers', 'legends']}
           theme={getNivoTheme()}
@@ -153,7 +150,6 @@ export function CstarHistogram({
       <ChartExportButtons
         containerRef={containerRef}
         filenameBase={`${filenameBase}-histogram`}
-        label="Експорт гістограми:"
       />
     </div>
   )

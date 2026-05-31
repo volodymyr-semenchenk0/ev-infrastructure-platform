@@ -90,10 +90,8 @@ export function RankingForestPlot({
           axisBottom={{
             tickSize: 4,
             tickPadding: 6,
-            legend: 'C* (середнє та 95 % інтервал)',
-            legendPosition: 'middle',
-            legendOffset: 44,
-            format: (v) => Number(v).toFixed(2),
+            tickRotation: -45,
+            format: (v) => Number(v).toFixed(4),
           }}
           axisLeft={{
             tickSize: 0,
@@ -126,7 +124,6 @@ export function RankingForestPlot({
       <ChartExportButtons
         containerRef={containerRef}
         filenameBase={`${filenameBase}-forest`}
-        label="Експорт forest-plot:"
       />
     </div>
   )
