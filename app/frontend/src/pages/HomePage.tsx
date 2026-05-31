@@ -98,15 +98,6 @@ export function HomePage() {
   return (
     <div className="flex-1 overflow-auto">
       <div className="mx-auto max-w-[1200px] space-y-6 p-6 md:p-8">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">СППР вибору локацій ЗС</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Пройдіть три обовʼязкові кроки – профіль і матриця, ваги FAHP,
-            ранжування. Аналіз чутливості Монте-Карло – окремий необовʼязковий
-            крок. Перемикайтесь між кроками у степері без втрати стану.
-          </p>
-        </div>
-
         <Stepper steps={steps} activeId={activeStep} onSelect={setActiveStep} />
 
         <StepPanel id="setup" activeStep={activeStep} label="Профіль і матриця">
