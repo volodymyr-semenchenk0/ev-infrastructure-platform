@@ -84,7 +84,9 @@ export function AhpMatrix({
           only inner grid lines (right/bottom); the last column/row drop theirs
           so the wrapper border is the sole, cleanly rounded outer edge. */}
       <div className="overflow-hidden rounded-lg border border-border">
-        <table className="w-full table-fixed border-collapse text-xs">
+        {/* Uniform cell height: the editable upper-triangle cell (Select + TFN)
+            is the tallest, so pin every cell to it for an even grid. */}
+        <table className="w-full table-fixed border-collapse text-xs [&_td]:h-16 [&_th]:h-16">
           <thead>
             <tr>
               <th className="w-40 border-b border-r border-border bg-muted/40 p-1.5"></th>
@@ -92,7 +94,7 @@ export function AhpMatrix({
                 <th
                   key={c.id}
                   title={c.code}
-                  className="border-b border-r border-border bg-muted/40 px-2 py-1.5 font-semibold last:border-r-0"
+                  className="break-all border-b border-r border-border bg-muted/40 px-2 py-1.5 font-semibold last:border-r-0"
                 >
                   {c.name ?? c.code}
                 </th>
@@ -105,7 +107,7 @@ export function AhpMatrix({
                 <th
                   title={rowCrit.code}
                   className={cn(
-                    'border-b border-r border-border bg-muted/40 px-2 py-1.5 text-left font-semibold',
+                    'break-all border-b border-r border-border bg-muted/40 px-2 py-1.5 text-left font-semibold',
                     i === n - 1 && 'border-b-0',
                   )}
                 >
