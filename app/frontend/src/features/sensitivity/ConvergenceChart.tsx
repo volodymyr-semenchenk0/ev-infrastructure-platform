@@ -76,7 +76,7 @@ export function ConvergenceChart({
       >
         <ResponsiveLine
           data={series}
-          margin={{ top: 16, right: 132, bottom: 52, left: 60 }}
+          margin={{ top: 16, right: 132, bottom: 32, left: 60 }}
           xScale={{ type: 'log', base: 10, min: 'auto', max: 'auto' }}
           yScale={{ type: 'linear', min: 'auto', max: 'auto' }}
           yFormat={(v) => Number(v).toFixed(4)}
@@ -90,9 +90,6 @@ export function ConvergenceChart({
             tickPadding: 6,
             tickValues: xTickValues,
             format: (v) => String(Math.round(Number(v))),
-            legend: 'Ітерація N (логарифмічна шкала)',
-            legendPosition: 'middle',
-            legendOffset: 44,
           }}
           axisLeft={{
             tickSize: 4,
