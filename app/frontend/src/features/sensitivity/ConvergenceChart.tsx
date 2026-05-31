@@ -1,7 +1,6 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { ResponsiveLine, type CustomLayer, type Point } from '@nivo/line'
 
-import { ChartExportButtons } from '@/features/export/ChartExportButtons'
 import { getNivoTheme } from '@/lib/nivo-theme'
 
 import type { ConfidenceInterval, SensitivityResponse } from './useSensitivity'
@@ -15,16 +14,13 @@ interface ConvergenceChartProps {
   // Used only to pick and order the top-N locations by mean C*.
   rankingIntervals: ConfidenceInterval[]
   nameByLocationId?: Record<number, string>
-  filenameBase: string
 }
 
 export function ConvergenceChart({
   convergence,
   rankingIntervals,
   nameByLocationId,
-  filenameBase,
 }: ConvergenceChartProps) {
-  const containerRef = useRef<HTMLDivElement>(null)
   // The chart hides static points (enablePoints=false); this tracks the point
   // under the cursor so the HoverDot layer can mark it on the line.
   const [hoverPoint, setHoverPoint] = useState<Point | null>(null)
@@ -88,47 +84,36 @@ export function ConvergenceChart({
   const xTickValues = [1, maxIter]
 
   return (
-    <div className="space-y-2">
-      <div
-        ref={containerRef}
-        style={{ height: 340 }}
-        aria-label="Збіжність середнього C* за кількістю ітерацій"
-      >
-        <ResponsiveLine
-          data={series}
-          margin={{ top: 16, right: 132, bottom: 32, left: 60 }}
-          xScale={{ type: 'log', base: 10, min: 'auto', max: 'auto' }}
-          yScale={{ type: 'linear', min: 'auto', max: 'auto' }}
-          yFormat={(v) => Number(v).toFixed(4)}
-          curve="monotoneX"
-          enablePoints={false}
-          enableGridX={false}
-          colors={{ scheme: 'category10' }}
-          theme={getNivoTheme()}
-          axisBottom={{
-            tickSize: 4,
-            tickPadding: 6,
-            tickValues: xTickValues,
-            format: (v) => String(Math.round(Number(v))),
-          }}
-          axisLeft={{
-            tickSize: 4,
-            tickPadding: 6,
-            legend: 'Середнє C*',
-            legendPosition: 'middle',
-            legendOffset: -48,
-            format: (v) => Number(v).toFixed(3),
-          }}
-          layers={['grid', 'markers', 'axes', 'areas', 'lines', 'mesh', HoverDot, EndLabels]}
-          useMesh
-          onMouseMove={(point) => setHoverPoint(point)}
-          onMouseLeave={() => setHoverPoint(null)}
-        />
-      </div>
-
-      <ChartExportButtons
-        containerRef={containerRef}
-        filenameBase={`${filenameBase}-convergence`}
+    <div style={{ height: 340 }} aria-label="Збіжність середнього C* за кількістю ітерацій">
+      <ResponsiveLine
+        data={series}
+        margin={{ top: 16, right: 132, bottom: 32, left: 60 }}
+        xScale={{ type: 'log', base: 10, min: 'auto', max: 'auto' }}
+        yScale={{ type: 'linear', min: 'auto', max: 'auto' }}
+        yFormat={(v) => Number(v).toFixed(4)}
+        curve="monotoneX"
+        enablePoints={false}
+        enableGridX={false}
+        colors={{ scheme: 'category10' }}
+        theme={getNivoTheme()}
+        axisBottom={{
+          tickSize: 4,
+          tickPadding: 6,
+          tickValues: xTickValues,
+          format: (v) => String(Math.round(Number(v))),
+        }}
+        axisLeft={{
+          tickSize: 4,
+          tickPadding: 6,
+          legend: 'Середнє C*',
+          legendPosition: 'middle',
+          legendOffset: -48,
+          format: (v) => Number(v).toFixed(3),
+        }}
+        layers={['grid', 'markers', 'axes', 'areas', 'lines', 'mesh', HoverDot, EndLabels]}
+        useMesh
+        onMouseMove={(point) => setHoverPoint(point)}
+        onMouseLeave={() => setHoverPoint(null)}
       />
     </div>
   )

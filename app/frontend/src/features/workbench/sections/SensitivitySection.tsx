@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Loader2, Play } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import { toast } from '@/components/ui/use-toast'
+import { ChartCard } from '@/features/export/ChartCard'
 import { TabularExportButtons } from '@/features/export/TabularExportButtons'
 import { useLocations } from '@/features/locations/useLocations'
 import { ConvergenceChart } from '@/features/sensitivity/ConvergenceChart'
@@ -37,6 +38,14 @@ export function SensitivitySection() {
 
   const form = useSensitivityForm()
   const mutation = useSensitivity()
+
+  // Which location's C* histogram to show. The selector lives in the chart
+  // card header; null means "fall back to the top-ranked location".
+  const [histLocationId, setHistLocationId] = useState<number | null>(null)
+  const histSelectedId =
+    sensitivity?.rankingIntervals.find((r) => r.locationId === histLocationId)?.locationId ??
+    sensitivity?.rankingIntervals[0]?.locationId ??
+    0
 
   const nameByLocationId = useMemo<Record<number, string>>(() => {
     if (!locations.data) return {}
@@ -179,31 +188,53 @@ export function SensitivitySection() {
             />
           </div>
 
-          <div className="space-y-2">
+          <ChartCard
+            title="Гістограма розподілу C*"
+            filenameBase={`${filenameBase}-histogram`}
+            controls={
+              <div className="flex items-center gap-2">
+                <label htmlFor="hist-loc" className="text-xs text-muted-foreground">
+                  Локація:
+                </label>
+                <select
+                  id="hist-loc"
+                  value={histSelectedId}
+                  onChange={(e) => setHistLocationId(Number(e.target.value))}
+                  className="h-8 rounded-md border bg-background px-2 text-sm"
+                >
+                  {sensitivity.rankingIntervals.map((r) => (
+                    <option key={r.locationId} value={r.locationId}>
+                      {nameByLocationId[r.locationId] ?? `#${r.locationId}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            }
+          >
             <CstarHistogram
               histogram={sensitivity.cstarHistogram}
               rankingIntervals={sensitivity.rankingIntervals}
-              nameByLocationId={nameByLocationId}
-              filenameBase={filenameBase}
+              selectedLocationId={histSelectedId}
             />
-          </div>
+          </ChartCard>
 
-          <div className="space-y-2">
+          <ChartCard
+            title="Інтервали рангів за C* (forest-plot)"
+            filenameBase={`${filenameBase}-forest`}
+          >
             <RankingForestPlot
               rankingIntervals={sensitivity.rankingIntervals}
               nameByLocationId={nameByLocationId}
-              filenameBase={filenameBase}
             />
-          </div>
+          </ChartCard>
 
-          <div className="space-y-2">
+          <ChartCard title="Збіжність середнього C*" filenameBase={`${filenameBase}-convergence`}>
             <ConvergenceChart
               convergence={sensitivity.convergence}
               rankingIntervals={sensitivity.rankingIntervals}
               nameByLocationId={nameByLocationId}
-              filenameBase={filenameBase}
             />
-          </div>
+          </ChartCard>
 
           <div>
             <h3 className="mb-2 text-sm font-semibold">Матриця стабільності p_i(k) (таблиця)</h3>
