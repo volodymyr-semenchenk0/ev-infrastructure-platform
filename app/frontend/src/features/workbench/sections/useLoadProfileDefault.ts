@@ -44,7 +44,7 @@ export function useLoadProfileDefault() {
           const stats = computeConsistencyStats(remote)
           commitMatrix(remote, stats.cr)
           if (!opts.silentSuccess) {
-            toast({ title: 'Дефолтну матрицю завантажено' })
+            toast({ title: 'Завантажено початкову матрицю' })
           }
           return { ok: true, source: 'remote' }
         }
