@@ -72,6 +72,16 @@ export function WeightsSection() {
 
   const filenameBase = `fahp-weights-${evaluationId ?? 'session'}`
 
+  // Column totals for the footer row. Σw_j is 1 by construction; the bound sums
+  // are shown only when every row carries bounds (legacy runs have none).
+  const weightSum = sortedRows.reduce((acc, r) => acc + r.weight, 0)
+  const lowerSum = sortedRows.every((r) => r.lower !== null)
+    ? sortedRows.reduce((acc, r) => acc + (r.lower ?? 0), 0)
+    : null
+  const upperSum = sortedRows.every((r) => r.upper !== null)
+    ? sortedRows.reduce((acc, r) => acc + (r.upper ?? 0), 0)
+    : null
+
   return (
     <div className="space-y-4">
       <div className="rounded-md border border-border p-3">
@@ -127,6 +137,22 @@ export function WeightsSection() {
               </tr>
             ))}
           </tbody>
+          <tfoot>
+            <tr className="border-t font-medium">
+              <td className="px-4 py-2" />
+              <td className="px-4 py-2">Сума</td>
+              <td className="px-4 py-2" />
+              <td className="px-4 py-2 text-right font-mono tabular-nums text-muted-foreground">
+                {lowerSum !== null ? lowerSum.toFixed(4) : '–'}
+              </td>
+              <td className="px-4 py-2 text-right font-mono tabular-nums">
+                {weightSum.toFixed(4)}
+              </td>
+              <td className="px-4 py-2 text-right font-mono tabular-nums text-muted-foreground">
+                {upperSum !== null ? upperSum.toFixed(4) : '–'}
+              </td>
+            </tr>
+          </tfoot>
         </table>
       </div>
 

@@ -65,10 +65,15 @@ describe('WeightsSection', () => {
 
     expect(await screen.findByTestId('weights-chart')).toHaveTextContent('3 bars')
 
-    const rows = screen.getAllByRole('row').slice(1) // skip header row
+    const rows = screen.getAllByRole('row').slice(1, -1) // skip header and footer
     // Columns are: #, Критерій, Код, l_j, w_j, u_j — code is the third <td>.
     const codeColumn = rows.map((row) => row.querySelectorAll('td')[2]?.textContent)
     expect(codeColumn).toEqual(['B', 'A', 'C'])
+
+    // Footer row carries the column totals; Σw_j = 1.
+    const footer = screen.getAllByRole('row').at(-1)!
+    expect(footer).toHaveTextContent('Сума')
+    expect(footer.querySelectorAll('td')[4]?.textContent).toBe('1.0000')
 
     // The weights step no longer surfaces CR or the evaluation id; CR lives on
     // the matrix step instead.
