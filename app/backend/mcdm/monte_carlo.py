@@ -10,6 +10,12 @@ import numpy as np
 # Chapter 2.3.3 fixes the acceptability index group sizes.
 DEFAULT_K_VALUES: tuple[int, ...] = (1, 3, 5)
 
+# Chapter 2.3.3 fixes 95 % confidence intervals as the 2.5/97.5 percentiles of
+# the accumulated C* sample (a non-parametric band that, unlike a normal
+# approximation, makes no symmetry assumption near rank-stability boundaries).
+CI_LOWER_PERCENTILE: float = 2.5
+CI_UPPER_PERCENTILE: float = 97.5
+
 
 class SensitivityResult(TypedDict):
     """Public return type of sensitivity_analysis (see formulas 1.15-1.17)."""
@@ -18,6 +24,8 @@ class SensitivityResult(TypedDict):
     scores_std: np.ndarray
     rank_freq: np.ndarray
     top_k_freq: dict[int, np.ndarray]
+    ci_lower: np.ndarray
+    ci_upper: np.ndarray
 
 
 def sensitivity_analysis(
@@ -54,7 +62,11 @@ def sensitivity_analysis(
                             (0-indexed, row 0 = best);
             "top_k_freq"  - cumulative acceptability index per formula (1.17):
                             dict {k: array(m,)} where entry [i] is
-                            (1/N) * sum_t 1[rank^(t)(a_i) <= k].
+                            (1/N) * sum_t 1[rank^(t)(a_i) <= k];
+            "ci_lower"    - per-alternative 2.5 percentile of C_i* over
+                            iterations (lower 95 % confidence bound, 2.3.3);
+            "ci_upper"    - per-alternative 97.5 percentile of C_i* (upper
+                            95 % confidence bound, 2.3.3).
     """
     rng = np.random.default_rng(seed)
     n_alt = decision_matrix.shape[0]
@@ -85,9 +97,15 @@ def sensitivity_analysis(
         k: cum_rank[min(k, n_alt) - 1, :].astype(np.float64) / n_simulations for k in k_values
     }
 
+    # (2.3.3) non-parametric 95 % confidence band from the empirical C* sample.
+    ci_lower = np.percentile(scores_all, CI_LOWER_PERCENTILE, axis=0)
+    ci_upper = np.percentile(scores_all, CI_UPPER_PERCENTILE, axis=0)
+
     return SensitivityResult(
         scores_mean=scores_all.mean(axis=0),
         scores_std=scores_all.std(axis=0),
         rank_freq=rank_freq,
         top_k_freq=top_k_freq,
+        ci_lower=ci_lower,
+        ci_upper=ci_upper,
     )

@@ -25,7 +25,7 @@ const SAMPLE_RANKING: RankingItem[] = [
 
 const SAMPLE_SENSITIVITY: SensitivityResult = {
   stabilityMatrix: { '1': { '1': 0.9, '3': 0.99, '5': 1 } },
-  confidenceIntervals: [{ locationId: 1, lower: 0.78, upper: 0.86 }],
+  confidenceIntervals: [{ locationId: 1, mean: 0.82, lower: 0.78, upper: 0.86 }],
 }
 
 function resetStore() {

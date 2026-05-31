@@ -398,7 +398,7 @@ class TestSensitivityRecordModel:
             perturbation=0.15,
             # Shape matches Appendix A.9: {location_id: {k: p_i(k)}}.
             stability_matrix={"1": {"1": 0.9, "3": 0.98, "5": 1.0}},
-            confidence_intervals=[{"location_id": 1, "lower": 0.82, "upper": 0.96}],
+            confidence_intervals=[{"location_id": 1, "mean": 0.9, "lower": 0.82, "upper": 0.96}],
         )
         db_session.add(record)
         await db_session.flush()

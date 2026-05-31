@@ -21,7 +21,6 @@ from services.repository import (
     SensitivityRepository,
 )
 
-CI_Z_SCORE_95: float = 1.96
 DEFAULT_SEED: int = 42
 
 
@@ -67,7 +66,8 @@ class SensitivityService:
         )
 
         scores_mean = mc_result["scores_mean"]
-        scores_std = mc_result["scores_std"]
+        ci_lower = mc_result["ci_lower"]
+        ci_upper = mc_result["ci_upper"]
         top_k_freq = mc_result["top_k_freq"]
 
         # stability_matrix[location_id][k] = p_i(k) per formula (1.17).
@@ -77,13 +77,16 @@ class SensitivityService:
         }
 
         # 95 % CI for the top-N alternatives by mean C* descending (Appendix A.9).
+        # Bounds are the 2.5/97.5 percentiles of the C* sample computed in the
+        # math core (subsection 2.3.3), not a normal approximation.
         order_desc = np.argsort(scores_mean)[::-1].tolist()
         top_indices = order_desc[:TOP_N_FOR_CONFIDENCE_INTERVALS]
         cis = [
             ConfidenceInterval(
                 location_id=location_ids[i],
-                lower=float(scores_mean[i] - CI_Z_SCORE_95 * scores_std[i]),
-                upper=float(scores_mean[i] + CI_Z_SCORE_95 * scores_std[i]),
+                mean=float(scores_mean[i]),
+                lower=float(ci_lower[i]),
+                upper=float(ci_upper[i]),
             )
             for i in top_indices
         ]

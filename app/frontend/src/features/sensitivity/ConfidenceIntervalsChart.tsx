@@ -49,7 +49,9 @@ export function ConfidenceIntervalsChart({
     const label = nameByLocationId?.[ci.locationId] ?? `#${ci.locationId}`
     return {
       location: `${idx + 1}. ${label}`,
-      mean: (ci.lower + ci.upper) / 2,
+      // Bar height is the true mean C*; whiskers span the asymmetric
+      // 2.5/97.5 percentile bounds, so the mean is not the midpoint.
+      mean: ci.mean,
       lower: ci.lower,
       upper: ci.upper,
     }

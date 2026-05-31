@@ -368,7 +368,7 @@ class TestSensitivity:
 
         Per Appendix A.9 and subsection 2.3.3, the response must contain:
           - stabilityMatrix: {locationId: {1: p_i(1), 3: p_i(3), 5: p_i(5)}}
-          - confidenceIntervals: top-N items only with keys locationId, lower, upper
+          - confidenceIntervals: top-N items only with keys locationId, mean, lower, upper
 
         Runs 200 iterations to keep test duration short while still exercising
         the full Monte Carlo pipeline.
@@ -413,7 +413,7 @@ class TestSensitivity:
             f"Expected {TOP_N_FOR_CONFIDENCE_INTERVALS} CIs (top-N only), got {len(cis)}"
         )
         first_ci = cis[0]
-        expected_ci_keys = {"locationId", "lower", "upper"}
+        expected_ci_keys = {"locationId", "mean", "lower", "upper"}
         assert expected_ci_keys.issubset(first_ci.keys()), (
             f"Missing keys in CI item. "
             f"Expected subset {expected_ci_keys}, got {set(first_ci.keys())}"
@@ -426,8 +426,8 @@ class TestSensitivity:
 
         The frontend bar chart shows the top-N locations sorted from best to
         worst; the API contract guarantees this ordering so the client does not
-        need to re-sort. Since C*_mean = (lower + upper) / 2, we assert the
-        midpoint of each subsequent interval is <= the previous one.
+        need to re-sort. Percentile bounds are asymmetric, so ordering is
+        asserted on the `mean` field, not the interval midpoint.
         """
         profiles_resp = await api_client.get("/api/profiles")
         profiles = profiles_resp.json()
@@ -449,9 +449,9 @@ class TestSensitivity:
         assert sens_resp.status_code == 200
 
         cis = sens_resp.json()["confidenceIntervals"]
-        midpoints = [(ci["lower"] + ci["upper"]) / 2 for ci in cis]
-        for i in range(len(midpoints) - 1):
-            assert midpoints[i] >= midpoints[i + 1], (
-                f"CI list not sorted desc: midpoint[{i}]={midpoints[i]:.4f} "
-                f"< midpoint[{i + 1}]={midpoints[i + 1]:.4f}"
+        means = [ci["mean"] for ci in cis]
+        for i in range(len(means) - 1):
+            assert means[i] >= means[i + 1], (
+                f"CI list not sorted desc: mean[{i}]={means[i]:.4f} "
+                f"< mean[{i + 1}]={means[i + 1]:.4f}"
             )
