@@ -1,5 +1,5 @@
-import { useRef } from 'react'
-import { ResponsiveLine, type CustomLayer } from '@nivo/line'
+import { useRef, useState } from 'react'
+import { ResponsiveLine, type CustomLayer, type Point } from '@nivo/line'
 
 import { ChartExportButtons } from '@/features/export/ChartExportButtons'
 import { getNivoTheme } from '@/lib/nivo-theme'
@@ -25,6 +25,9 @@ export function ConvergenceChart({
   filenameBase,
 }: ConvergenceChartProps) {
   const containerRef = useRef<HTMLDivElement>(null)
+  // The chart hides static points (enablePoints=false); this tracks the point
+  // under the cursor so the HoverDot layer can mark it on the line.
+  const [hoverPoint, setHoverPoint] = useState<Point | null>(null)
 
   const series = rankingIntervals.slice(0, MAX_SERIES).map((r) => {
     const values = convergence.meanByLocation[String(r.locationId)] ?? []
@@ -56,6 +59,23 @@ export function ConvergenceChart({
       })}
     </g>
   )
+
+  // Render a dot on the line at the hovered point. Pointer events are off so
+  // the dot never steals hover from the voronoi mesh under it.
+  const HoverDot: CustomLayer = () => {
+    if (!hoverPoint) return null
+    return (
+      <circle
+        cx={hoverPoint.x}
+        cy={hoverPoint.y}
+        r={5}
+        fill={hoverPoint.serieColor}
+        stroke="hsl(var(--background))"
+        strokeWidth={2}
+        pointerEvents="none"
+      />
+    )
+  }
 
   if (series.length === 0) {
     return null
@@ -99,8 +119,10 @@ export function ConvergenceChart({
             legendOffset: -48,
             format: (v) => Number(v).toFixed(3),
           }}
-          layers={['grid', 'markers', 'axes', 'areas', 'lines', 'mesh', EndLabels]}
+          layers={['grid', 'markers', 'axes', 'areas', 'lines', 'mesh', HoverDot, EndLabels]}
           useMesh
+          onMouseMove={(point) => setHoverPoint(point)}
+          onMouseLeave={() => setHoverPoint(null)}
         />
       </div>
 
