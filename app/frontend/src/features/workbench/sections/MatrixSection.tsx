@@ -137,7 +137,9 @@ export function MatrixSection() {
   )
 
   if (!activeProfile) {
-    return <Info>Спочатку оберіть профіль ОПР у попередньому розділі.</Info>
+    return (
+      <Info>Оберіть профіль ОПР для переходу до матриці нечітких попарних порівнянь.</Info>
+    )
   }
 
   if (criteria.isLoading || !criteria.data) {

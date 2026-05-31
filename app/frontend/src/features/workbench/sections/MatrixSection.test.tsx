@@ -89,7 +89,7 @@ describe('MatrixSection', () => {
     renderSection()
 
     expect(
-      await screen.findByText(/Спочатку оберіть профіль/),
+      await screen.findByText(/Оберіть профіль ОПР для переходу/),
     ).toBeInTheDocument()
     mock.restore()
   })
