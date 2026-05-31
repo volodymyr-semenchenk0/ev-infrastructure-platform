@@ -86,7 +86,7 @@ export function SensitivitySection() {
       setError(null)
       toast({
         title: 'Аналіз чутливості виконано',
-        description: `Семплів: ${form.iterations.toLocaleString('uk-UA')}, δ = ${form.perturbation.toFixed(2)}.`,
+        description: `Ітерацій: ${form.iterations.toLocaleString('uk-UA')}, δ = ${form.perturbation.toFixed(2)}.`,
       })
     } catch (error) {
       const description =
