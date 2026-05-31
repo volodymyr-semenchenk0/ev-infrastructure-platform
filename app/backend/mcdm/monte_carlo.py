@@ -16,8 +16,10 @@ DEFAULT_K_VALUES: tuple[int, ...] = (1, 3, 5)
 CI_LOWER_PERCENTILE: float = 2.5
 CI_UPPER_PERCENTILE: float = 97.5
 
-# Step 1 chart (subsection 2.3.3 visualisation): number of shared histogram bins
-# spanning the global C* range, so every alternative is binned on one axis.
+# Step 1 chart (subsection 2.3.3 visualisation): number of histogram bins per
+# location. Bins are auto-zoomed to each alternative's own C* range so its
+# distribution fills the axis; axes are therefore not comparable across
+# locations, which is acceptable because the chart shows one location at a time.
 HISTOGRAM_BINS: int = 30
 
 
@@ -30,7 +32,7 @@ class SensitivityResult(TypedDict):
     top_k_freq: dict[int, np.ndarray]
     ci_lower: np.ndarray
     ci_upper: np.ndarray
-    hist_bin_edges: np.ndarray
+    hist_bin_edges: np.ndarray  # shape (m, HISTOGRAM_BINS + 1): per-alternative
     hist_counts: np.ndarray
     convergence_iterations: np.ndarray
     convergence_mean: np.ndarray
@@ -92,8 +94,9 @@ def sensitivity_analysis(
                             iterations (lower 95 % confidence bound, 2.3.3);
             "ci_upper"    - per-alternative 97.5 percentile of C_i* (upper
                             95 % confidence bound, 2.3.3);
-            "hist_bin_edges" - shared histogram bin edges over the global C*
-                            range, shape (HISTOGRAM_BINS + 1,);
+            "hist_bin_edges" - per-alternative histogram bin edges, each row
+                            auto-zoomed to that alternative's own C* range,
+                            shape (m, HISTOGRAM_BINS + 1);
             "hist_counts" - per-alternative C* counts over those bins, shape
                             (m, HISTOGRAM_BINS); each row sums to n_simulations;
             "convergence_iterations" - log-spaced iteration checkpoints, shape
@@ -134,12 +137,12 @@ def sensitivity_analysis(
     ci_lower = np.percentile(scores_all, CI_LOWER_PERCENTILE, axis=0)
     ci_upper = np.percentile(scores_all, CI_UPPER_PERCENTILE, axis=0)
 
-    # Step 1 chart: shared bins over the global C* range so every alternative's
-    # distribution is comparable on one axis; counts per alternative sum to N.
-    hist_bin_edges = np.histogram_bin_edges(scores_all, bins=HISTOGRAM_BINS)
+    # Step 1 chart: bins auto-zoomed to each alternative's own C* range so its
+    # distribution fills the axis; counts per alternative sum to N.
+    hist_bin_edges = np.empty((n_alt, HISTOGRAM_BINS + 1))
     hist_counts = np.empty((n_alt, HISTOGRAM_BINS), dtype=np.intp)
     for i in range(n_alt):
-        hist_counts[i], _ = np.histogram(scores_all[:, i], bins=hist_bin_edges)
+        hist_counts[i], hist_bin_edges[i] = np.histogram(scores_all[:, i], bins=HISTOGRAM_BINS)
 
     # Step 3 chart: running mean of C* at log-spaced checkpoints. cumsum keeps
     # this O(N) instead of recomputing each prefix mean.

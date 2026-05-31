@@ -487,9 +487,10 @@ class TestSensitivity:
             assert r["lower"] <= r["mean"] <= r["upper"]
 
         hist = data["cstarHistogram"]
-        assert len(hist["binEdges"]) >= 2
-        for counts in hist["countsByLocation"].values():
-            assert len(counts) == len(hist["binEdges"]) - 1
+        for lid, counts in hist["countsByLocation"].items():
+            edges = hist["edgesByLocation"][lid]
+            assert len(edges) >= 2
+            assert len(counts) == len(edges) - 1
             assert sum(counts) == 200
 
         conv = data["convergence"]

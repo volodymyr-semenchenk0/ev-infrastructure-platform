@@ -545,10 +545,12 @@ class TestSensitivityService:
             assert ri.lower <= ri.mean <= ri.upper
 
         hist = result.cstar_histogram
-        assert len(hist.bin_edges) >= 2
+        assert len(hist.edges_by_location) == n_loc
         assert len(hist.counts_by_location) == n_loc
-        for counts in hist.counts_by_location.values():
-            assert len(counts) == len(hist.bin_edges) - 1
+        for lid, counts in hist.counts_by_location.items():
+            edges = hist.edges_by_location[lid]
+            assert len(edges) >= 2
+            assert len(counts) == len(edges) - 1
             assert sum(counts) == 200
 
         conv = result.convergence

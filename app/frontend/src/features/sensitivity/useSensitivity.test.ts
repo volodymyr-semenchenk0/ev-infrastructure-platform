@@ -22,7 +22,7 @@ describe('useSensitivity payload contract', () => {
         { locationId: 2, mean: 0.18, lower: 0.1, upper: 0.3 },
       ],
       cstarHistogram: {
-        binEdges: [0, 0.5, 1],
+        edgesByLocation: { '1': [0.4, 0.5, 0.6], '2': [0.1, 0.2, 0.3] },
         countsByLocation: { '1': [50, 50], '2': [70, 30] },
       },
       convergence: {

@@ -105,10 +105,13 @@ class SensitivityService:
             for i in order_desc
         ]
 
-        # Step 1 histogram: shared bins, C* counts per location.
+        # Step 1 histogram: per-location auto-zoomed bins, C* counts per location.
+        hist_edges = mc_result["hist_bin_edges"]
         hist_counts = mc_result["hist_counts"]
         cstar_histogram = CstarHistogram(
-            bin_edges=[float(e) for e in mc_result["hist_bin_edges"]],
+            edges_by_location={
+                location_ids[i]: [float(e) for e in hist_edges[i]] for i in range(len(location_ids))
+            },
             counts_by_location={
                 location_ids[i]: [int(c) for c in hist_counts[i]] for i in range(len(location_ids))
             },

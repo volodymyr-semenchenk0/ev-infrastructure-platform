@@ -173,28 +173,28 @@ def test_sensitivity_top_k_acceptability_matches_rank_freq_cumsum() -> None:
 
 
 def test_histogram_counts_sum_to_n_per_alternative() -> None:
-    """Shared-bin histogram accounts for all N samples for every alternative.
+    """Per-location auto-zoomed histogram accounts for all N samples.
 
-    Step 1 chart uses bins over the global C* range, so each alternative's
-    counts must sum to N; otherwise the displayed distribution would silently
-    drop samples that fall outside a per-alternative range.
+    Each alternative is binned over its own C* range, so its counts must sum to
+    N; otherwise the displayed distribution would silently drop samples.
     """
     result = sensitivity_analysis(
         DM, WEIGHTS, TYPES, topsis, n_simulations=N_SIM, delta=0.15, seed=0
     )
     edges = result["hist_bin_edges"]
     counts = result["hist_counts"]
-    assert edges.shape == (counts.shape[1] + 1,)
+    assert edges.shape == (N_ALT, counts.shape[1] + 1)
     assert counts.shape[0] == N_ALT
     for i in range(N_ALT):
         assert int(counts[i].sum()) == N_SIM
 
 
-def test_histogram_edges_match_global_sample_extent() -> None:
-    """Bin edges span the global min/max of the whole accumulated C* sample.
+def test_histogram_edges_match_per_alternative_extent() -> None:
+    """Each alternative's bin edges span that alternative's own C* min/max.
 
     A recording scorer captures every C* vector real TOPSIS returns, so the
-    test compares the shared edges against the true sample extent directly.
+    test compares each alternative's auto-zoomed edges against its own sample
+    extent directly (per-location auto-zoom, not a shared global axis).
     """
     recorded: list[np.ndarray] = []
 
@@ -206,9 +206,20 @@ def test_histogram_edges_match_global_sample_extent() -> None:
         return scores, ranking
 
     result = sensitivity_analysis(DM, WEIGHTS, TYPES, rec, n_simulations=N_SIM, delta=0.15, seed=0)
-    sample = np.array(recorded)
-    np.testing.assert_allclose(result["hist_bin_edges"][0], sample.min(), atol=1e-12)
-    np.testing.assert_allclose(result["hist_bin_edges"][-1], sample.max(), atol=1e-12)
+    sample = np.array(recorded)  # shape (N_SIM, N_ALT)
+    edges = result["hist_bin_edges"]
+    for i in range(N_ALT):
+        lo, hi = sample[:, i].min(), sample[:, i].max()
+        if lo == hi:
+            # A dominated alternative with constant C*: np.histogram auto-zooms
+            # to (x - 0.5, x + 0.5) rather than a zero-width range.
+            np.testing.assert_allclose(edges[i][0], lo - 0.5, atol=1e-12)
+            np.testing.assert_allclose(edges[i][-1], hi + 0.5, atol=1e-12)
+        else:
+            np.testing.assert_allclose(edges[i][0], lo, atol=1e-12)
+            np.testing.assert_allclose(edges[i][-1], hi, atol=1e-12)
+    # Auto-zoom means edges are per-location, not a single shared global axis.
+    assert any(not np.allclose(edges[i], edges[0]) for i in range(1, N_ALT))
 
 
 def test_convergence_last_checkpoint_is_n_and_equals_mean() -> None:
