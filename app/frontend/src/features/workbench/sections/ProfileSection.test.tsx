@@ -165,9 +165,7 @@ describe('ProfileSection', () => {
 
     renderWithQuery(<ProfileSection />)
 
-    expect(
-      await screen.findByText(/Не вдалося завантажити список профілів/),
-    ).toBeInTheDocument()
+    expect(await screen.findByText(/Не вдалося завантажити список профілів/)).toBeInTheDocument()
     mock.restore()
   })
 })
