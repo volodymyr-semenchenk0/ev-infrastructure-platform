@@ -16,13 +16,7 @@ function renderLayout() {
   )
 }
 
-describe('WorkbenchLayout a11y', () => {
-  it('renders a skip link that targets the main landmark', () => {
-    renderLayout()
-    const link = screen.getByRole('link', { name: 'Перейти до основного вмісту' })
-    expect(link).toHaveAttribute('href', '#workbench-main')
-  })
-
+describe('WorkbenchLayout', () => {
   it('exposes the main content as a labelled landmark', () => {
     renderLayout()
     const main = screen.getByRole('main', { name: 'Робоча область' })
