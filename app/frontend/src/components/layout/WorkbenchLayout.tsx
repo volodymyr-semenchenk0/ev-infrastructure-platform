@@ -16,6 +16,9 @@ export function WorkbenchLayout() {
       >
         <Outlet />
       </main>
+      <footer className="border-t px-4 py-2 text-center text-xs text-muted-foreground">
+        © 2026 Developed by Volodymyr Semenchenko
+      </footer>
     </div>
   )
 }
