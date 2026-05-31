@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react'
+import { useMemo } from 'react'
 import { Loader2, Play } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -6,15 +6,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import { toast } from '@/components/ui/use-toast'
-import { ChartExportButtons } from '@/features/export/ChartExportButtons'
 import { TabularExportButtons } from '@/features/export/TabularExportButtons'
 import { useLocations } from '@/features/locations/useLocations'
-import { ConfidenceIntervalsChart } from '@/features/sensitivity/ConfidenceIntervalsChart'
-import { StabilityHeatmap } from '@/features/sensitivity/StabilityHeatmap'
-import {
-  useSensitivity,
-  type SensitivityResponse,
-} from '@/features/sensitivity/useSensitivity'
+import { ConvergenceChart } from '@/features/sensitivity/ConvergenceChart'
+import { CstarHistogram } from '@/features/sensitivity/CstarHistogram'
+import { RankingForestPlot } from '@/features/sensitivity/RankingForestPlot'
+import { useSensitivity, type SensitivityResponse } from '@/features/sensitivity/useSensitivity'
 import {
   ITERATIONS_MAX,
   ITERATIONS_MIN,
@@ -36,15 +33,10 @@ export function SensitivitySection() {
   const sensitivity = useSessionStore((s) => s.sensitivity)
   const setSensitivity = useSessionStore((s) => s.setSensitivity)
   const setError = useSessionStore((s) => s.setError)
-  const stabilityLayerEnabled = useSessionStore((s) => s.stabilityLayerEnabled)
-  const setStabilityLayerEnabled = useSessionStore((s) => s.setStabilityLayerEnabled)
   const locations = useLocations()
 
   const form = useSensitivityForm()
   const mutation = useSensitivity()
-
-  const ciChartRef = useRef<HTMLDivElement>(null)
-  const heatmapRef = useRef<HTMLDivElement>(null)
 
   const nameByLocationId = useMemo<Record<number, string>>(() => {
     if (!locations.data) return {}
@@ -98,9 +90,7 @@ export function SensitivitySection() {
       })
     } catch (error) {
       const description =
-        error instanceof ValidationError
-          ? error.detail
-          : 'Не вдалося виконати аналіз чутливості.'
+        error instanceof ValidationError ? error.detail : 'Не вдалося виконати аналіз чутливості.'
       setError({ message: description, source: 'sensitivity' })
       toast({ title: 'Помилка чутливості', description, variant: 'destructive' })
     }
@@ -115,8 +105,7 @@ export function SensitivitySection() {
           <Label htmlFor="sens-iterations" className="text-xs font-medium">
             Кількість ітерацій N
             <span className="ml-1 text-muted-foreground">
-              ({ITERATIONS_MIN.toLocaleString('uk-UA')}–
-              {ITERATIONS_MAX.toLocaleString('uk-UA')})
+              ({ITERATIONS_MIN.toLocaleString('uk-UA')}–{ITERATIONS_MAX.toLocaleString('uk-UA')})
             </span>
           </Label>
           <Input
@@ -135,9 +124,7 @@ export function SensitivitySection() {
         <div className="space-y-1">
           <Label htmlFor="sens-perturbation" className="text-xs font-medium">
             Амплітуда збурення δ ={' '}
-            <span className="font-mono tabular-nums">
-              {form.perturbation.toFixed(2)}
-            </span>
+            <span className="font-mono tabular-nums">{form.perturbation.toFixed(2)}</span>
             <span className="ml-1 text-muted-foreground">
               ({PERTURBATION_MIN.toFixed(2)}–{PERTURBATION_MAX.toFixed(2)})
             </span>
@@ -159,12 +146,7 @@ export function SensitivitySection() {
         </p>
       </div>
 
-      <Button
-        size="sm"
-        onClick={handleRun}
-        disabled={mutation.isPending}
-        className="w-full"
-      >
+      <Button size="sm" onClick={handleRun} disabled={mutation.isPending} className="w-full">
         {mutation.isPending ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
@@ -198,43 +180,36 @@ export function SensitivitySection() {
           </div>
 
           <div className="space-y-2">
-            <h3 className="text-sm font-semibold">
-              95 % довірчі інтервали C* для топ-{sensitivity.confidenceIntervals.length}
-            </h3>
-            <div ref={ciChartRef}>
-              <ConfidenceIntervalsChart
-                confidenceIntervals={sensitivity.confidenceIntervals}
-                nameByLocationId={nameByLocationId}
-              />
-            </div>
-            <ChartExportButtons
-              containerRef={ciChartRef}
-              filenameBase={`${filenameBase}-ci`}
-              label="Експорт ДІ:"
+            <h3 className="text-sm font-semibold">Крок 1 – розподіл C* для локації</h3>
+            <CstarHistogram
+              histogram={sensitivity.cstarHistogram}
+              rankingIntervals={sensitivity.rankingIntervals}
+              nameByLocationId={nameByLocationId}
+              filenameBase={filenameBase}
             />
           </div>
 
           <div className="space-y-2">
-            <h3 className="text-sm font-semibold">
-              Матриця стабільності p_i(k) (теплова карта)
-            </h3>
-            <div ref={heatmapRef}>
-              <StabilityHeatmap
-                stabilityMatrix={sensitivity.stabilityMatrix}
-                nameByLocationId={nameByLocationId}
-              />
-            </div>
-            <ChartExportButtons
-              containerRef={heatmapRef}
-              filenameBase={`${filenameBase}-heatmap`}
-              label="Експорт теплової карти:"
+            <h3 className="text-sm font-semibold">Крок 2 – інтервали рангів за C*</h3>
+            <RankingForestPlot
+              rankingIntervals={sensitivity.rankingIntervals}
+              nameByLocationId={nameByLocationId}
+              filenameBase={filenameBase}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold">Крок 3 – збіжність середнього C*</h3>
+            <ConvergenceChart
+              convergence={sensitivity.convergence}
+              rankingIntervals={sensitivity.rankingIntervals}
+              nameByLocationId={nameByLocationId}
+              filenameBase={filenameBase}
             />
           </div>
 
           <div>
-            <h3 className="mb-2 text-sm font-semibold">
-              Матриця стабільності p_i(k) (таблиця)
-            </h3>
+            <h3 className="mb-2 text-sm font-semibold">Матриця стабільності p_i(k) (таблиця)</h3>
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b text-left text-muted-foreground">
@@ -253,10 +228,7 @@ export function SensitivitySection() {
                     <tr key={locationId} className="border-b last:border-b-0">
                       <td className="py-2 pr-3">{label}</td>
                       {K_VALUES.map((k) => (
-                        <td
-                          key={k}
-                          className="py-2 pr-3 text-right font-mono tabular-nums"
-                        >
+                        <td key={k} className="py-2 pr-3 text-right font-mono tabular-nums">
                           {((perK[String(k)] ?? 0) * 100).toFixed(1)}%
                         </td>
                       ))}
@@ -266,23 +238,6 @@ export function SensitivitySection() {
               </tbody>
             </table>
           </div>
-
-          <label className="flex items-center justify-between gap-3 rounded-md border bg-background p-3 text-sm">
-            <span>
-              <span className="font-medium">Шар стійкості на карті</span>
-              <span className="ml-1 text-muted-foreground">
-                — забарвлення за p_i(1); застосовується, коли карта показана
-              </span>
-            </span>
-            <input
-              type="checkbox"
-              role="switch"
-              aria-checked={stabilityLayerEnabled}
-              checked={stabilityLayerEnabled}
-              onChange={(e) => setStabilityLayerEnabled(e.target.checked)}
-              className="h-4 w-7 cursor-pointer appearance-none rounded-full bg-muted transition-colors checked:bg-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            />
-          </label>
         </div>
       )}
     </div>

@@ -170,3 +170,79 @@ def test_sensitivity_top_k_acceptability_matches_rank_freq_cumsum() -> None:
     for k in (1, 3, 5):
         expected = rank_freq[: min(k, N_ALT), :].sum(axis=0) / N_SIM
         np.testing.assert_allclose(top_k[k], expected, atol=1e-12)
+
+
+def test_histogram_counts_sum_to_n_per_alternative() -> None:
+    """Shared-bin histogram accounts for all N samples for every alternative.
+
+    Step 1 chart uses bins over the global C* range, so each alternative's
+    counts must sum to N; otherwise the displayed distribution would silently
+    drop samples that fall outside a per-alternative range.
+    """
+    result = sensitivity_analysis(
+        DM, WEIGHTS, TYPES, topsis, n_simulations=N_SIM, delta=0.15, seed=0
+    )
+    edges = result["hist_bin_edges"]
+    counts = result["hist_counts"]
+    assert edges.shape == (counts.shape[1] + 1,)
+    assert counts.shape[0] == N_ALT
+    for i in range(N_ALT):
+        assert int(counts[i].sum()) == N_SIM
+
+
+def test_histogram_edges_match_global_sample_extent() -> None:
+    """Bin edges span the global min/max of the whole accumulated C* sample.
+
+    A recording scorer captures every C* vector real TOPSIS returns, so the
+    test compares the shared edges against the true sample extent directly.
+    """
+    recorded: list[np.ndarray] = []
+
+    def rec(
+        matrix: np.ndarray, weights: np.ndarray, types: np.ndarray
+    ) -> tuple[np.ndarray, np.ndarray]:
+        scores, ranking = topsis(matrix, weights, types)
+        recorded.append(scores.copy())
+        return scores, ranking
+
+    result = sensitivity_analysis(DM, WEIGHTS, TYPES, rec, n_simulations=N_SIM, delta=0.15, seed=0)
+    sample = np.array(recorded)
+    np.testing.assert_allclose(result["hist_bin_edges"][0], sample.min(), atol=1e-12)
+    np.testing.assert_allclose(result["hist_bin_edges"][-1], sample.max(), atol=1e-12)
+
+
+def test_convergence_last_checkpoint_is_n_and_equals_mean() -> None:
+    """convergence_iterations ends at N; the final running mean equals scores_mean.
+
+    The running mean at the last checkpoint is the full-sample mean by
+    definition, so it must coincide with scores_mean to numerical precision.
+    """
+    result = sensitivity_analysis(
+        DM, WEIGHTS, TYPES, topsis, n_simulations=N_SIM, delta=0.15, seed=0
+    )
+    iters = result["convergence_iterations"]
+    cmean = result["convergence_mean"]
+    assert iters[-1] == N_SIM
+    assert cmean.shape == (len(iters), N_ALT)
+    assert np.all(np.diff(iters) > 0)
+    np.testing.assert_allclose(cmean[-1], result["scores_mean"], atol=1e-12)
+
+
+def test_convergence_collapses_to_mean_when_delta_zero() -> None:
+    """delta=0 keeps every C* sample identical, so every running mean row equals scores_mean."""
+    result = sensitivity_analysis(
+        DM, WEIGHTS, TYPES, topsis, n_simulations=N_SIM, delta=0.0, seed=0
+    )
+    cmean = result["convergence_mean"]
+    for row in range(cmean.shape[0]):
+        np.testing.assert_allclose(cmean[row], result["scores_mean"], atol=1e-12)
+
+
+def test_convergence_checkpoints_helper() -> None:
+    """N<10 returns a single point (N,); otherwise strictly increasing ints ending at N."""
+    from mcdm.monte_carlo import _convergence_checkpoints
+
+    np.testing.assert_array_equal(_convergence_checkpoints(5), np.array([5]))
+    cp = _convergence_checkpoints(1000)
+    assert cp[-1] == 1000
+    assert np.all(np.diff(cp) > 0)

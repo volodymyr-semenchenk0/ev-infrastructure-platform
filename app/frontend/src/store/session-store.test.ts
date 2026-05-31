@@ -26,6 +26,9 @@ const SAMPLE_RANKING: RankingItem[] = [
 const SAMPLE_SENSITIVITY: SensitivityResult = {
   stabilityMatrix: { '1': { '1': 0.9, '3': 0.99, '5': 1 } },
   confidenceIntervals: [{ locationId: 1, mean: 0.82, lower: 0.78, upper: 0.86 }],
+  rankingIntervals: [{ locationId: 1, mean: 0.82, lower: 0.78, upper: 0.86 }],
+  cstarHistogram: { binEdges: [0, 0.5, 1], countsByLocation: { '1': [40, 60] } },
+  convergence: { iterations: [1, 10, 100], meanByLocation: { '1': [0.8, 0.81, 0.82] } },
 }
 
 function resetStore() {
@@ -54,14 +57,6 @@ describe('useSessionStore', () => {
     expect(useSessionStore.getState().selectedLocationId).toBe(7)
     useSessionStore.getState().setSelectedLocationId(null)
     expect(useSessionStore.getState().selectedLocationId).toBeNull()
-  })
-
-  it('toggles the stability layer flag', () => {
-    expect(useSessionStore.getState().stabilityLayerEnabled).toBe(false)
-    useSessionStore.getState().setStabilityLayerEnabled(true)
-    expect(useSessionStore.getState().stabilityLayerEnabled).toBe(true)
-    useSessionStore.getState().resetSession()
-    expect(useSessionStore.getState().stabilityLayerEnabled).toBe(false)
   })
 
   it('stores the pairwise matrix', () => {

@@ -38,6 +38,29 @@ class ConfidenceInterval(CamelModel):
     upper: float
 
 
+class CstarHistogram(CamelModel):
+    """C* distribution per location over shared bins (Step 1 storyline chart).
+
+    Return-only: recomputed each request, never persisted. `counts_by_location`
+    is keyed by location id; each list has len(bin_edges) - 1 entries summing to
+    the iteration count N.
+    """
+
+    bin_edges: list[float]
+    counts_by_location: dict[int, list[int]]
+
+
+class ConvergenceTrace(CamelModel):
+    """Running mean of C* at log-spaced iteration checkpoints (Step 3 chart).
+
+    Return-only. `iterations` is strictly increasing and ends at N; each
+    `mean_by_location` series carries one value per checkpoint.
+    """
+
+    iterations: list[int]
+    mean_by_location: dict[int, list[float]]
+
+
 class SensitivityRead(CamelModel):
     """Aggregated Monte Carlo result.
 
@@ -45,7 +68,17 @@ class SensitivityRead(CamelModel):
     formula (1.17) for k in STABILITY_K_VALUES. `confidence_intervals` lists
     the top-`TOP_N_FOR_CONFIDENCE_INTERVALS` alternatives ordered by mean C*
     descending (Appendix A.9).
+
+    The last three fields back the sensitivity storyline charts and are
+    recomputed on every request — they are NOT persisted (Appendix A.9 keeps
+    only stability_matrix and confidence_intervals). `ranking_intervals` carries
+    the mean and 2.5/97.5 percentile band for ALL locations, ordered best to
+    worst (Step 2 forest-plot); `cstar_histogram` and `convergence` back Steps 1
+    and 3.
     """
 
     stability_matrix: dict[int, dict[int, float]]
     confidence_intervals: list[ConfidenceInterval]
+    ranking_intervals: list[ConfidenceInterval]
+    cstar_histogram: CstarHistogram
+    convergence: ConvergenceTrace
