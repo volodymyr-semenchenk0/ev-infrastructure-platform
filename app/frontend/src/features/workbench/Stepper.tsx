@@ -115,8 +115,11 @@ function StepButton({ step, number, active, onSelect }: StepButtonProps) {
       </span>
       <span
         className={cn(
-          'whitespace-nowrap text-xs leading-tight',
-          active ? 'font-medium text-foreground' : 'text-muted-foreground',
+          // Keep a constant font-weight across states so the label width — and
+          // thus the row layout — does not shift; signal the active step by
+          // colour only.
+          'whitespace-nowrap text-xs font-medium leading-tight',
+          active ? 'text-foreground' : 'text-muted-foreground',
         )}
       >
         {step.label}
