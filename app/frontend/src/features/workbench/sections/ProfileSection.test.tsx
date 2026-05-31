@@ -74,7 +74,7 @@ describe('ProfileSection', () => {
     await waitFor(() => {
       expect(useProfileStore.getState().activeProfile?.code).toBe('municipal')
     })
-    expect(screen.getByText(/Профіль: Муніципалітет/)).toBeInTheDocument()
+    expect(screen.getByText(/Обраний профіль: Муніципалітет/)).toBeInTheDocument()
     mock.restore()
   })
 

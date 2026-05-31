@@ -48,20 +48,14 @@ export function ProfileSection() {
   }
 
   if (profiles.isError || !profiles.data) {
-    return (
-      <p className="text-sm text-destructive">
-        Не вдалося завантажити список профілів.
-      </p>
-    )
+    return <p className="text-sm text-destructive">Не вдалося завантажити список профілів.</p>
   }
 
   if (activeProfile && !expanded) {
     return (
       <div className="flex items-center justify-between gap-2 rounded-md border bg-background px-3 py-2">
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium">
-            Профіль: {activeProfile.name}
-          </p>
+          <p className="truncate text-sm font-medium">Обраний профіль: {activeProfile.name}</p>
         </div>
         <Button variant="outline" size="sm" onClick={() => setExpanded(true)}>
           Змінити

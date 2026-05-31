@@ -1,9 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Calculator, HelpCircle, RotateCcw } from 'lucide-react'
+import { ArrowRight, HelpCircle, Info as InfoIcon, RotateCcw } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Info } from '@/components/ui/info'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { toast } from '@/components/ui/use-toast'
 import { AhpMatrix } from '@/features/calculate/AhpMatrix'
 import {
@@ -192,24 +198,42 @@ export function MatrixSection() {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        Верхній трикутник редагується значеннями шкали Сааті; нижній –
-        автоматично обернений TFN за формулою (1.6); діагональ – (1, 1, 1).
-      </p>
+      <div>
+        <h3 className="text-sm font-semibold">Нечітка матриця попарних порівнянь</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Верхній трикутник редагується значеннями шкали Сааті, нижній заповнюється
+          автоматично оберненим TFN, а діагональ дорівнює (1, 1, 1).
+        </p>
+      </div>
 
-      <section
-        aria-label="Статистика узгодженості"
-        className="grid grid-cols-2 gap-3 rounded-md border bg-muted/40 p-3 text-sm sm:grid-cols-4"
-      >
-        <Stat label="λ_max" value={formatStat(stats.lambdaMax)} />
-        <Stat label="CI" value={formatStat(stats.ci)} />
-        <Stat label={`RI (n=${matrix.length})`} value={formatStat(stats.ri, 2)} />
-        <Stat
-          label="CR"
-          value={formatStat(stats.cr)}
-          className={cn('font-semibold tabular-nums', getCrColor(stats.cr))}
-        />
-      </section>
+      <TooltipProvider delayDuration={150}>
+        <section
+          aria-label="Статистика узгодженості"
+          className="grid grid-cols-2 gap-3 rounded-md border bg-muted/40 p-3 text-sm sm:grid-cols-4"
+        >
+          <Stat
+            label="λ_max"
+            value={formatStat(stats.lambdaMax)}
+            info="Максимальне власне значення матриці попарних порівнянь, на якому ґрунтується оцінка її узгодженості."
+          />
+          <Stat
+            label="CI"
+            value={formatStat(stats.ci)}
+            info="Індекс узгодженості, що дорівнює (λ_max − n) поділеному на (n − 1) і показує, наскільки матриця відхиляється від ідеально узгодженої."
+          />
+          <Stat
+            label={`RI (n=${matrix.length})`}
+            value={formatStat(stats.ri, 2)}
+            info="Випадковий індекс, тобто середня узгодженість випадкової матриці розміру n, відносно якої нормують індекс CI."
+          />
+          <Stat
+            label="CR"
+            value={formatStat(stats.cr)}
+            info="Відношення узгодженості, що дорівнює CI поділеному на RI. Матриця вважається прийнятною, коли CR не перевищує 0,10."
+            className={cn('font-semibold tabular-nums', getCrColor(stats.cr))}
+          />
+        </section>
+      </TooltipProvider>
 
       <details className="rounded-md border bg-background p-3 text-sm">
         <summary className="flex cursor-pointer items-center gap-2 font-medium">
@@ -270,8 +294,8 @@ export function MatrixSection() {
             disabled={!canRunFahp || createEvaluation.isPending}
             title={canRunFahp ? undefined : 'Узгодженість CR перевищує 0,10'}
           >
-            <Calculator className="mr-2 h-4 w-4" aria-hidden="true" />
             {createEvaluation.isPending ? 'Обчислення…' : 'Обчислити ваги'}
+            <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
       </div>
@@ -282,13 +306,29 @@ export function MatrixSection() {
 interface StatProps {
   label: string
   value: string
+  // Short explanation surfaced via an info icon + tooltip next to the label.
+  info: string
   className?: string
 }
 
-function Stat({ label, value, className }: StatProps) {
+function Stat({ label, value, info, className }: StatProps) {
   return (
     <div>
-      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="flex items-center gap-1 text-xs text-muted-foreground">
+        {label}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              aria-label={`Що таке ${label}`}
+              className="inline-flex rounded-full text-muted-foreground/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <InfoIcon className="h-3.5 w-3.5" aria-hidden="true" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>{info}</TooltipContent>
+        </Tooltip>
+      </p>
       <p className={cn('mt-0.5 text-base font-semibold tabular-nums', className)}>
         {value}
       </p>
