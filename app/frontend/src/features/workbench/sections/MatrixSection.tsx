@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowRight, HelpCircle, Info as InfoIcon, RotateCcw } from 'lucide-react'
+import { AlertTriangle, ArrowRight, HelpCircle, Info as InfoIcon, RotateCcw } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Info } from '@/components/ui/info'
@@ -179,10 +179,10 @@ export function MatrixSection() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-4 md:flex-row md:items-start">
-        <div className="max-w-[600px]">
-          <h3 className="text-sm font-semibold">Нечітка матриця попарних порівнянь</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
+      <div>
+        <h3 className="text-sm font-semibold">Нечітка матриця попарних порівнянь</h3>
+        <div className="mt-1 flex flex-col gap-6 md:flex-row md:items-start">
+          <p className="max-w-[600px] text-sm text-muted-foreground">
             Значення в клітинці a_ij показує, наскільки критерій рядка важливіший за критерій
             колонки (читається «рядок відносно колонки»). Якщо число більше за 1 – критерій рядка
             переважає, якщо менше 1 – переважає критерій колонки, а 1 означає рівнозначність. Уся
@@ -191,20 +191,20 @@ export function MatrixSection() {
             зміні одного відношення зворотне перераховується автоматично. Оцінки задаються за шкалою
             Сааті від 1 (рівнозначність) до 9 (абсолютна перевага).
           </p>
-        </div>
-        <div className="border-t pt-4 md:border-l md:border-t-0 md:pl-4 md:pt-0">
-          <h4 className="flex items-center gap-2 text-sm font-medium">
-            <HelpCircle className="h-4 w-4" aria-hidden="true" />
-            Шкала Сааті
-          </h4>
-          <dl className="mt-3 grid gap-1 text-xs">
-            {SAATY_LEGEND.map(([key, description]) => (
-              <div key={key} className="flex gap-2">
-                <dt className="font-mono font-medium">{key}</dt>
-                <dd className="text-muted-foreground">{description}</dd>
-              </div>
-            ))}
-          </dl>
+          <div className="border-t pt-6 md:border-l md:border-t-0 md:pl-6 md:pt-0">
+            <h4 className="flex items-center gap-2 text-sm font-medium">
+              <HelpCircle className="h-4 w-4" aria-hidden="true" />
+              Шкала Сааті
+            </h4>
+            <dl className="mt-3 grid gap-1 text-xs">
+              {SAATY_LEGEND.map(([key, description]) => (
+                <div key={key} className="flex gap-2">
+                  <dt className="font-mono font-medium">{key}</dt>
+                  <dd className="text-muted-foreground">{description}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
         </div>
       </div>
 
@@ -245,16 +245,23 @@ export function MatrixSection() {
       />
 
       {stats.cr > CR_THRESHOLD && inconsistentPairs.length > 0 && (
-        <p
+        <div
           role="status"
-          className="rounded-md border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-100"
+          className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-100"
         >
-          CR перевищує 0,10. Найбільший внесок у неузгодженість дають пари:{' '}
-          {inconsistentPairs
-            .map(({ i, j }) => `${criteria.data[i].code}/${criteria.data[j].code}`)
-            .join(', ')}
-          . Перегляньте їх перед обчисленням.
-        </p>
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" aria-hidden="true" />
+          <p>
+            CR перевищує 0,10. Найбільший внесок у неузгодженість дають пари:{' '}
+            {inconsistentPairs.map(({ i, j }, idx) => (
+              <span key={`${i}-${j}`}>
+                {idx > 0 ? ', ' : ''}
+                <span className="font-semibold">{criteria.data[i].name}</span> /{' '}
+                <span className="font-semibold">{criteria.data[j].name}</span>
+              </span>
+            ))}
+            . Перегляньте їх перед обчисленням.
+          </p>
+        </div>
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-2">
