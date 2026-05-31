@@ -3,6 +3,7 @@ import { EyeOff, MapPin } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ChartCard } from '@/features/export/ChartCard'
 import { TabularExportButtons } from '@/features/export/TabularExportButtons'
 import { useLocations } from '@/features/locations/useLocations'
 import { ClosenessScatterPlot } from '@/features/results/ClosenessScatterPlot'
@@ -50,14 +51,14 @@ export function RankingSection() {
         row.sMinus,
       ]),
     ],
-    [rows],
+    [rows]
   )
 
   if (!ranking) {
     return (
       <p className="text-sm text-muted-foreground">
-        Ранжування ще не виконано. Натисніть «Обчислити ваги» в розділі матриці –
-        TOPSIS виконується в межах того ж сеансу.
+        Ранжування ще не виконано. Натисніть «Обчислити ваги» в розділі матриці – TOPSIS виконується
+        в межах того ж сеансу.
       </p>
     )
   }
@@ -99,11 +100,15 @@ export function RankingSection() {
       <RankingTable
         rows={rows}
         selectedLocationId={selectedLocationId}
-        onRowClick={(id) =>
-          setSelectedLocationId(selectedLocationId === id ? null : id)
-        }
+        onRowClick={(id) => setSelectedLocationId(selectedLocationId === id ? null : id)}
       />
-      <ClosenessScatterPlot rows={rows} />
+      <ChartCard title="Розподіл коефіцієнтів близькості" filenameBase={filenameBase}>
+        <ClosenessScatterPlot rows={rows} />
+      </ChartCard>
+      <p className="max-w-[600px] text-sm text-muted-foreground">
+        Локації впорядковані за спаданням C*. Колір кодує зону: зелений – C* ≥ 0.5, жовтий – 0.3 ≤
+        C* &lt; 0.5, червоний – C* &lt; 0.3.
+      </p>
     </div>
   )
 }

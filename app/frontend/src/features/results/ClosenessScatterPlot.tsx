@@ -1,8 +1,5 @@
 import { useMemo } from 'react'
-import {
-  ResponsiveScatterPlot,
-  type ScatterPlotLayerProps,
-} from '@nivo/scatterplot'
+import { ResponsiveScatterPlot, type ScatterPlotLayerProps } from '@nivo/scatterplot'
 
 import { getNivoTheme } from '@/lib/nivo-theme'
 
@@ -28,10 +25,7 @@ function colorForCloseness(closeness: number): string {
   return '#ef4444'
 }
 
-function ThresholdLine({
-  yScale,
-  innerWidth,
-}: ScatterPlotLayerProps<Datum>): JSX.Element {
+function ThresholdLine({ yScale, innerWidth }: ScatterPlotLayerProps<Datum>): JSX.Element {
   const scale = yScale as (value: number) => number
   const y = scale(THRESHOLD)
   return (
@@ -95,76 +89,62 @@ export function ClosenessScatterPlot({ rows }: ClosenessScatterPlotProps) {
 
   const pointCount = data[0]?.data.length ?? 0
 
+  if (pointCount === 0) {
+    return <p className="text-sm text-muted-foreground">Дані відсутні.</p>
+  }
+
   return (
-    <section className="space-y-2">
-      <div>
-        <h3 className="text-base font-semibold">
-          Розподіл коефіцієнтів близькості
-        </h3>
-        <p className="text-sm text-muted-foreground">
-          Локації впорядковані за спаданням C*. Колір кодує зону:
-          зелений – C* ≥ 0.5, жовтий – 0.3 ≤ C* &lt; 0.5, червоний – C* &lt; 0.3.
-        </p>
-      </div>
-      {pointCount === 0 ? (
-        <p className="text-sm text-muted-foreground">Дані відсутні.</p>
-      ) : (
-        <div
-          style={{ height: 320 }}
-          aria-label="Розподіл коефіцієнтів близькості C* за рангом локації"
-        >
-          <ResponsiveScatterPlot<Datum>
-            data={data}
-            margin={{ top: 16, right: 24, bottom: 52, left: 60 }}
-            xScale={{ type: 'linear', min: 0, max: pointCount + 1 }}
-            yScale={{ type: 'linear', min: 0, max: 1 }}
-            nodeSize={10}
-            theme={getNivoTheme()}
-            axisBottom={{
-              tickSize: 4,
-              tickPadding: 6,
-              legend: 'Ранг локації',
-              legendPosition: 'middle',
-              legendOffset: 40,
-              format: (v) => `${v}`,
+    <div style={{ height: 320 }} aria-label="Розподіл коефіцієнтів близькості C* за рангом локації">
+      <ResponsiveScatterPlot<Datum>
+        data={data}
+        margin={{ top: 16, right: 24, bottom: 52, left: 60 }}
+        xScale={{ type: 'linear', min: 0, max: pointCount + 1 }}
+        yScale={{ type: 'linear', min: 0, max: 1 }}
+        nodeSize={10}
+        theme={getNivoTheme()}
+        axisBottom={{
+          tickSize: 4,
+          tickPadding: 6,
+          legend: 'Ранг локації',
+          legendPosition: 'middle',
+          legendOffset: 40,
+          format: (v) => `${v}`,
+        }}
+        axisLeft={{
+          tickSize: 4,
+          tickPadding: 6,
+          legend: 'Коефіцієнт близькості C*',
+          legendPosition: 'middle',
+          legendOffset: -48,
+          format: (v) => Number(v).toFixed(2),
+        }}
+        layers={[
+          'grid',
+          'axes',
+          ThresholdLine,
+          ColoredNodes,
+          'markers',
+          'mesh',
+          'legends',
+          'annotations',
+        ]}
+        tooltip={({ node }) => (
+          <div
+            style={{
+              background: 'hsl(var(--background))',
+              color: 'hsl(var(--foreground))',
+              border: '1px solid hsl(var(--border))',
+              borderRadius: 6,
+              padding: '6px 10px',
+              fontSize: 12,
             }}
-            axisLeft={{
-              tickSize: 4,
-              tickPadding: 6,
-              legend: 'Коефіцієнт близькості C*',
-              legendPosition: 'middle',
-              legendOffset: -48,
-              format: (v) => Number(v).toFixed(2),
-            }}
-            layers={[
-              'grid',
-              'axes',
-              ThresholdLine,
-              ColoredNodes,
-              'markers',
-              'mesh',
-              'legends',
-              'annotations',
-            ]}
-            tooltip={({ node }) => (
-              <div
-                style={{
-                  background: 'hsl(var(--background))',
-                  color: 'hsl(var(--foreground))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: 6,
-                  padding: '6px 10px',
-                  fontSize: 12,
-                }}
-              >
-                <strong>{node.data.name}</strong>
-                <div>Ранг: {node.data.x}</div>
-                <div>C* = {node.data.y.toFixed(4)}</div>
-              </div>
-            )}
-          />
-        </div>
-      )}
-    </section>
+          >
+            <strong>{node.data.name}</strong>
+            <div>Ранг: {node.data.x}</div>
+            <div>C* = {node.data.y.toFixed(4)}</div>
+          </div>
+        )}
+      />
+    </div>
   )
 }

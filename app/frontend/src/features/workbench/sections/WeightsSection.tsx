@@ -1,10 +1,10 @@
-import { useMemo, useRef } from 'react'
+import { useMemo } from 'react'
 import { ArrowRight } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/use-toast'
 import { useCriteria } from '@/features/calculate/useCriteria'
-import { ChartExportButtons } from '@/features/export/ChartExportButtons'
+import { ChartCard } from '@/features/export/ChartCard'
 import { TabularExportButtons } from '@/features/export/TabularExportButtons'
 import { WeightsBarChart } from '@/features/results/WeightsBarChart'
 import { useSessionStore } from '@/store/session-store'
@@ -18,8 +18,6 @@ export function WeightsSection() {
   const pendingRanking = useSessionStore((s) => s.pendingRanking)
   const revealRanking = useSessionStore((s) => s.revealRanking)
   const criteria = useCriteria()
-
-  const chartRef = useRef<HTMLDivElement>(null)
 
   const criteriaNames = useMemo(() => {
     const map: Record<string, string> = {}
@@ -54,12 +52,12 @@ export function WeightsSection() {
         row.upper ?? '',
       ]),
     ],
-    [sortedRows],
+    [sortedRows]
   )
 
   const jsonPayload = useMemo(
     () => ({ evaluationId, consistencyRatio, weights: sortedRows }),
-    [evaluationId, consistencyRatio, sortedRows],
+    [evaluationId, consistencyRatio, sortedRows]
   )
 
   if (!weights) {
@@ -79,26 +77,19 @@ export function WeightsSection() {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-md border border-border p-3">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-          <h3 className="text-sm font-semibold">Ваги критеріїв (FAHP)</h3>
-          <ChartExportButtons containerRef={chartRef} filenameBase={filenameBase} />
-        </div>
-        <div ref={chartRef}>
-          <WeightsBarChart
-            weights={weights}
-            weightsFuzzy={weightsFuzzy}
-            criteriaNames={criteriaNames}
-          />
-        </div>
-      </div>
+      <ChartCard title="Ваги критеріїв (FAHP)" filenameBase={filenameBase}>
+        <WeightsBarChart
+          weights={weights}
+          weightsFuzzy={weightsFuzzy}
+          criteriaNames={criteriaNames}
+        />
+      </ChartCard>
 
       <div className="pt-4">
         <h3 className="text-sm font-semibold">Ваги критеріїв (FAHP)</h3>
         <p className="mt-1 max-w-[600px] text-sm text-muted-foreground">
-          w_j — дефазифікована вага критерію (центроїд нечіткого трикутника), а l_j та
-          u_j — нижня й верхня межі відповідного нечіткого числа. Рядки впорядковано за
-          спаданням ваги.
+          w_j — дефазифікована вага критерію (центроїд нечіткого трикутника), а l_j та u_j — нижня й
+          верхня межі відповідного нечіткого числа. Рядки впорядковано за спаданням ваги.
         </p>
       </div>
 
