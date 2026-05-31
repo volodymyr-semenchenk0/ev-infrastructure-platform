@@ -23,19 +23,19 @@ export function HomePage() {
 
   const weights = useSessionStore((s) => s.weights)
   const ranking = useSessionStore((s) => s.ranking)
-  const evaluationId = useSessionStore((s) => s.evaluationId)
-  const sensitivity = useSessionStore((s) => s.sensitivity)
 
-  // A FAHP run sets weights + ranking + evaluationId together, so steps 2-4
-  // unlock at once. Sensitivity additionally requires a finished evaluation.
+  // FAHP sets weights + evaluationId and holds the ranking; running ranking on
+  // the weights step then fills `ranking`. So the weights step unlocks after
+  // FAHP, while ranking and the (analytical) sensitivity step unlock only once
+  // the ranking has been run.
   const enabled: Record<StepId, boolean> = useMemo(
     () => ({
       setup: true,
       weights: weights !== null,
       ranking: ranking !== null,
-      sensitivity: evaluationId !== null,
+      sensitivity: ranking !== null,
     }),
-    [weights, ranking, evaluationId],
+    [weights, ranking],
   )
 
   const steps: StepItem[] = [
@@ -53,22 +53,32 @@ export function HomePage() {
     },
     {
       id: 'ranking',
-      label: 'Ранжування',
+      label: 'Ранжування (TOPSIS)',
       complete: ranking !== null,
       disabled: !enabled.ranking,
     },
     {
       id: 'sensitivity',
       label: 'Чутливість (МК)',
-      complete: sensitivity !== null,
+      // Analytical step: never reaches a completed state, only unlocks.
+      complete: false,
       disabled: !enabled.sensitivity,
       optional: true,
     },
   ]
 
-  // Auto-advance to the ranking step the moment FAHP produces a ranking. Guard
-  // on the null→value transition only, so manual navigation back to an earlier
-  // step is respected and a restored session does not force a jump on mount.
+  // Auto-advance through the mandatory flow, guarding on the null→value
+  // transition only so manual navigation back is respected and a restored
+  // session does not force a jump on mount. FAHP → show the weights step (and
+  // its "run ranking" button); running ranking → show the ranking results.
+  const prevWeights = useRef(weights)
+  useEffect(() => {
+    if (weights && !prevWeights.current) {
+      setActiveStep('weights')
+    }
+    prevWeights.current = weights
+  }, [weights, setActiveStep])
+
   const prevRanking = useRef(ranking)
   useEffect(() => {
     if (ranking && !prevRanking.current) {

@@ -45,9 +45,6 @@ export function Stepper({ steps, activeId, onSelect }: StepperProps) {
                   className="flex shrink-0 flex-col items-center self-stretch px-1"
                 >
                   <span className="mt-3 h-8 w-px bg-border" />
-                  <span className="mt-1 whitespace-nowrap text-[10px] uppercase tracking-wide text-muted-foreground">
-                    Необовʼязково
-                  </span>
                 </li>
               )}
               <li className="flex min-w-0 flex-1 items-start">
@@ -67,9 +64,7 @@ export function Stepper({ steps, activeId, onSelect }: StepperProps) {
                   className={cn(
                     'group flex shrink-0 flex-col items-center gap-1 rounded-md px-2 py-1 text-center',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                    step.disabled
-                      ? 'cursor-not-allowed opacity-50'
-                      : 'cursor-pointer hover:bg-accent/40',
+                    step.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
                   )}
                 >
                   <span

@@ -94,10 +94,23 @@ describe('useSessionStore', () => {
     expect(state.lastError).toEqual({ message: 'CR > 0.10', source: 'matrix' })
   })
 
+  it('revealRanking promotes the held ranking into the ranking field', () => {
+    const store = useSessionStore.getState()
+    store.setPendingRanking(SAMPLE_RANKING)
+
+    expect(useSessionStore.getState().ranking).toBeNull()
+    expect(useSessionStore.getState().pendingRanking).toEqual(SAMPLE_RANKING)
+
+    store.revealRanking()
+
+    expect(useSessionStore.getState().ranking).toEqual(SAMPLE_RANKING)
+  })
+
   it('commitMatrix writes matrix and CR while wiping downstream artefacts', () => {
     const store = useSessionStore.getState()
     store.setWeights({ A: 1 }, 0.05)
     store.setRanking(SAMPLE_RANKING)
+    store.setPendingRanking(SAMPLE_RANKING)
     store.setSensitivity(SAMPLE_SENSITIVITY)
     store.setEvaluationId(7)
     store.setError({ message: 'boom' })
@@ -109,6 +122,7 @@ describe('useSessionStore', () => {
     expect(state.consistencyRatio).toBe(0.04)
     expect(state.weights).toBeNull()
     expect(state.ranking).toBeNull()
+    expect(state.pendingRanking).toBeNull()
     expect(state.sensitivity).toBeNull()
     expect(state.evaluationId).toBeNull()
     expect(state.lastError).toBeNull()

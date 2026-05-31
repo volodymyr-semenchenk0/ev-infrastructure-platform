@@ -62,8 +62,12 @@ describe('Stepper', () => {
     expect(onSelect).toHaveBeenCalledWith('weights')
   })
 
-  it('renders the optional separator before the optional step', () => {
-    render(<Stepper steps={makeSteps()} activeId="setup" onSelect={() => {}} />)
-    expect(screen.getByText('Необовʼязково')).toBeInTheDocument()
+  it('renders a divider before the optional step', () => {
+    const { container } = render(
+      <Stepper steps={makeSteps()} activeId="setup" onSelect={() => {}} />,
+    )
+    // The optional step is separated from the mandatory group by a hidden
+    // divider list item rather than a connector.
+    expect(container.querySelector('li[aria-hidden="true"]')).toBeInTheDocument()
   })
 })
