@@ -61,6 +61,12 @@ export function ConvergenceChart({
     return null
   }
 
+  // X axis shows exactly two ticks: the first iteration (1) and the maximum.
+  // The iterations array is an ascending log-spaced sampling, so its last
+  // element is the max N.
+  const maxIter = convergence.iterations[convergence.iterations.length - 1] ?? 1
+  const xTickValues = [1, maxIter]
+
   return (
     <div className="space-y-2">
       <div
@@ -70,9 +76,10 @@ export function ConvergenceChart({
       >
         <ResponsiveLine
           data={series}
-          margin={{ top: 16, right: 132, bottom: 52, left: 60 }}
+          margin={{ top: 16, right: 132, bottom: 32, left: 60 }}
           xScale={{ type: 'log', base: 10, min: 'auto', max: 'auto' }}
           yScale={{ type: 'linear', min: 'auto', max: 'auto' }}
+          yFormat={(v) => Number(v).toFixed(4)}
           curve="monotoneX"
           enablePoints={false}
           enableGridX={false}
@@ -81,9 +88,8 @@ export function ConvergenceChart({
           axisBottom={{
             tickSize: 4,
             tickPadding: 6,
-            legend: 'Ітерація N (логарифмічна шкала)',
-            legendPosition: 'middle',
-            legendOffset: 44,
+            tickValues: xTickValues,
+            format: (v) => String(Math.round(Number(v))),
           }}
           axisLeft={{
             tickSize: 4,
