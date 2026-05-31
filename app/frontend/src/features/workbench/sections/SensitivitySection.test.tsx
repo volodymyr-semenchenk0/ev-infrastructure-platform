@@ -3,20 +3,10 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import MockAdapter from 'axios-mock-adapter'
 import type { ReactNode } from 'react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 
 import { api } from '@/lib/api'
 import { useSessionStore } from '@/store/session-store'
-
-// Nivo charts render SVGs jsdom cannot lay out. Stub both so the surrounding
-// section logic (run mutation, store writes, toggles) can be tested in
-// isolation from the visualisation layer.
-vi.mock('@/features/sensitivity/ConfidenceIntervalsChart', () => ({
-  ConfidenceIntervalsChart: () => <div data-testid="ci-chart" />,
-}))
-vi.mock('@/features/sensitivity/StabilityHeatmap', () => ({
-  StabilityHeatmap: () => <div data-testid="stability-heatmap" />,
-}))
 
 import { SensitivitySection } from './SensitivitySection'
 
@@ -73,10 +63,9 @@ describe('SensitivitySection', () => {
     await waitFor(() => {
       expect(useSessionStore.getState().sensitivity).not.toBeNull()
     })
-    expect(screen.getByText(/95 % довірчі інтервали/)).toBeInTheDocument()
-    expect(screen.getByTestId('ci-chart')).toBeInTheDocument()
-    expect(screen.getByTestId('stability-heatmap')).toBeInTheDocument()
-    expect(screen.getByText(/Матриця стабільності p_i\(k\) \(теплова карта\)/)).toBeInTheDocument()
+    expect(
+      screen.getByText(/Матриця стабільності p_i\(k\) \(таблиця\)/),
+    ).toBeInTheDocument()
     expect(screen.getByText(/Шар стійкості на карті/)).toBeInTheDocument()
     mock.restore()
   })

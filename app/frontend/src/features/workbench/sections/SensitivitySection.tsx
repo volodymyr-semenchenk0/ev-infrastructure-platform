@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react'
+import { useMemo } from 'react'
 import { Loader2, Play } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -6,11 +6,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import { toast } from '@/components/ui/use-toast'
-import { ChartExportButtons } from '@/features/export/ChartExportButtons'
 import { TabularExportButtons } from '@/features/export/TabularExportButtons'
 import { useLocations } from '@/features/locations/useLocations'
-import { ConfidenceIntervalsChart } from '@/features/sensitivity/ConfidenceIntervalsChart'
-import { StabilityHeatmap } from '@/features/sensitivity/StabilityHeatmap'
 import {
   useSensitivity,
   type SensitivityResponse,
@@ -42,9 +39,6 @@ export function SensitivitySection() {
 
   const form = useSensitivityForm()
   const mutation = useSensitivity()
-
-  const ciChartRef = useRef<HTMLDivElement>(null)
-  const heatmapRef = useRef<HTMLDivElement>(null)
 
   const nameByLocationId = useMemo<Record<number, string>>(() => {
     if (!locations.data) return {}
@@ -194,40 +188,6 @@ export function SensitivitySection() {
                 confidenceIntervals: sensitivity.confidenceIntervals,
               }}
               filenameBase={filenameBase}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <h3 className="text-sm font-semibold">
-              95 % довірчі інтервали C* для топ-{sensitivity.confidenceIntervals.length}
-            </h3>
-            <div ref={ciChartRef}>
-              <ConfidenceIntervalsChart
-                confidenceIntervals={sensitivity.confidenceIntervals}
-                nameByLocationId={nameByLocationId}
-              />
-            </div>
-            <ChartExportButtons
-              containerRef={ciChartRef}
-              filenameBase={`${filenameBase}-ci`}
-              label="Експорт ДІ:"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <h3 className="text-sm font-semibold">
-              Матриця стабільності p_i(k) (теплова карта)
-            </h3>
-            <div ref={heatmapRef}>
-              <StabilityHeatmap
-                stabilityMatrix={sensitivity.stabilityMatrix}
-                nameByLocationId={nameByLocationId}
-              />
-            </div>
-            <ChartExportButtons
-              containerRef={heatmapRef}
-              filenameBase={`${filenameBase}-heatmap`}
-              label="Експорт теплової карти:"
             />
           </div>
 
