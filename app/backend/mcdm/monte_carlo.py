@@ -16,6 +16,10 @@ DEFAULT_K_VALUES: tuple[int, ...] = (1, 3, 5)
 CI_LOWER_PERCENTILE: float = 2.5
 CI_UPPER_PERCENTILE: float = 97.5
 
+# Step 1 chart (subsection 2.3.3 visualisation): number of shared histogram bins
+# spanning the global C* range, so every alternative is binned on one axis.
+HISTOGRAM_BINS: int = 30
+
 
 class SensitivityResult(TypedDict):
     """Public return type of sensitivity_analysis (see formulas 1.15-1.17)."""
@@ -26,6 +30,27 @@ class SensitivityResult(TypedDict):
     top_k_freq: dict[int, np.ndarray]
     ci_lower: np.ndarray
     ci_upper: np.ndarray
+    hist_bin_edges: np.ndarray
+    hist_counts: np.ndarray
+    convergence_iterations: np.ndarray
+    convergence_mean: np.ndarray
+
+
+def _convergence_checkpoints(n: int) -> np.ndarray:
+    """Log-spaced iteration indices for the running-mean convergence trace.
+
+    Returns strictly increasing integers in [1, n], always including n so the
+    running mean at the last checkpoint equals the full-sample mean. n < 10
+    yields a single point (n,): too few iterations to show a meaningful curve.
+    """
+    if n < 10:
+        return np.array([n], dtype=np.intp)
+    # Log spacing keeps the early, fast-moving part of the curve legible on a
+    # log x-axis without storing one point per iteration.
+    points = np.unique(np.geomspace(1, n, num=20).astype(np.intp))
+    if points[-1] != n:
+        points = np.append(points, n)
+    return points.astype(np.intp)
 
 
 def sensitivity_analysis(
@@ -66,7 +91,15 @@ def sensitivity_analysis(
             "ci_lower"    - per-alternative 2.5 percentile of C_i* over
                             iterations (lower 95 % confidence bound, 2.3.3);
             "ci_upper"    - per-alternative 97.5 percentile of C_i* (upper
-                            95 % confidence bound, 2.3.3).
+                            95 % confidence bound, 2.3.3);
+            "hist_bin_edges" - shared histogram bin edges over the global C*
+                            range, shape (HISTOGRAM_BINS + 1,);
+            "hist_counts" - per-alternative C* counts over those bins, shape
+                            (m, HISTOGRAM_BINS); each row sums to n_simulations;
+            "convergence_iterations" - log-spaced iteration checkpoints, shape
+                            (C,), strictly increasing, last entry == n_simulations;
+            "convergence_mean" - running mean of C_i* at each checkpoint, shape
+                            (C, m); the last row equals scores_mean.
     """
     rng = np.random.default_rng(seed)
     n_alt = decision_matrix.shape[0]
@@ -101,6 +134,19 @@ def sensitivity_analysis(
     ci_lower = np.percentile(scores_all, CI_LOWER_PERCENTILE, axis=0)
     ci_upper = np.percentile(scores_all, CI_UPPER_PERCENTILE, axis=0)
 
+    # Step 1 chart: shared bins over the global C* range so every alternative's
+    # distribution is comparable on one axis; counts per alternative sum to N.
+    hist_bin_edges = np.histogram_bin_edges(scores_all, bins=HISTOGRAM_BINS)
+    hist_counts = np.empty((n_alt, HISTOGRAM_BINS), dtype=np.intp)
+    for i in range(n_alt):
+        hist_counts[i], _ = np.histogram(scores_all[:, i], bins=hist_bin_edges)
+
+    # Step 3 chart: running mean of C* at log-spaced checkpoints. cumsum keeps
+    # this O(N) instead of recomputing each prefix mean.
+    checkpoints = _convergence_checkpoints(n_simulations)
+    cumulative = np.cumsum(scores_all, axis=0)
+    convergence_mean = cumulative[checkpoints - 1] / checkpoints[:, np.newaxis]
+
     return SensitivityResult(
         scores_mean=scores_all.mean(axis=0),
         scores_std=scores_all.std(axis=0),
@@ -108,4 +154,8 @@ def sensitivity_analysis(
         top_k_freq=top_k_freq,
         ci_lower=ci_lower,
         ci_upper=ci_upper,
+        hist_bin_edges=hist_bin_edges,
+        hist_counts=hist_counts,
+        convergence_iterations=checkpoints,
+        convergence_mean=convergence_mean,
     )
