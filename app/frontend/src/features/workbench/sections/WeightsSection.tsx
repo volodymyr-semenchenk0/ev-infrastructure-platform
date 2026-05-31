@@ -75,12 +75,6 @@ export function WeightsSection() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-        {evaluationId !== null && (
-          <span>
-            ID розрахунку:{' '}
-            <span className="font-mono text-foreground">{evaluationId}</span>
-          </span>
-        )}
         {consistencyRatio !== null && (
           <span>
             CR:{' '}
@@ -98,11 +92,7 @@ export function WeightsSection() {
           criteriaNames={criteriaNames}
         />
       </div>
-      <ChartExportButtons
-        containerRef={chartRef}
-        filenameBase={filenameBase}
-        label="Експорт діаграми:"
-      />
+      <ChartExportButtons containerRef={chartRef} filenameBase={filenameBase} />
 
       <div className="overflow-hidden rounded-md border border-border">
         <table className="w-full text-sm">
@@ -137,17 +127,13 @@ export function WeightsSection() {
         </table>
       </div>
 
-      <div className="flex">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <TabularExportButtons
           csvRows={csvRows}
           jsonData={jsonPayload}
           filenameBase={filenameBase}
-          label="Експорт таблиці:"
         />
-      </div>
-
-      {ranking === null ? (
-        <div className="flex justify-end border-t pt-4">
+        {ranking === null ? (
           <Button
             type="button"
             size="sm"
@@ -163,12 +149,12 @@ export function WeightsSection() {
             Виконати ранжування
             <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
           </Button>
-        </div>
-      ) : (
-        <p className="border-t pt-4 text-sm text-muted-foreground">
-          Ранжування виконано (TOPSIS). Результат – на кроці «Ранжування».
-        </p>
-      )}
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Ранжування виконано (TOPSIS). Результат – на кроці «Ранжування».
+          </p>
+        )}
+      </div>
     </div>
   )
 }

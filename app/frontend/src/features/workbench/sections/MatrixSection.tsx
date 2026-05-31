@@ -182,7 +182,7 @@ export function MatrixSection() {
       setError(null)
       toast({
         title: 'Ваги обчислено',
-        description: `Сеанс №${result.evaluationId}, виконано за ${result.executionTimeMs ?? '?'} мс.`,
+        description: `Виконано за ${result.executionTimeMs ?? '?'} мс.`,
       })
     } catch (error) {
       const description =
