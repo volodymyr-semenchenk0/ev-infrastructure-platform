@@ -9,7 +9,8 @@ from __future__ import annotations
 import numpy as np
 
 # Saaty Random Index table (n → RI) for CR computation.
-# Source: Saaty (1980), values for n=1..10.
+# Source: Saaty (1980), Table 4.2, values for n=1..15. Mirrors the frontend
+# RANDOM_INDEX table in features/calculate/consistency.ts.
 _RI: dict[int, float] = {
     1: 0.00,
     2: 0.00,
@@ -21,6 +22,11 @@ _RI: dict[int, float] = {
     8: 1.41,
     9: 1.45,
     10: 1.49,
+    11: 1.51,
+    12: 1.48,
+    13: 1.56,
+    14: 1.57,
+    15: 1.59,
 }
 
 

@@ -69,6 +69,11 @@ def _compute_cr(modal_matrix: np.ndarray) -> float:
         8: 1.41,
         9: 1.45,
         10: 1.49,
+        11: 1.51,
+        12: 1.48,
+        13: 1.56,
+        14: 1.57,
+        15: 1.59,
     }
     ri = random_index.get(n, 1.49)
     if ri == 0:
