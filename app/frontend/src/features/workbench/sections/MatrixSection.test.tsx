@@ -37,6 +37,36 @@ const HIGH_CR_3X3: FuzzyNumber[][] = [
   ],
 ]
 
+// Stand-in for the server-built profile default Ã. Rank-1 (m_ij = w_i/w_j for
+// w = [0.5, 0.3, 0.2]) so it is perfectly consistent (CR = 0) yet not identity
+// — distinguishing "profile default loaded" from "reset to identity".
+const PROFILE_DEFAULT_3X3: FuzzyNumber[][] = [
+  [
+    { l: 1, m: 1, u: 1 },
+    { l: 5 / 3, m: 5 / 3, u: 5 / 3 },
+    { l: 5 / 2, m: 5 / 2, u: 5 / 2 },
+  ],
+  [
+    { l: 3 / 5, m: 3 / 5, u: 3 / 5 },
+    { l: 1, m: 1, u: 1 },
+    { l: 3 / 2, m: 3 / 2, u: 3 / 2 },
+  ],
+  [
+    { l: 2 / 5, m: 2 / 5, u: 2 / 5 },
+    { l: 2 / 3, m: 2 / 3, u: 2 / 3 },
+    { l: 1, m: 1, u: 1 },
+  ],
+]
+
+// GET /api/profiles/{id} body the loader reads `pairwiseMatrix` from.
+const profileDetail = (pairwiseMatrix: FuzzyNumber[][]) => ({
+  id: PROFILE.id,
+  code: PROFILE.code,
+  name: PROFILE.name,
+  criteria: [],
+  pairwiseMatrix,
+})
+
 function renderSection() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
@@ -68,6 +98,7 @@ describe('MatrixSection', () => {
     useProfileStore.getState().setActiveProfile(PROFILE)
     const mock = new MockAdapter(api)
     mock.onGet('/criteria').reply(200, CRITERIA)
+    mock.onGet('/profiles/1').reply(200, profileDetail(PROFILE_DEFAULT_3X3))
 
     renderSection()
 
@@ -84,6 +115,8 @@ describe('MatrixSection', () => {
 
     const mock = new MockAdapter(api)
     mock.onGet('/criteria').reply(200, CRITERIA)
+    // Pre-seeded matrix means the section does not self-load; mocked defensively.
+    mock.onGet('/profiles/1').reply(200, profileDetail(PROFILE_DEFAULT_3X3))
 
     renderSection()
 
@@ -92,36 +125,48 @@ describe('MatrixSection', () => {
     mock.restore()
   })
 
-  it('enables «Обчислити ваги» when the default identity matrix is in the editor', async () => {
+  it('loads the profile default into the editor and enables compute', async () => {
     useProfileStore.getState().setActiveProfile(PROFILE)
 
     const mock = new MockAdapter(api)
     mock.onGet('/criteria').reply(200, CRITERIA)
+    mock.onGet('/profiles/1').reply(200, profileDetail(PROFILE_DEFAULT_3X3))
 
     renderSection()
 
     const button = await screen.findByRole('button', { name: /Обчислити ваги/ })
     await waitFor(() => expect(button).toBeEnabled())
+    // The self-load committed the profile default (CR = 0), not an identity matrix.
+    await waitFor(() => {
+      expect(useSessionStore.getState().pairwiseMatrix?.[0][1].m).toBeCloseTo(5 / 3)
+    })
     mock.restore()
   })
 
-  it('reset (icon-only) returns the matrix to identity, clearing prior edits', async () => {
+  it('reset restores the profile default matrix', async () => {
     useProfileStore.getState().setActiveProfile(PROFILE)
+    // Start from an edited, inconsistent matrix so compute is disabled.
     useSessionStore.getState().commitMatrix(HIGH_CR_3X3, 0)
 
     const mock = new MockAdapter(api)
     mock.onGet('/criteria').reply(200, CRITERIA)
+    mock.onGet('/profiles/1').reply(200, profileDetail(PROFILE_DEFAULT_3X3))
 
     const user = userEvent.setup()
     renderSection()
 
-    // Wait for the Compute button to be disabled (HIGH_CR_3X3 ⇒ CR > 0.10)
+    // HIGH_CR_3X3 ⇒ CR > 0.10 ⇒ Compute disabled.
     const compute = await screen.findByRole('button', { name: /Обчислити ваги/ })
     await waitFor(() => expect(compute).toBeDisabled())
 
     await user.click(screen.getByRole('button', { name: 'Скинути до дефолту' }))
-    // After reset to identity, CR = 0 ⇒ Compute is enabled.
+
+    // Reset reloads the server default (CR = 0) ⇒ Compute enabled, and the
+    // store holds the profile default, not an identity matrix.
     await waitFor(() => expect(compute).toBeEnabled())
+    await waitFor(() => {
+      expect(useSessionStore.getState().pairwiseMatrix?.[0][1].m).toBeCloseTo(5 / 3)
+    })
     mock.restore()
   })
 
@@ -130,6 +175,7 @@ describe('MatrixSection', () => {
 
     const mock = new MockAdapter(api)
     mock.onGet('/criteria').reply(200, CRITERIA)
+    mock.onGet('/profiles/1').reply(200, profileDetail(PROFILE_DEFAULT_3X3))
     mock.onPost('/evaluations').reply(200, {
       evaluationId: 42,
       weights: { A: 0.5, B: 0.3, C: 0.2 },
@@ -159,6 +205,7 @@ describe('MatrixSection', () => {
 
     const mock = new MockAdapter(api)
     mock.onGet('/criteria').reply(200, CRITERIA)
+    mock.onGet('/profiles/1').reply(200, profileDetail(PROFILE_DEFAULT_3X3))
     mock.onPost('/evaluations').reply(500)
 
     const user = userEvent.setup()
