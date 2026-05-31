@@ -137,7 +137,7 @@ export function CstarHistogram({
               }}
             >
               <div>C* ≈ {row.bin}</div>
-              <div>Семплів: {row.count}</div>
+              <div>Ітерацій: {row.count}</div>
             </div>
           )}
           ariaLabel="Гістограма розподілу C*"
