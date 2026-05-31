@@ -44,6 +44,9 @@ class EvaluationRun(Base):
     )
     status: Mapped[str] = mapped_column(String(16), nullable=False)
     weights_vector: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    # Triangular fuzzy weights {code: {l, m, u}}; nullable for runs created before
+    # this column existed. The crisp weights_vector is the centroid of each triple.
+    weights_fuzzy: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     execution_time_ms: Mapped[int] = mapped_column(Integer, nullable=False)
 
     ranking: Mapped[list[RankingItem]] = relationship(

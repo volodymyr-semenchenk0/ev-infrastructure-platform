@@ -138,11 +138,13 @@ class EvaluationRepository:
         status: str,
         weights: dict[str, float],
         execution_time_ms: int,
+        weights_fuzzy: dict[str, dict[str, float]] | None = None,
     ) -> EvaluationRun:
         run = EvaluationRun(
             profile_id=profile_id,
             status=status,
             weights_vector=weights,
+            weights_fuzzy=weights_fuzzy,
             execution_time_ms=execution_time_ms,
         )
         self.session.add(run)

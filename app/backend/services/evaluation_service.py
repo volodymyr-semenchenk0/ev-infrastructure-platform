@@ -60,7 +60,7 @@ class EvaluationService:
 
         started = time.perf_counter()
 
-        weights = fahp_weights(matrix_np)
+        weights, fuzzy = fahp_weights(matrix_np)
 
         locations = await self.location_repo.list_ordered()
         criterion_ids = [c.id for c in criteria]
@@ -74,10 +74,15 @@ class EvaluationService:
         elapsed_ms = max(int((time.perf_counter() - started) * 1000), 1)
 
         weights_dict = {c.code: float(w) for c, w in zip(criteria, weights, strict=True)}
+        weights_fuzzy_dict = {
+            c.code: {"l": float(tri[0]), "m": float(tri[1]), "u": float(tri[2])}
+            for c, tri in zip(criteria, fuzzy, strict=True)
+        }
         run = await self.eval_repo.create(
             profile_id=profile_id,
             status="completed",
             weights=weights_dict,
+            weights_fuzzy=weights_fuzzy_dict,
             execution_time_ms=elapsed_ms,
         )
 

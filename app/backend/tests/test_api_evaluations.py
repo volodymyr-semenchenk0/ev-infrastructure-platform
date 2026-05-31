@@ -63,6 +63,21 @@ class TestEvaluationInvariants:
         total = sum(weights.values())
         assert total == pytest.approx(1.0, abs=1e-9), f"FAHP weights must sum to 1.0, got {total}"
 
+    async def test_weights_fuzzy_brackets_crisp_weights(self, api_client: AsyncClient) -> None:
+        """POST /api/evaluations returns weightsFuzzy with l ≤ w ≤ u per criterion.
+
+        The crisp weight is the centroid of its triangle, so each fuzzy triple
+        must bracket it. Reference: mcdm/fahp.py fahp_weights — variant-A bounds.
+        """
+        data = await _create_evaluation(api_client)
+        weights = data["weights"]
+        fuzzy = data["weightsFuzzy"]
+        assert fuzzy is not None and set(fuzzy) == set(weights)
+        for code, w in weights.items():
+            tri = fuzzy[code]
+            assert tri["l"] <= tri["m"] <= tri["u"]
+            assert tri["l"] - 1e-9 <= w <= tri["u"] + 1e-9
+
     async def test_camel_case_response_keys(self, api_client: AsyncClient) -> None:
         """POST /api/evaluations response uses camelCase for all field names.
 
