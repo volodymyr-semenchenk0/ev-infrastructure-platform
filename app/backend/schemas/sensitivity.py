@@ -39,14 +39,15 @@ class ConfidenceInterval(CamelModel):
 
 
 class CstarHistogram(CamelModel):
-    """C* distribution per location over shared bins (Step 1 storyline chart).
+    """C* distribution per location, bins auto-zoomed per location (Step 1 chart).
 
-    Return-only: recomputed each request, never persisted. `counts_by_location`
-    is keyed by location id; each list has len(bin_edges) - 1 entries summing to
-    the iteration count N.
+    Return-only: recomputed each request, never persisted. Both maps are keyed by
+    location id. `edges_by_location[id]` holds that location's own bin edges
+    (auto-zoomed to its C* range); `counts_by_location[id]` has
+    len(edges_by_location[id]) - 1 entries summing to the iteration count N.
     """
 
-    bin_edges: list[float]
+    edges_by_location: dict[int, list[float]]
     counts_by_location: dict[int, list[int]]
 
 
