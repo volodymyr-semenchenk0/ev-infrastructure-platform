@@ -56,7 +56,7 @@ export function HomePage() {
 
   return (
     <div className="flex-1 overflow-auto">
-      <div className="mx-auto max-w-5xl space-y-6 p-6 md:p-8">
+      <div className="mx-auto max-w-[1200px] space-y-6 p-6 md:p-8">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">СППР вибору локацій ЗС</h1>
           <p className="mt-1 text-sm text-muted-foreground">
