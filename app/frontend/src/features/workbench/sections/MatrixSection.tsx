@@ -211,22 +211,22 @@ export function MatrixSection() {
           <Stat
             label="λ_max"
             value={formatStat(stats.lambdaMax)}
-            info="Максимальне власне значення матриці попарних порівнянь; основа для оцінки узгодженості."
+            info="Максимальне власне значення матриці попарних порівнянь, на якому ґрунтується оцінка її узгодженості."
           />
           <Stat
             label="CI"
             value={formatStat(stats.ci)}
-            info="Індекс узгодженості (Consistency Index): (λ_max − n) / (n − 1)."
+            info="Індекс узгодженості, що дорівнює (λ_max − n) поділеному на (n − 1) і показує, наскільки матриця відхиляється від ідеально узгодженої."
           />
           <Stat
             label={`RI (n=${matrix.length})`}
             value={formatStat(stats.ri, 2)}
-            info="Випадковий індекс (Random Index) для матриці розміру n; еталон для нормування CI."
+            info="Випадковий індекс, тобто середня узгодженість випадкової матриці розміру n, відносно якої нормують індекс CI."
           />
           <Stat
             label="CR"
             value={formatStat(stats.cr)}
-            info="Відношення узгодженості (Consistency Ratio): CI / RI. Матриця прийнятна, якщо CR ≤ 0,10."
+            info="Відношення узгодженості, що дорівнює CI поділеному на RI. Матриця вважається прийнятною, коли CR не перевищує 0,10."
             className={cn('font-semibold tabular-nums', getCrColor(stats.cr))}
           />
         </section>
