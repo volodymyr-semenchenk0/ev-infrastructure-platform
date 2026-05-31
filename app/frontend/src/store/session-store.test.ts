@@ -59,14 +59,6 @@ describe('useSessionStore', () => {
     expect(useSessionStore.getState().selectedLocationId).toBeNull()
   })
 
-  it('toggles the stability layer flag', () => {
-    expect(useSessionStore.getState().stabilityLayerEnabled).toBe(false)
-    useSessionStore.getState().setStabilityLayerEnabled(true)
-    expect(useSessionStore.getState().stabilityLayerEnabled).toBe(true)
-    useSessionStore.getState().resetSession()
-    expect(useSessionStore.getState().stabilityLayerEnabled).toBe(false)
-  })
-
   it('stores the pairwise matrix', () => {
     useSessionStore.getState().setPairwiseMatrix(SAMPLE_MATRIX)
     expect(useSessionStore.getState().pairwiseMatrix).toEqual(SAMPLE_MATRIX)

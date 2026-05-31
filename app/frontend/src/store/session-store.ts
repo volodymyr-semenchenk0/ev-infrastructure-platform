@@ -36,21 +36,14 @@ export interface SessionState {
   // single source of truth so the ranking table, the map markers, and any
   // future popovers stay in lockstep without prop-drilling.
   selectedLocationId: number | null
-  // When true, MapPane colours markers by p_i(1) intensity instead of rank.
-  // Stays false until the first MC run.
-  stabilityLayerEnabled: boolean
 
   setPairwiseMatrix: (matrix: FuzzyNumber[][] | null) => void
   setWeights: (weights: Record<string, number> | null, consistencyRatio?: number | null) => void
   setRanking: (ranking: RankingItem[] | null) => void
-  setSensitivity: (
-    sensitivity: SensitivityResult | null,
-    params?: SensitivityParams | null,
-  ) => void
+  setSensitivity: (sensitivity: SensitivityResult | null, params?: SensitivityParams | null) => void
   setEvaluationId: (id: number | null) => void
   setError: (error: SessionError | null) => void
   setSelectedLocationId: (id: number | null) => void
-  setStabilityLayerEnabled: (enabled: boolean) => void
   // commitMatrix is the matrix editor's save path. It writes the matrix and
   // its CR together and wipes downstream artefacts (weights/ranking/sensitivity
   // and the evaluationId) because those were computed from the previous matrix.
@@ -71,7 +64,6 @@ const EMPTY_SESSION = {
   evaluationId: null,
   lastError: null,
   selectedLocationId: null,
-  stabilityLayerEnabled: false,
 } satisfies Pick<
   SessionState,
   | 'pairwiseMatrix'
@@ -83,7 +75,6 @@ const EMPTY_SESSION = {
   | 'evaluationId'
   | 'lastError'
   | 'selectedLocationId'
-  | 'stabilityLayerEnabled'
 >
 
 export const useSessionStore = create<SessionState>((set) => ({
@@ -94,8 +85,7 @@ export const useSessionStore = create<SessionState>((set) => ({
   setWeights: (weights, consistencyRatio) =>
     set((state) => ({
       weights,
-      consistencyRatio:
-        consistencyRatio !== undefined ? consistencyRatio : state.consistencyRatio,
+      consistencyRatio: consistencyRatio !== undefined ? consistencyRatio : state.consistencyRatio,
     })),
 
   setRanking: (ranking) => set({ ranking }),
@@ -103,8 +93,7 @@ export const useSessionStore = create<SessionState>((set) => ({
   setSensitivity: (sensitivity, params) =>
     set((state) => ({
       sensitivity,
-      lastSensitivityParams:
-        params === undefined ? state.lastSensitivityParams : params,
+      lastSensitivityParams: params === undefined ? state.lastSensitivityParams : params,
     })),
 
   setEvaluationId: (id) => set({ evaluationId: id }),
@@ -112,8 +101,6 @@ export const useSessionStore = create<SessionState>((set) => ({
   setError: (error) => set({ lastError: error }),
 
   setSelectedLocationId: (id) => set({ selectedLocationId: id }),
-
-  setStabilityLayerEnabled: (enabled) => set({ stabilityLayerEnabled: enabled }),
 
   commitMatrix: (matrix, consistencyRatio) =>
     set({
@@ -126,7 +113,6 @@ export const useSessionStore = create<SessionState>((set) => ({
       evaluationId: null,
       lastError: null,
       selectedLocationId: null,
-      stabilityLayerEnabled: false,
     }),
 
   resetSession: () => set({ ...EMPTY_SESSION }),

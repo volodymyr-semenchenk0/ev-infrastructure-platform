@@ -33,8 +33,6 @@ export function SensitivitySection() {
   const sensitivity = useSessionStore((s) => s.sensitivity)
   const setSensitivity = useSessionStore((s) => s.setSensitivity)
   const setError = useSessionStore((s) => s.setError)
-  const stabilityLayerEnabled = useSessionStore((s) => s.stabilityLayerEnabled)
-  const setStabilityLayerEnabled = useSessionStore((s) => s.setStabilityLayerEnabled)
   const locations = useLocations()
 
   const form = useSensitivityForm()
@@ -240,23 +238,6 @@ export function SensitivitySection() {
               </tbody>
             </table>
           </div>
-
-          <label className="flex items-center justify-between gap-3 rounded-md border bg-background p-3 text-sm">
-            <span>
-              <span className="font-medium">Шар стійкості на карті</span>
-              <span className="ml-1 text-muted-foreground">
-                — забарвлення за p_i(1); застосовується, коли карта показана
-              </span>
-            </span>
-            <input
-              type="checkbox"
-              role="switch"
-              aria-checked={stabilityLayerEnabled}
-              checked={stabilityLayerEnabled}
-              onChange={(e) => setStabilityLayerEnabled(e.target.checked)}
-              className="h-4 w-7 cursor-pointer appearance-none rounded-full bg-muted transition-colors checked:bg-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            />
-          </label>
         </div>
       )}
     </div>

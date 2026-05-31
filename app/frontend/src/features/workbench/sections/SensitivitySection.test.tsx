@@ -93,32 +93,6 @@ describe('SensitivitySection', () => {
     expect(screen.getByText(/Крок 2/)).toBeInTheDocument()
     expect(screen.getByText(/Крок 3/)).toBeInTheDocument()
     expect(screen.getByText(/Матриця стабільності p_i\(k\) \(таблиця\)/)).toBeInTheDocument()
-    expect(screen.getByText(/Шар стійкості на карті/)).toBeInTheDocument()
-    mock.restore()
-  })
-
-  it('toggles the stability layer flag', async () => {
-    useSessionStore.getState().setEvaluationId(42)
-    useSessionStore.getState().setSensitivity({
-      stabilityMatrix: { '1': { '1': 0.8, '3': 1, '5': 1 } },
-      confidenceIntervals: [{ locationId: 1, mean: 0.82, lower: 0.7, upper: 0.9 }],
-      rankingIntervals: [{ locationId: 1, mean: 0.82, lower: 0.7, upper: 0.9 }],
-      cstarHistogram: { binEdges: [0, 0.5, 1], countsByLocation: { '1': [40, 60] } },
-      convergence: { iterations: [1, 10, 100], meanByLocation: { '1': [0.8, 0.81, 0.82] } },
-    })
-
-    const mock = new MockAdapter(api)
-    mock.onGet('/locations').reply(200, LOCATIONS)
-
-    const user = userEvent.setup()
-    renderSection()
-
-    const toggle = await screen.findByRole('switch', { name: /Шар стійкості/ })
-    expect(toggle).not.toBeChecked()
-    await user.click(toggle)
-    await waitFor(() => {
-      expect(useSessionStore.getState().stabilityLayerEnabled).toBe(true)
-    })
     mock.restore()
   })
 
