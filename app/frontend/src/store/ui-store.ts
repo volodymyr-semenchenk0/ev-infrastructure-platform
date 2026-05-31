@@ -1,8 +1,12 @@
 import { create } from 'zustand'
 
+// The workbench is a 4-step wizard. Steps 1-3 (setup → weights → ranking)
+// are the mandatory connected flow; sensitivity is a detached optional step.
+export type StepId = 'setup' | 'weights' | 'ranking' | 'sensitivity'
+
 interface UiState {
-  openAccordionIds: string[]
-  setOpenAccordionIds: (ids: string[]) => void
+  activeStep: StepId
+  setActiveStep: (id: StepId) => void
   mapVisible: boolean
   setMapVisible: (visible: boolean) => void
   mapFullscreen: boolean
@@ -10,8 +14,8 @@ interface UiState {
 }
 
 export const useUiStore = create<UiState>((set) => ({
-  openAccordionIds: ['profile'],
-  setOpenAccordionIds: (ids) => set({ openAccordionIds: ids }),
+  activeStep: 'setup',
+  setActiveStep: (id) => set({ activeStep: id }),
   mapVisible: false,
   setMapVisible: (visible) => set({ mapVisible: visible }),
   mapFullscreen: false,

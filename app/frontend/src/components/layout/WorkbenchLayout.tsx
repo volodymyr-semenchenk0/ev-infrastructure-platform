@@ -3,12 +3,12 @@ import { Outlet } from 'react-router-dom'
 import { Header } from './Header'
 
 // Workbench layout: header only. The page itself owns the full content
-// column (a vertical stack of accordions), so this wrapper just exposes the
+// (the stepper and the active step's panel), so this wrapper just exposes the
 // header and an outlet for the consolidated home page.
 //
 // The skip link is visually hidden until it picks up keyboard focus and then
-// jumps the user past the header straight into the main content; the
-// accordion column is long so this remains the most impactful a11y affordance.
+// jumps the user past the header straight into the main content; this remains
+// the most impactful a11y affordance.
 export function WorkbenchLayout() {
   return (
     <div className="flex h-screen flex-col">

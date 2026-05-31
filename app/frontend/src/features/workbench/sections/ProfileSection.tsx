@@ -72,9 +72,6 @@ export function ProfileSection() {
 
   return (
     <div className="space-y-3">
-      <p className="text-xs text-muted-foreground">
-        Оберіть профіль ОПР, щоб задати початкові ваги критеріїв.
-      </p>
       <div className="flex flex-col gap-3 sm:flex-row">
         {profiles.data.map((profile) => (
           <ProfileCard

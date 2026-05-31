@@ -26,6 +26,10 @@ export interface SessionState {
   weights: Record<string, number> | null
   consistencyRatio: number | null
   ranking: RankingItem[] | null
+  // TOPSIS ranking computed alongside FAHP weights server-side, but held back
+  // until the operator explicitly runs ranking on the weights step. The
+  // ranking step stays empty until `revealRanking` promotes this to `ranking`.
+  pendingRanking: RankingItem[] | null
   sensitivity: SensitivityResult | null
   // Parameters of the last Monte Carlo run; the API response does not echo
   // them, so the MC details panel reads them from here.
@@ -40,6 +44,9 @@ export interface SessionState {
   setPairwiseMatrix: (matrix: FuzzyNumber[][] | null) => void
   setWeights: (weights: Record<string, number> | null, consistencyRatio?: number | null) => void
   setRanking: (ranking: RankingItem[] | null) => void
+  setPendingRanking: (ranking: RankingItem[] | null) => void
+  // Promote the held TOPSIS ranking into `ranking` (the "run ranking" action).
+  revealRanking: () => void
   setSensitivity: (sensitivity: SensitivityResult | null, params?: SensitivityParams | null) => void
   setEvaluationId: (id: number | null) => void
   setError: (error: SessionError | null) => void
@@ -59,6 +66,7 @@ const EMPTY_SESSION = {
   weights: null,
   consistencyRatio: null,
   ranking: null,
+  pendingRanking: null,
   sensitivity: null,
   lastSensitivityParams: null,
   evaluationId: null,
@@ -70,6 +78,7 @@ const EMPTY_SESSION = {
   | 'weights'
   | 'consistencyRatio'
   | 'ranking'
+  | 'pendingRanking'
   | 'sensitivity'
   | 'lastSensitivityParams'
   | 'evaluationId'
@@ -90,6 +99,10 @@ export const useSessionStore = create<SessionState>((set) => ({
 
   setRanking: (ranking) => set({ ranking }),
 
+  setPendingRanking: (ranking) => set({ pendingRanking: ranking }),
+
+  revealRanking: () => set((state) => ({ ranking: state.pendingRanking })),
+
   setSensitivity: (sensitivity, params) =>
     set((state) => ({
       sensitivity,
@@ -108,6 +121,7 @@ export const useSessionStore = create<SessionState>((set) => ({
       consistencyRatio,
       weights: null,
       ranking: null,
+      pendingRanking: null,
       sensitivity: null,
       lastSensitivityParams: null,
       evaluationId: null,

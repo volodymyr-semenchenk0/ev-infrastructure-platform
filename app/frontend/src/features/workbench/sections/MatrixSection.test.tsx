@@ -170,7 +170,7 @@ describe('MatrixSection', () => {
     mock.restore()
   })
 
-  it('runs FAHP using the local matrix and writes results to the store', async () => {
+  it('runs FAHP using the local matrix and holds the ranking in the store', async () => {
     useProfileStore.getState().setActiveProfile(PROFILE)
 
     const mock = new MockAdapter(api)
@@ -193,7 +193,10 @@ describe('MatrixSection', () => {
     await waitFor(() => {
       expect(useSessionStore.getState().weights).toEqual({ A: 0.5, B: 0.3, C: 0.2 })
     })
-    expect(useSessionStore.getState().ranking).toHaveLength(1)
+    // The ranking is held back (revealed only by «Виконати ранжування»), so the
+    // ranking step stays empty while weights and the evaluation id are written.
+    expect(useSessionStore.getState().ranking).toBeNull()
+    expect(useSessionStore.getState().pendingRanking).toHaveLength(1)
     expect(useSessionStore.getState().evaluationId).toBe(42)
     // The local matrix is also committed to session so other consumers can read it.
     expect(useSessionStore.getState().pairwiseMatrix).not.toBeNull()

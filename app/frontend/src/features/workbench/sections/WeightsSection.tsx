@@ -1,5 +1,8 @@
 import { useMemo, useRef } from 'react'
+import { ArrowRight } from 'lucide-react'
 
+import { Button } from '@/components/ui/button'
+import { toast } from '@/components/ui/use-toast'
 import { useCriteria } from '@/features/calculate/useCriteria'
 import { ChartExportButtons } from '@/features/export/ChartExportButtons'
 import { TabularExportButtons } from '@/features/export/TabularExportButtons'
@@ -10,6 +13,9 @@ export function WeightsSection() {
   const weights = useSessionStore((s) => s.weights)
   const consistencyRatio = useSessionStore((s) => s.consistencyRatio)
   const evaluationId = useSessionStore((s) => s.evaluationId)
+  const ranking = useSessionStore((s) => s.ranking)
+  const pendingRanking = useSessionStore((s) => s.pendingRanking)
+  const revealRanking = useSessionStore((s) => s.revealRanking)
   const criteria = useCriteria()
 
   const chartRef = useRef<HTMLDivElement>(null)
@@ -113,6 +119,30 @@ export function WeightsSection() {
           ))}
         </tbody>
       </table>
+
+      {ranking === null ? (
+        <div className="flex justify-end border-t pt-4">
+          <Button
+            type="button"
+            size="sm"
+            disabled={pendingRanking === null}
+            onClick={() => {
+              revealRanking()
+              toast({
+                title: 'Ранжування виконано',
+                description: 'TOPSIS застосовано до вагів FAHP. Перейдіть до кроку «Ранжування».',
+              })
+            }}
+          >
+            Виконати ранжування
+            <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+          </Button>
+        </div>
+      ) : (
+        <p className="border-t pt-4 text-sm text-muted-foreground">
+          Ранжування виконано (TOPSIS). Результат – на кроці «Ранжування».
+        </p>
+      )}
     </div>
   )
 }

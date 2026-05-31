@@ -1,11 +1,16 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import MockAdapter from 'axios-mock-adapter'
 import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { api } from '@/lib/api'
-import { useSessionStore } from '@/store/session-store'
+import { useSessionStore, type RankingItem } from '@/store/session-store'
+
+const PENDING_RANKING: RankingItem[] = [
+  { locationId: 1, rank: 1, closeness: 0.9, sPlus: 0.1, sMinus: 0.5 },
+]
 
 // WeightsBarChart pulls @nivo/bar which renders SVGs based on DOM measurements
 // jsdom can't compute. Stub it so the chart-presence assertion is meaningful
@@ -76,6 +81,45 @@ describe('WeightsSection', () => {
     // Chart export buttons (PNG/SVG).
     expect(screen.getByRole('button', { name: /PNG/ })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /SVG/ })).toBeInTheDocument()
+    mock.restore()
+  })
+
+  it('reveals the held ranking when «Виконати ранжування» is clicked', async () => {
+    useSessionStore.getState().setWeights({ A: 0.5, B: 0.3, C: 0.2 }, 0.07)
+    useSessionStore.getState().setEvaluationId(7)
+    useSessionStore.getState().setPendingRanking(PENDING_RANKING)
+
+    const mock = new MockAdapter(api)
+    mock.onGet('/criteria').reply(200, CRITERIA)
+
+    const user = userEvent.setup()
+    renderSection()
+
+    const runButton = await screen.findByRole('button', { name: /Виконати ранжування/ })
+    expect(useSessionStore.getState().ranking).toBeNull()
+
+    await user.click(runButton)
+
+    await waitFor(() => {
+      expect(useSessionStore.getState().ranking).toEqual(PENDING_RANKING)
+    })
+    // Once revealed, the action collapses to a confirmation note.
+    expect(
+      screen.queryByRole('button', { name: /Виконати ранжування/ }),
+    ).not.toBeInTheDocument()
+    mock.restore()
+  })
+
+  it('disables «Виконати ранжування» until a ranking is held', async () => {
+    useSessionStore.getState().setWeights({ A: 0.5, B: 0.3, C: 0.2 }, 0.07)
+
+    const mock = new MockAdapter(api)
+    mock.onGet('/criteria').reply(200, CRITERIA)
+
+    renderSection()
+
+    const runButton = await screen.findByRole('button', { name: /Виконати ранжування/ })
+    expect(runButton).toBeDisabled()
     mock.restore()
   })
 })

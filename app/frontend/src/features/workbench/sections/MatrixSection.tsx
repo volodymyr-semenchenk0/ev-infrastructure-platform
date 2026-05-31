@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Calculator, HelpCircle, RotateCcw } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import { Info } from '@/components/ui/info'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from '@/components/ui/use-toast'
 import { AhpMatrix } from '@/features/calculate/AhpMatrix'
@@ -49,7 +50,7 @@ export function MatrixSection() {
   const storedMatrix = useSessionStore((s) => s.pairwiseMatrix)
   const commitMatrix = useSessionStore((s) => s.commitMatrix)
   const setWeights = useSessionStore((s) => s.setWeights)
-  const setRanking = useSessionStore((s) => s.setRanking)
+  const setPendingRanking = useSessionStore((s) => s.setPendingRanking)
   const setEvaluationId = useSessionStore((s) => s.setEvaluationId)
   const setError = useSessionStore((s) => s.setError)
   const criteria = useCriteria()
@@ -136,11 +137,7 @@ export function MatrixSection() {
   )
 
   if (!activeProfile) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        Спочатку оберіть профіль ОПР у попередньому розділі.
-      </p>
-    )
+    return <Info>Спочатку оберіть профіль ОПР у попередньому розділі.</Info>
   }
 
   if (criteria.isLoading || !criteria.data) {
@@ -170,7 +167,9 @@ export function MatrixSection() {
         pairwiseMatrix: matrix,
       })
       setWeights(result.weights, stats.cr)
-      setRanking(result.ranking)
+      // Hold the TOPSIS ranking — the ranking step stays empty until the
+      // operator runs ranking from the weights step.
+      setPendingRanking(result.ranking)
       setEvaluationId(result.evaluationId)
       setError(null)
       toast({
