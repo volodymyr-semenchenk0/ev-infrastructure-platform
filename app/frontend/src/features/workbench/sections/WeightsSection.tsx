@@ -72,27 +72,35 @@ export function WeightsSection() {
 
   const filenameBase = `fahp-weights-${evaluationId ?? 'session'}`
 
+  // Footer total for the crisp weights only; Σw_j is 1 by construction. The
+  // fuzzy bound columns are left without a total — their raw sums are not 1 and
+  // carry no useful interpretation here.
+  const weightSum = sortedRows.reduce((acc, r) => acc + r.weight, 0)
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-        {consistencyRatio !== null && (
-          <span>
-            CR:{' '}
-            <span className="font-mono text-foreground">
-              {consistencyRatio.toFixed(3)}
-            </span>
-          </span>
-        )}
+      <div className="rounded-md border border-border p-3">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <h3 className="text-sm font-semibold">Ваги критеріїв (FAHP)</h3>
+          <ChartExportButtons containerRef={chartRef} filenameBase={filenameBase} />
+        </div>
+        <div ref={chartRef}>
+          <WeightsBarChart
+            weights={weights}
+            weightsFuzzy={weightsFuzzy}
+            criteriaNames={criteriaNames}
+          />
+        </div>
       </div>
 
-      <div ref={chartRef}>
-        <WeightsBarChart
-          weights={weights}
-          weightsFuzzy={weightsFuzzy}
-          criteriaNames={criteriaNames}
-        />
+      <div className="pt-4">
+        <h3 className="text-sm font-semibold">Ваги критеріїв (FAHP)</h3>
+        <p className="mt-1 max-w-[600px] text-sm text-muted-foreground">
+          w_j — дефазифікована вага критерію (центроїд нечіткого трикутника), а l_j та
+          u_j — нижня й верхня межі відповідного нечіткого числа. Рядки впорядковано за
+          спаданням ваги.
+        </p>
       </div>
-      <ChartExportButtons containerRef={chartRef} filenameBase={filenameBase} />
 
       <div className="overflow-hidden rounded-md border border-border">
         <table className="w-full text-sm">
@@ -124,6 +132,18 @@ export function WeightsSection() {
               </tr>
             ))}
           </tbody>
+          <tfoot>
+            <tr className="border-t bg-muted/40 font-medium">
+              <td className="px-4 py-2" />
+              <td className="px-4 py-2">Сума</td>
+              <td className="px-4 py-2" />
+              <td className="px-4 py-2" />
+              <td className="px-4 py-2 text-right font-mono tabular-nums">
+                {weightSum.toFixed(4)}
+              </td>
+              <td className="px-4 py-2" />
+            </tr>
+          </tfoot>
         </table>
       </div>
 
