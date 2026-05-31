@@ -39,6 +39,20 @@ MATRIX_ANALYTIC = np.array(
 )
 ANALYTIC_EXPECTED = np.array([0.629498, 0.263186, 0.107315])
 
+# Normalized fuzzy weight triangle for MATRIX_ANALYTIC. The raw Buckley fuzzy
+# weight z_i (x) (1/Su, 1/Sm, 1/Sl) is divided by Sum(centroid) -- the same
+# scalar that normalises the crisp vector -- so each crisp weight stays the
+# centroid (l+m+u)/3 of its own triangle and l_i <= w_i <= u_i holds. Each row
+# is (l, m, u); rows mean to ANALYTIC_EXPECTED. Hand-derived from the row
+# geometric means above, verified programmatically.
+ANALYTIC_FUZZY_EXPECTED = np.array(
+    [
+        [0.409456, 0.605673, 0.873367],
+        [0.162493, 0.245588, 0.381478],
+        [0.070975, 0.099581, 0.151390],
+    ]
+)
+
 # 3x3 matrix where C1 clearly dominates C2 and C3.
 # C1 vs C2: (5,7,9), C1 vs C3: (5,7,9), C2 vs C3: (1,1,1).
 MATRIX_DOMINANT = np.array(
@@ -66,7 +80,7 @@ def test_fahp_weights_sum_to_one() -> None:
 
     Buckley: centroid-defuzzified fuzzy weights are normalised so their sum = 1.
     """
-    weights = fahp_weights(MATRIX_GENERIC)
+    weights, _ = fahp_weights(MATRIX_GENERIC)
     assert abs(weights.sum() - 1.0) < 1e-9
 
 
@@ -78,7 +92,7 @@ def test_fahp_weights_equal_comparison() -> None:
       Sum S = (3,3,3); fuzzy weight w_i = (1,1,1) (x) (1/3,1/3,1/3) = (1/3,1/3,1/3).
       Centroid (l+m+u)/3 = 1/3 for each -> normalised = [1/3, 1/3, 1/3].
     """
-    weights = fahp_weights(MATRIX_EQUAL)
+    weights, _ = fahp_weights(MATRIX_EQUAL)
     expected = np.full(3, 1 / 3)
     np.testing.assert_allclose(weights, expected, atol=1e-9)
 
@@ -89,9 +103,44 @@ def test_fahp_weights_analytic_oracle() -> None:
     Reference vector [0.629498, 0.263186, 0.107315], verified programmatically
     and by hand against the row geometric means above.
     """
-    weights = fahp_weights(MATRIX_ANALYTIC)
+    weights, _ = fahp_weights(MATRIX_ANALYTIC)
     np.testing.assert_allclose(weights, ANALYTIC_EXPECTED, atol=1e-6)
     assert weights[0] > weights[1] > weights[2], "order must be C1 > C2 > C3"
+
+
+def test_fahp_weights_returns_normalized_fuzzy_triangle() -> None:
+    """fahp_weights returns the crisp vector and the normalised fuzzy triangle.
+
+    Reference: Buckley, J.J. (1985). Fuzzy hierarchical analysis. Fuzzy Sets and
+    Systems, 17(3), 233-247. BibTeX: buckley_fuzzy_1985.
+
+    The fuzzy weight z_i (x) (1/Su, 1/Sm, 1/Sl) is normalised by Sum(centroid),
+    the same scalar that normalises the crisp vector, so the crisp weight equals
+    the centroid of its triangle. Oracle hand-derived from the row geometric
+    means documented above.
+    """
+    weights, fuzzy = fahp_weights(MATRIX_ANALYTIC)
+    np.testing.assert_allclose(weights, ANALYTIC_EXPECTED, atol=1e-6)
+    assert fuzzy.shape == (3, 3)
+    np.testing.assert_allclose(fuzzy, ANALYTIC_FUZZY_EXPECTED, atol=1e-5)
+
+
+def test_fahp_fuzzy_bounds_bracket_crisp_weight() -> None:
+    """Each crisp weight lies within its fuzzy bounds: l_i <= w_i <= u_i.
+
+    Variant-A normalisation guarantees this because the crisp weight is the
+    centroid (l+m+u)/3 of the same triangle; the bound order l_i <= m_i <= u_i
+    follows from the bound reversal in the Buckley inverse. Holds for any
+    consistent matrix.
+    """
+    for matrix in (MATRIX_ANALYTIC, MATRIX_GENERIC, MATRIX_DOMINANT, MATRIX_EQUAL):
+        weights, fuzzy = fahp_weights(matrix)
+        lower, modal, upper = fuzzy[:, 0], fuzzy[:, 1], fuzzy[:, 2]
+        assert (lower <= modal + 1e-12).all()
+        assert (modal <= upper + 1e-12).all()
+        assert (lower <= weights + 1e-12).all()
+        assert (weights <= upper + 1e-12).all()
+        np.testing.assert_allclose(weights, fuzzy.mean(axis=1), atol=1e-12)
 
 
 def test_fahp_weights_no_zero_weights() -> None:
@@ -101,13 +150,13 @@ def test_fahp_weights_no_zero_weights() -> None:
     possibility can drive dominated criteria to exactly zero.
     """
     for matrix in (MATRIX_ANALYTIC, MATRIX_GENERIC):
-        weights = fahp_weights(matrix)
+        weights, _ = fahp_weights(matrix)
         assert (weights > 0.0).all(), "all weights must be strictly positive"
 
 
 def test_fahp_weights_dominant_criterion() -> None:
     """When one criterion dominates, its weight must exceed all others."""
-    weights = fahp_weights(MATRIX_DOMINANT)
+    weights, _ = fahp_weights(MATRIX_DOMINANT)
     assert weights[0] > weights[1], "C1 weight must exceed C2"
     assert weights[0] > weights[2], "C1 weight must exceed C3"
 

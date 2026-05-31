@@ -30,7 +30,7 @@ db/
 | `pairwise_matrices` | (profile_id, criterion_i_id, criterion_j_id) | l, m, u NUMERIC(6,3) | B-tree(profile_id) |
 | `locations` | id | name, address, district, geom GEOMETRY(POINT, 4326) | GiST(geom), B-tree(district) |
 | `existing_stations` | id | power_kw NUMERIC(6,2), connector_type, geom | GiST(geom) |
-| `evaluation_runs` | id | profile_id FK, created_at, status, weights_vector JSON | B-tree(profile_id) |
+| `evaluation_runs` | id | profile_id FK, created_at, status, weights_vector JSON, weights_fuzzy JSON (nullable) | B-tree(profile_id) |
 | `ranking_items` | (evaluation_id, location_id) | rank SMALLINT, closeness_coefficient, distances NUMERIC(8,6); CHECK rank≥1, C∈[0,1], S±≥0 | B-tree(evaluation_id) |
 | `sensitivity_records` | evaluation_id (PK=FK, ON DELETE CASCADE) | iterations, perturbation, JSON-поля | – |
 
@@ -91,7 +91,7 @@ make test           # pytest -v
 
 3. **Alembic-фільтри у `env.py`** (`include_object` + `include_name`) блокують `drop_table` для системних PostGIS-таблиць (Tiger Geocoder, `spatial_ref_sys`, `topology`). Без цього `alembic revision --autogenerate` згенерує сотні `op.drop_table(...)` для геокодер-довідників, що поставляються з `postgis/postgis` Docker-образом.
 
-4. **JSON для `weights_vector`, `stability_matrix`, `confidence_intervals`** замість нормалізованих таблиць — атомарне отримання повного результату одним SELECT (обґрунтовано у 2.2.2 §«семіструктуровані документи»). Тип `sa.JSON` (портативно), не PostgreSQL-only `JSONB`; підняти до JSONB можна окремою міграцією за потреби (повнотекстовий пошук, GIN-індекс).
+4. **JSON для `weights_vector`, `weights_fuzzy`, `stability_matrix`, `confidence_intervals`** замість нормалізованих таблиць — атомарне отримання повного результату одним SELECT (обґрунтовано у 2.2.2 §«семіструктуровані документи»). Тип `sa.JSON` (портативно), не PostgreSQL-only `JSONB`; підняти до JSONB можна окремою міграцією за потреби (повнотекстовий пошук, GIN-індекс).
 
 5. **PostGIS extension не дроп-ається у `downgrade`** — інші БД у тому ж кластері можуть від неї залежати.
 

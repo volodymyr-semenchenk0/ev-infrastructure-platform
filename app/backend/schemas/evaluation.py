@@ -45,6 +45,19 @@ class FuzzyNumber(CamelModel):
         return self
 
 
+class FuzzyWeight(CamelModel):
+    """Triangular fuzzy weight (l, m, u) derived by FAHP.
+
+    Distinct from FuzzyNumber: a weight is not a Saaty comparison, so the modal
+    value may fall below 1/9 for low-priority criteria. Only the triangular
+    ordering l ≤ m ≤ u is required.
+    """
+
+    l: float
+    m: float
+    u: float
+
+
 class EvaluationCreate(CamelModel):
     """POST /api/evaluations — request body with profile and pairwise matrix."""
 
@@ -102,5 +115,8 @@ class EvaluationRead(CamelModel):
 
     evaluation_id: int = Field(validation_alias="id")
     weights: dict[str, float] = Field(validation_alias="weights_vector")
+    weights_fuzzy: dict[str, FuzzyWeight] | None = Field(
+        default=None, validation_alias="weights_fuzzy"
+    )
     ranking: list[RankingItemRead]
     execution_time_ms: int | None = None

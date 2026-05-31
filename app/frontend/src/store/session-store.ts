@@ -6,6 +6,7 @@ import type { components } from '@/types/api'
 // `FuzzyNumber`, `RankingItemRead`, and `SensitivityRead` are the source of
 // truth; do not re-declare them locally.
 export type FuzzyNumber = components['schemas']['FuzzyNumber']
+export type FuzzyWeight = components['schemas']['FuzzyWeight']
 export type RankingItem = components['schemas']['RankingItemRead']
 export type SensitivityResult = components['schemas']['SensitivityRead']
 
@@ -24,6 +25,9 @@ export interface SensitivityParams {
 export interface SessionState {
   pairwiseMatrix: FuzzyNumber[][] | null
   weights: Record<string, number> | null
+  // Triangular fuzzy bounds {code: {l, m, u}} per criterion, normalised so each
+  // crisp weight is the centroid of its triple. Null for legacy runs.
+  weightsFuzzy: Record<string, FuzzyWeight> | null
   consistencyRatio: number | null
   ranking: RankingItem[] | null
   // TOPSIS ranking computed alongside FAHP weights server-side, but held back
@@ -42,7 +46,11 @@ export interface SessionState {
   selectedLocationId: number | null
 
   setPairwiseMatrix: (matrix: FuzzyNumber[][] | null) => void
-  setWeights: (weights: Record<string, number> | null, consistencyRatio?: number | null) => void
+  setWeights: (
+    weights: Record<string, number> | null,
+    consistencyRatio?: number | null,
+    weightsFuzzy?: Record<string, FuzzyWeight> | null,
+  ) => void
   setRanking: (ranking: RankingItem[] | null) => void
   setPendingRanking: (ranking: RankingItem[] | null) => void
   // Promote the held TOPSIS ranking into `ranking` (the "run ranking" action).
@@ -64,6 +72,7 @@ export interface SessionState {
 const EMPTY_SESSION = {
   pairwiseMatrix: null,
   weights: null,
+  weightsFuzzy: null,
   consistencyRatio: null,
   ranking: null,
   pendingRanking: null,
@@ -76,6 +85,7 @@ const EMPTY_SESSION = {
   SessionState,
   | 'pairwiseMatrix'
   | 'weights'
+  | 'weightsFuzzy'
   | 'consistencyRatio'
   | 'ranking'
   | 'pendingRanking'
@@ -91,9 +101,10 @@ export const useSessionStore = create<SessionState>((set) => ({
 
   setPairwiseMatrix: (matrix) => set({ pairwiseMatrix: matrix }),
 
-  setWeights: (weights, consistencyRatio) =>
+  setWeights: (weights, consistencyRatio, weightsFuzzy) =>
     set((state) => ({
       weights,
+      weightsFuzzy: weightsFuzzy ?? null,
       consistencyRatio: consistencyRatio !== undefined ? consistencyRatio : state.consistencyRatio,
     })),
 
@@ -120,6 +131,7 @@ export const useSessionStore = create<SessionState>((set) => ({
       pairwiseMatrix: matrix,
       consistencyRatio,
       weights: null,
+      weightsFuzzy: null,
       ranking: null,
       pendingRanking: null,
       sensitivity: null,

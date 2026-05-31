@@ -11,6 +11,7 @@ import { useSessionStore } from '@/store/session-store'
 
 export function WeightsSection() {
   const weights = useSessionStore((s) => s.weights)
+  const weightsFuzzy = useSessionStore((s) => s.weightsFuzzy)
   const consistencyRatio = useSessionStore((s) => s.consistencyRatio)
   const evaluationId = useSessionStore((s) => s.evaluationId)
   const ranking = useSessionStore((s) => s.ranking)
@@ -35,14 +36,23 @@ export function WeightsSection() {
         code,
         weight,
         name: criteriaNames[code] ?? code,
+        lower: weightsFuzzy?.[code]?.l ?? null,
+        upper: weightsFuzzy?.[code]?.u ?? null,
       }))
       .sort((a, b) => b.weight - a.weight)
-  }, [weights, criteriaNames])
+  }, [weights, weightsFuzzy, criteriaNames])
 
   const csvRows = useMemo(
     () => [
-      ['rank', 'code', 'name', 'weight'],
-      ...sortedRows.map((row, idx) => [idx + 1, row.code, row.name, row.weight]),
+      ['rank', 'code', 'name', 'weight', 'lower', 'upper'],
+      ...sortedRows.map((row, idx) => [
+        idx + 1,
+        row.code,
+        row.name,
+        row.weight,
+        row.lower ?? '',
+        row.upper ?? '',
+      ]),
     ],
     [sortedRows],
   )
@@ -89,7 +99,11 @@ export function WeightsSection() {
       </div>
 
       <div ref={chartRef}>
-        <WeightsBarChart weights={weights} criteriaNames={criteriaNames} />
+        <WeightsBarChart
+          weights={weights}
+          weightsFuzzy={weightsFuzzy}
+          criteriaNames={criteriaNames}
+        />
       </div>
       <ChartExportButtons
         containerRef={chartRef}
@@ -103,7 +117,9 @@ export function WeightsSection() {
             <th className="py-2 pr-3 font-medium">#</th>
             <th className="py-2 pr-3 font-medium">Критерій</th>
             <th className="py-2 pr-3 font-medium">Код</th>
-            <th className="py-2 text-right font-medium">w_j</th>
+            <th className="py-2 pr-3 text-right font-medium">l_j</th>
+            <th className="py-2 pr-3 text-right font-medium">w_j</th>
+            <th className="py-2 text-right font-medium">u_j</th>
           </tr>
         </thead>
         <tbody>
@@ -112,8 +128,14 @@ export function WeightsSection() {
               <td className="py-2 pr-3 tabular-nums">{idx + 1}</td>
               <td className="py-2 pr-3">{row.name}</td>
               <td className="py-2 pr-3 font-mono text-muted-foreground">{row.code}</td>
-              <td className="py-2 text-right font-mono tabular-nums">
+              <td className="py-2 pr-3 text-right font-mono tabular-nums text-muted-foreground">
+                {row.lower !== null ? row.lower.toFixed(4) : '–'}
+              </td>
+              <td className="py-2 pr-3 text-right font-mono tabular-nums">
                 {row.weight.toFixed(4)}
+              </td>
+              <td className="py-2 text-right font-mono tabular-nums text-muted-foreground">
+                {row.upper !== null ? row.upper.toFixed(4) : '–'}
               </td>
             </tr>
           ))}

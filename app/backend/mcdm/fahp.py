@@ -47,7 +47,7 @@ def _consistency_ratio(modal: np.ndarray) -> float:
     return float(ci / ri)
 
 
-def fahp_weights(matrix: np.ndarray) -> np.ndarray:
+def fahp_weights(matrix: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """Обчислити ваги критеріїв методом нечіткого AHP (Buckley, 1985).
 
     Середнє геометричне рядків нечіткої матриці з центроїдною дефаззифікацією
@@ -60,7 +60,12 @@ def fahp_weights(matrix: np.ndarray) -> np.ndarray:
                 трійки (l, m, u) трикутного нечіткого числа.
 
     Returns:
-        Нормований вектор ваг розміру (n,), сума = 1.
+        Кортеж (weights, fuzzy):
+          weights – нормований крапковий вектор ваг розміру (n,), сума = 1;
+          fuzzy – нечіткі трикутні ваги розміру (n, 3), рядки (l, m, u),
+            нормовані тим самим множником, що й weights, тож кожна крапкова
+            вага є центроїдом свого трикутника (weights == fuzzy.mean(axis=1))
+            і виконується l_i ≤ weights_i ≤ u_i.
 
     Raises:
         ValueError: якщо CR > 0.1 (матриця не є консистентною).
@@ -82,5 +87,9 @@ def fahp_weights(matrix: np.ndarray) -> np.ndarray:
 
     # Centroid defuzzification (l+m+u)/3, then normalise to sum 1.
     centroid = w.mean(axis=1)  # (n,)
-    weights: np.ndarray = centroid / centroid.sum()
-    return weights
+    k = centroid.sum()
+    weights: np.ndarray = centroid / k
+    # Carry the fuzzy bounds through with the same scalar k so the crisp weight
+    # stays the centroid of its triangle and l_i <= weights_i <= u_i holds.
+    fuzzy: np.ndarray = w / k  # (n, 3)
+    return weights, fuzzy

@@ -296,6 +296,10 @@ export interface components {
             weights: {
                 [key: string]: number;
             };
+            /** Weightsfuzzy */
+            weightsFuzzy?: {
+                [key: string]: components["schemas"]["FuzzyWeight"];
+            } | null;
             /** Ranking */
             ranking: components["schemas"]["RankingItemRead"][];
             /** Executiontimems */
@@ -306,6 +310,22 @@ export interface components {
          * @description Triangular fuzzy number (l, m, u) with l ≤ m ≤ u and m within Saaty bounds.
          */
         FuzzyNumber: {
+            /** L */
+            l: number;
+            /** M */
+            m: number;
+            /** U */
+            u: number;
+        };
+        /**
+         * FuzzyWeight
+         * @description Triangular fuzzy weight (l, m, u) derived by FAHP.
+         *
+         *     Distinct from FuzzyNumber: a weight is not a Saaty comparison, so the modal
+         *     value may fall below 1/9 for low-priority criteria. Only the triangular
+         *     ordering l ≤ m ≤ u is required.
+         */
+        FuzzyWeight: {
             /** L */
             l: number;
             /** M */

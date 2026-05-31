@@ -15,9 +15,16 @@ interface RankingItem {
   sMinus: number
 }
 
+interface FuzzyWeight {
+  l: number
+  m: number
+  u: number
+}
+
 export interface EvaluationResponse {
   evaluationId: number
   weights: Record<string, number>
+  weightsFuzzy: Record<string, FuzzyWeight> | null
   ranking: RankingItem[]
   executionTimeMs: number | null
 }
