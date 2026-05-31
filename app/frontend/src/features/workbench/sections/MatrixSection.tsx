@@ -174,7 +174,7 @@ export function MatrixSection() {
         profileId: activeProfile.id,
         pairwiseMatrix: matrix,
       })
-      setWeights(result.weights, stats.cr)
+      setWeights(result.weights, stats.cr, result.weightsFuzzy)
       // Hold the TOPSIS ranking — the ranking step stays empty until the
       // operator runs ranking from the weights step.
       setPendingRanking(result.ranking)

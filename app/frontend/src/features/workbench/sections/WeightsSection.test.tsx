@@ -84,6 +84,31 @@ describe('WeightsSection', () => {
     mock.restore()
   })
 
+  it('renders l_j and u_j columns from the fuzzy bounds, dash when absent', async () => {
+    useSessionStore.getState().setWeights({ A: 0.5, B: 0.3, C: 0.2 }, 0.07, {
+      A: { l: 0.4, m: 0.5, u: 0.6 },
+      B: { l: 0.2, m: 0.3, u: 0.4 },
+      // C intentionally omitted to exercise the dash fallback.
+    })
+
+    const mock = new MockAdapter(api)
+    mock.onGet('/criteria').reply(200, CRITERIA)
+
+    renderSection()
+
+    await screen.findByTestId('weights-chart')
+
+    const rows = screen.getAllByRole('row').slice(1) // skip header
+    // Columns: #, Критерій, Код, l_j, w_j, u_j → l is td[3], u is td[5].
+    // Rows are sorted by weight desc: A (0.5), B (0.3), C (0.2).
+    const cells = (i: number) => rows[i].querySelectorAll('td')
+    expect(cells(0)[3]?.textContent).toBe('0.4000')
+    expect(cells(0)[5]?.textContent).toBe('0.6000')
+    expect(cells(2)[3]?.textContent).toBe('–')
+    expect(cells(2)[5]?.textContent).toBe('–')
+    mock.restore()
+  })
+
   it('reveals the held ranking when «Виконати ранжування» is clicked', async () => {
     useSessionStore.getState().setWeights({ A: 0.5, B: 0.3, C: 0.2 }, 0.07)
     useSessionStore.getState().setEvaluationId(7)
