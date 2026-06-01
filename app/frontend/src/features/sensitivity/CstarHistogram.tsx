@@ -6,8 +6,8 @@ import type { ConfidenceInterval, SensitivityResponse } from './useSensitivity'
 
 interface CstarHistogramProps {
   histogram: SensitivityResponse['cstarHistogram']
-  // Mean and 2.5/97.5 percentile band per location, used for the reference
-  // lines. rankingIntervals[0] is the top-1 location.
+  // Deterministic C* and 2.5/97.5 percentile band per location, used for the
+  // reference lines. rankingIntervals[0] is the top-1 location.
   rankingIntervals: ConfidenceInterval[]
   // Which location's histogram to show; the selector lives in the section.
   selectedLocationId: number
@@ -50,7 +50,7 @@ export function CstarHistogram({
     const xOf = (v: number) => ((v - edges[0]) / span) * innerWidth
     const marks = [
       { v: selected.lower, dashed: true, label: '2,5 %' },
-      { v: selected.mean, dashed: false, label: 'C̄*' },
+      { v: selected.cstar, dashed: false, label: 'C*' },
       { v: selected.upper, dashed: true, label: '97,5 %' },
     ]
     return (

@@ -12,8 +12,8 @@ describe('ConvergenceChart', () => {
           meanByLocation: { '1': [0.5, 0.55, 0.6], '2': [0.3, 0.32, 0.33] },
         }}
         rankingIntervals={[
-          { locationId: 1, mean: 0.6, lower: 0.4, upper: 0.8 },
-          { locationId: 2, mean: 0.33, lower: 0.2, upper: 0.45 },
+          { locationId: 1, cstar: 0.6, lower: 0.4, upper: 0.8 },
+          { locationId: 2, cstar: 0.33, lower: 0.2, upper: 0.45 },
         ]}
         nameByLocationId={{ 1: 'Alpha', 2: 'Beta' }}
       />,

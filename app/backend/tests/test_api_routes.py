@@ -368,7 +368,7 @@ class TestSensitivity:
 
         Per Appendix A.9 and subsection 2.3.3, the response must contain:
           - stabilityMatrix: {locationId: {1: p_i(1), 3: p_i(3), 5: p_i(5)}}
-          - confidenceIntervals: top-N items only with keys locationId, mean, lower, upper
+          - confidenceIntervals: top-N items only with keys locationId, cstar, lower, upper
 
         Runs 200 iterations to keep test duration short while still exercising
         the full Monte Carlo pipeline.
@@ -413,22 +413,24 @@ class TestSensitivity:
             f"Expected {TOP_N_FOR_CONFIDENCE_INTERVALS} CIs (top-N only), got {len(cis)}"
         )
         first_ci = cis[0]
-        expected_ci_keys = {"locationId", "mean", "lower", "upper"}
+        expected_ci_keys = {"locationId", "cstar", "lower", "upper"}
         assert expected_ci_keys.issubset(first_ci.keys()), (
             f"Missing keys in CI item. "
             f"Expected subset {expected_ci_keys}, got {set(first_ci.keys())}"
         )
 
-    async def test_post_sensitivity_ci_sorted_by_mean_score_desc(
+    async def test_post_sensitivity_ci_selected_and_sorted_by_deterministic_rank(
         self, api_client: AsyncClient
     ) -> None:
-        """confidenceIntervals must be ordered by mean closeness C* descending.
+        """confidenceIntervals cover the top-N base-ranking locations, in rank order.
 
-        The frontend bar chart shows the top-N locations sorted from best to
-        worst; the API contract guarantees this ordering so the client does not
-        need to re-sort. Percentile bounds are asymmetric, so ordering is
-        asserted on the `mean` field, not the interval midpoint.
+        The deterministic base ranking is the sole selection/order key (2.3.3),
+        so the client does not need to re-sort. Each item's cstar equals the
+        deterministic closeness coefficient of the base run, not a Monte Carlo
+        mean.
         """
+        from schemas.sensitivity import TOP_N_FOR_CONFIDENCE_INTERVALS
+
         profiles_resp = await api_client.get("/api/profiles")
         profiles = profiles_resp.json()
         municipal_id = next(p for p in profiles if p["code"] == "municipal")["id"]
@@ -442,6 +444,12 @@ class TestSensitivity:
         )
         evaluation_id = create_resp.json()["evaluationId"]
 
+        ranking = (await api_client.get(f"/api/evaluations/{evaluation_id}")).json()["ranking"]
+        ordered = sorted(ranking, key=lambda r: r["rank"])
+        expected_top = [(r["locationId"], r["closeness"]) for r in ordered][
+            :TOP_N_FOR_CONFIDENCE_INTERVALS
+        ]
+
         sens_resp = await api_client.post(
             f"/api/evaluations/{evaluation_id}/sensitivity",
             json={"iterations": 200, "perturbation": 0.1},
@@ -449,17 +457,15 @@ class TestSensitivity:
         assert sens_resp.status_code == 200
 
         cis = sens_resp.json()["confidenceIntervals"]
-        means = [ci["mean"] for ci in cis]
-        for i in range(len(means) - 1):
-            assert means[i] >= means[i + 1], (
-                f"CI list not sorted desc: mean[{i}]={means[i]:.4f} "
-                f"< mean[{i + 1}]={means[i + 1]:.4f}"
-            )
+        assert [(ci["locationId"], ci["cstar"]) for ci in cis] == expected_top, (
+            "Confidence intervals must be the top-N base-ranking locations, in rank order, "
+            "with cstar equal to the deterministic closeness coefficient"
+        )
 
     async def test_post_sensitivity_returns_storyline_payloads(
         self, api_client: AsyncClient
     ) -> None:
-        """Response carries rankingIntervals (all, desc), cstarHistogram, convergence.
+        """Response carries rankingIntervals (all, by rank), cstarHistogram, convergence.
 
         These three return-only fields back the sensitivity storyline charts and
         are recomputed each request (never persisted).
@@ -481,10 +487,14 @@ class TestSensitivity:
 
         ri = data["rankingIntervals"]
         assert len(ri) == len(data["stabilityMatrix"])
-        ri_means = [r["mean"] for r in ri]
-        assert ri_means == sorted(ri_means, reverse=True)
+        # Ordered by the deterministic base rank, cstar = deterministic C*.
+        eval_ranking = (await api_client.get(f"/api/evaluations/{evaluation_id}")).json()["ranking"]
+        ordered = sorted(eval_ranking, key=lambda r: r["rank"])
+        assert [(r["locationId"], r["cstar"]) for r in ri] == [
+            (r["locationId"], r["closeness"]) for r in ordered
+        ], "Ranking intervals must follow the deterministic rank with deterministic cstar"
         for r in ri:
-            assert r["lower"] <= r["mean"] <= r["upper"]
+            assert r["lower"] <= r["upper"]
 
         hist = data["cstarHistogram"]
         for lid, counts in hist["countsByLocation"].items():

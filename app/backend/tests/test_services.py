@@ -430,11 +430,14 @@ class TestSensitivityService:
     async def test_sensitivity_service_persists_record_with_top_n_confidence_intervals(
         self, db_session: AsyncSession
     ) -> None:
-        """Result contains a CI per top-N alternative ordered by mean C* descending.
+        """Result contains a CI per top-N alternative ordered by deterministic rank.
 
-        Per Appendix A.9, only the top-3 alternatives carry confidence intervals,
-        ordered by mean C* descending. Bounds are percentile-based (2.3.3) and
-        generally asymmetric, so ordering is asserted on `mean`, not the midpoint.
+        Per Appendix A.9, only the top-3 alternatives of the base ranking carry
+        confidence intervals, selected and ordered by the deterministic rank
+        (highest C_i* first). Each interval's `cstar` is the deterministic
+        closeness coefficient of the base TOPSIS run; the percentile bounds
+        (2.3.3) are generally asymmetric, so `cstar` need not be the midpoint and
+        is not required to lie inside the band.
 
         Reference: subsection 2.3.3 + Appendix A.9.
         """
@@ -450,14 +453,30 @@ class TestSensitivityService:
             f"Expected {TOP_N_FOR_CONFIDENCE_INTERVALS} CIs (top-N only), "
             f"got {len(result.confidence_intervals)}"
         )
-        means = [ci.mean for ci in result.confidence_intervals]
-        assert means == sorted(means, reverse=True), (
-            "Confidence intervals must be ordered by mean C* descending"
+
+        # The deterministic base ranking is the sole selection/order key (2.3.3).
+        ranking_rows = (
+            (
+                await db_session.execute(
+                    select(RankingItem)
+                    .where(RankingItem.evaluation_id == eval_id)
+                    .order_by(RankingItem.rank)
+                )
+            )
+            .scalars()
+            .all()
+        )
+        cstar_by_loc = {r.location_id: float(r.closeness_coefficient) for r in ranking_rows}
+        top_n_loc_ids = [r.location_id for r in ranking_rows[:TOP_N_FOR_CONFIDENCE_INTERVALS]]
+
+        assert [ci.location_id for ci in result.confidence_intervals] == top_n_loc_ids, (
+            "Confidence intervals must cover the top-N base-ranking locations, in rank order"
         )
         for ci in result.confidence_intervals:
-            assert ci.lower <= ci.mean <= ci.upper, (
-                "mean C* must lie within its percentile confidence interval"
+            assert ci.cstar == cstar_by_loc[ci.location_id], (
+                "cstar must equal the deterministic closeness coefficient of the base ranking"
             )
+            assert ci.lower <= ci.upper, "percentile band must be well-formed"
 
         rec = await db_session.scalar(
             select(SensitivityRecord).where(SensitivityRecord.evaluation_id == eval_id)
@@ -526,11 +545,12 @@ class TestSensitivityService:
     async def test_sensitivity_service_returns_storyline_payloads(
         self, db_session: AsyncSession
     ) -> None:
-        """Storyline charts: ranking_intervals (all, desc), histogram, convergence.
+        """Storyline charts: ranking_intervals (all, by rank), histogram, convergence.
 
         ranking_intervals carries every location (unlike confidence_intervals,
-        top-N only) ordered by mean C* descending; the histogram counts of each
-        location sum to N; the convergence iterations end at N.
+        top-N only) ordered by the deterministic rank of the base ranking; the
+        histogram counts of each location sum to N; the convergence iterations
+        end at N.
         """
         _, eval_id = await self._create_evaluation(db_session)
 
@@ -539,10 +559,27 @@ class TestSensitivityService:
 
         n_loc = len(result.stability_matrix)
         assert len(result.ranking_intervals) == n_loc
-        means = [ri.mean for ri in result.ranking_intervals]
-        assert means == sorted(means, reverse=True)
+
+        ranking_rows = (
+            (
+                await db_session.execute(
+                    select(RankingItem)
+                    .where(RankingItem.evaluation_id == eval_id)
+                    .order_by(RankingItem.rank)
+                )
+            )
+            .scalars()
+            .all()
+        )
+        ordered_loc_ids = [r.location_id for r in ranking_rows]
+        cstar_by_loc = {r.location_id: float(r.closeness_coefficient) for r in ranking_rows}
+
+        assert [ri.location_id for ri in result.ranking_intervals] == ordered_loc_ids, (
+            "ranking_intervals must be ordered by the deterministic rank"
+        )
         for ri in result.ranking_intervals:
-            assert ri.lower <= ri.mean <= ri.upper
+            assert ri.cstar == cstar_by_loc[ri.location_id]
+            assert ri.lower <= ri.upper
 
         hist = result.cstar_histogram
         assert len(hist.edges_by_location) == n_loc
