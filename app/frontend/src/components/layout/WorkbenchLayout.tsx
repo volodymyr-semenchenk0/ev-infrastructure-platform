@@ -9,14 +9,10 @@ export function WorkbenchLayout() {
   return (
     <div className="flex h-screen flex-col">
       <Header />
-      <main
-        id="workbench-main"
-        aria-label="Робоча область"
-        className="flex flex-1 overflow-hidden"
-      >
+      <main id="workbench-main" aria-label="Робоча область" className="flex flex-1 overflow-hidden">
         <Outlet />
       </main>
-      <footer className="border-t px-4 py-2 text-center text-xs text-muted-foreground">
+      <footer className="border-t px-4 py-4 text-center text-xs text-muted-foreground">
         © 2026 Developed by Volodymyr Semenchenko
       </footer>
     </div>
