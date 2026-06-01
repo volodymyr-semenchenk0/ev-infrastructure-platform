@@ -57,12 +57,12 @@ describe('SensitivitySection', () => {
         '2': { '1': 0.2, '3': 0.6, '5': 1 },
       },
       confidenceIntervals: [
-        { locationId: 1, mean: 0.82, lower: 0.7, upper: 0.9 },
-        { locationId: 2, mean: 0.39, lower: 0.3, upper: 0.5 },
+        { locationId: 1, cstar: 0.82, lower: 0.7, upper: 0.9 },
+        { locationId: 2, cstar: 0.39, lower: 0.3, upper: 0.5 },
       ],
       rankingIntervals: [
-        { locationId: 1, mean: 0.82, lower: 0.7, upper: 0.9 },
-        { locationId: 2, mean: 0.39, lower: 0.3, upper: 0.5 },
+        { locationId: 1, cstar: 0.82, lower: 0.7, upper: 0.9 },
+        { locationId: 2, cstar: 0.39, lower: 0.3, upper: 0.5 },
       ],
       cstarHistogram: {
         edgesByLocation: { '1': [0.7, 0.8, 0.9], '2': [0.3, 0.4, 0.5] },

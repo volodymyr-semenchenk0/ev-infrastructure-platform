@@ -8,8 +8,8 @@ describe('RankingForestPlot', () => {
     const { container } = render(
       <RankingForestPlot
         rankingIntervals={[
-          { locationId: 1, mean: 0.6, lower: 0.4, upper: 0.8 },
-          { locationId: 2, mean: 0.45, lower: 0.3, upper: 0.6 },
+          { locationId: 1, cstar: 0.6, lower: 0.4, upper: 0.8 },
+          { locationId: 2, cstar: 0.45, lower: 0.3, upper: 0.6 },
         ]}
         nameByLocationId={{ 1: 'Alpha', 2: 'Beta' }}
       />,
