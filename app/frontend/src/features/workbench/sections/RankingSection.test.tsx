@@ -7,13 +7,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { api } from '@/lib/api'
 import { useSessionStore } from '@/store/session-store'
+import { useUiStore } from '@/store/ui-store'
 
-// Nivo scatter plot and the map embed both need real SVG / WebGL stacks we
-// cannot give them in jsdom. Stub both so the surrounding section can be
-// asserted independently.
-vi.mock('@/features/results/ClosenessScatterPlot', () => ({
-  ClosenessScatterPlot: () => <div data-testid="closeness-scatter" />,
-}))
+// The map embed needs a real WebGL stack we cannot give it in jsdom. Stub it so
+// the surrounding section can be asserted independently.
 vi.mock('@/features/workbench/RankingMapEmbed', () => ({
   RankingMapEmbed: () => <div data-testid="ranking-map-embed" />,
 }))
@@ -34,6 +31,7 @@ function renderSection(node: ReactNode = <RankingSection />) {
 describe('RankingSection', () => {
   beforeEach(() => {
     useSessionStore.getState().resetSession()
+    useUiStore.getState().setActiveStep('ranking')
   })
 
   it('shows the placeholder when no ranking is set', async () => {
@@ -46,7 +44,7 @@ describe('RankingSection', () => {
     mock.restore()
   })
 
-  it('renders the ranking table, scatter plot and inline export buttons', async () => {
+  it('renders the table, the always-on map and inline export buttons', async () => {
     useSessionStore.getState().setRanking([
       { locationId: 2, rank: 1, closeness: 0.91, sPlus: 0.1, sMinus: 0.5 },
       { locationId: 1, rank: 2, closeness: 0.72, sPlus: 0.2, sMinus: 0.4 },
@@ -61,7 +59,9 @@ describe('RankingSection', () => {
     expect(await screen.findByText('Alpha')).toBeInTheDocument()
     expect(screen.getByText('Beta')).toBeInTheDocument()
     expect(screen.getByText('Gamma')).toBeInTheDocument()
-    expect(screen.getByTestId('closeness-scatter')).toBeInTheDocument()
+    // Map is always rendered above the table (no toggle).
+    expect(screen.getByTestId('ranking-map-embed')).toBeInTheDocument()
+    expect(screen.queryByTestId('closeness-scatter')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^CSV$/ })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^JSON$/ })).toBeInTheDocument()
     mock.restore()
@@ -94,7 +94,7 @@ describe('RankingSection', () => {
     mock.restore()
   })
 
-  it('toggles the embedded map on the «Показати на карті» button', async () => {
+  it('navigates to the sensitivity step on the «Перевірити чутливість» button', async () => {
     useSessionStore.getState().setRanking([
       { locationId: 1, rank: 1, closeness: 0.5, sPlus: 0.2, sMinus: 0.2 },
     ])
@@ -106,15 +106,10 @@ describe('RankingSection', () => {
     renderSection()
 
     await screen.findByText('Alpha')
-    expect(screen.queryByTestId('ranking-map-embed')).not.toBeInTheDocument()
+    expect(useUiStore.getState().activeStep).toBe('ranking')
 
-    await user.click(screen.getByRole('button', { name: /Показати на карті/ }))
-    expect(await screen.findByTestId('ranking-map-embed')).toBeInTheDocument()
-
-    await user.click(screen.getByRole('button', { name: /Приховати карту/ }))
-    await waitFor(() =>
-      expect(screen.queryByTestId('ranking-map-embed')).not.toBeInTheDocument(),
-    )
+    await user.click(screen.getByRole('button', { name: /Перевірити чутливість/ }))
+    await waitFor(() => expect(useUiStore.getState().activeStep).toBe('sensitivity'))
     mock.restore()
   })
 })
