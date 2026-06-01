@@ -179,23 +179,6 @@ export function SensitivitySection() {
 
       {sensitivity && (
         <div className="space-y-6 border-t pt-4">
-          <div className="flex justify-end">
-            <TabularExportButtons
-              csvRows={stabilityCsv}
-              jsonData={{
-                evaluationId,
-                params: {
-                  iterations: form.iterations,
-                  perturbation: form.perturbation,
-                },
-                seed: DEFAULT_SEED,
-                stabilityMatrix: sensitivity.stabilityMatrix,
-                confidenceIntervals: sensitivity.confidenceIntervals,
-              }}
-              filenameBase={filenameBase}
-            />
-          </div>
-
           <ChartCard
             title="Гістограма розподілу C*"
             filenameBase={`${filenameBase}-histogram`}
@@ -274,6 +257,22 @@ export function SensitivitySection() {
                   })}
                 </TableBody>
               </Table>
+            </div>
+            <div className="mt-3 flex justify-start">
+              <TabularExportButtons
+                csvRows={stabilityCsv}
+                jsonData={{
+                  evaluationId,
+                  params: {
+                    iterations: form.iterations,
+                    perturbation: form.perturbation,
+                  },
+                  seed: DEFAULT_SEED,
+                  stabilityMatrix: sensitivity.stabilityMatrix,
+                  confidenceIntervals: sensitivity.confidenceIntervals,
+                }}
+                filenameBase={filenameBase}
+              />
             </div>
           </div>
         </div>
