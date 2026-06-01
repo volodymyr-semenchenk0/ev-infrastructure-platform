@@ -3,7 +3,6 @@ import { Map as MapGL, type MapRef } from 'react-map-gl/maplibre'
 
 import { LocationMarker } from './LocationMarker'
 import { LocationPopup } from './LocationPopup'
-import { MapLegend } from './MapLegend'
 import { KYIV_CENTER, OSM_STYLE } from './map-style'
 import type { LocationItem } from '@/features/locations/useLocations'
 import type { Criterion } from '@/features/calculate/useCriteria'
@@ -90,7 +89,6 @@ export function LocationMap({
           />
         )}
       </MapGL>
-      <MapLegend />
     </div>
   )
 }

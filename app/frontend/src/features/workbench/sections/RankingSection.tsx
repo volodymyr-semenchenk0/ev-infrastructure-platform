@@ -1,12 +1,10 @@
 import { useMemo } from 'react'
-import { EyeOff, MapPin } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ChartCard } from '@/features/export/ChartCard'
 import { TabularExportButtons } from '@/features/export/TabularExportButtons'
 import { useLocations } from '@/features/locations/useLocations'
-import { ClosenessScatterPlot } from '@/features/results/ClosenessScatterPlot'
 import { RankingTable, type RankingRow } from '@/features/results/RankingTable'
 import { RankingMapEmbed } from '@/features/workbench/RankingMapEmbed'
 import { useSessionStore } from '@/store/session-store'
@@ -18,8 +16,7 @@ export function RankingSection() {
   const selectedLocationId = useSessionStore((s) => s.selectedLocationId)
   const setSelectedLocationId = useSessionStore((s) => s.setSelectedLocationId)
   const locations = useLocations()
-  const mapVisible = useUiStore((s) => s.mapVisible)
-  const setMapVisible = useUiStore((s) => s.setMapVisible)
+  const setActiveStep = useUiStore((s) => s.setActiveStep)
 
   const rows = useMemo<RankingRow[]>(() => {
     if (!ranking || !locations.data) return []
@@ -72,6 +69,7 @@ export function RankingSection() {
   return (
     <div className="space-y-4">
       <h3 className="text-sm font-semibold">Ранжування (TOPSIS)</h3>
+      <RankingMapEmbed />
       <div className="overflow-hidden rounded-md border border-border">
         <RankingTable
           rows={rows}
@@ -86,33 +84,11 @@ export function RankingSection() {
           jsonData={{ evaluationId, ranking: rows }}
           filenameBase={filenameBase}
         />
-        <Button
-          type="button"
-          variant={mapVisible ? 'outline' : 'default'}
-          size="sm"
-          onClick={() => setMapVisible(!mapVisible)}
-        >
-          {mapVisible ? (
-            <>
-              <EyeOff className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
-              Приховати карту
-            </>
-          ) : (
-            <>
-              <MapPin className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
-              Показати на карті
-            </>
-          )}
+        <Button type="button" size="sm" onClick={() => setActiveStep('sensitivity')}>
+          Перевірити чутливість
+          <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
         </Button>
       </div>
-      {mapVisible && <RankingMapEmbed />}
-      <ChartCard title="Розподіл коефіцієнтів близькості" filenameBase={filenameBase}>
-        <ClosenessScatterPlot rows={rows} />
-      </ChartCard>
-      <p className="max-w-[600px] text-sm text-muted-foreground">
-        Локації впорядковані за спаданням C*. Колір кодує зону: зелений – C* ≥ 0.5, жовтий – 0.3 ≤
-        C* &lt; 0.5, червоний – C* &lt; 0.3.
-      </p>
     </div>
   )
 }
