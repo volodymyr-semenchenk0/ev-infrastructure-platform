@@ -69,6 +69,9 @@ export function Stepper({ steps, activeId, onSelect }: StepperProps) {
                   disabled={step.disabled}
                   aria-current={step.id === activeId ? 'step' : undefined}
                   onClick={() => onSelect(step.id)}
+                  // Fixed width so toggling the active variant (which adds the
+                  // outline's 1px border) does not change the button's size.
+                  className="w-48"
                 >
                   {step.label}
                 </Button>
