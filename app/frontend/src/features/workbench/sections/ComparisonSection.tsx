@@ -1,7 +1,6 @@
 import { useEffect, useMemo } from 'react'
-import { Loader2, RefreshCw } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 
-import { Button } from '@/components/ui/button'
 import { DiffTable } from '@/features/comparison/DiffTable'
 import { GroupedBarChart } from '@/features/comparison/GroupedBarChart'
 import { SpearmanBadge } from '@/features/comparison/SpearmanBadge'
@@ -9,7 +8,6 @@ import { useProfileComparison } from '@/features/comparison/useProfileComparison
 import { ChartCard } from '@/features/export/ChartCard'
 import { TabularExportButtons } from '@/features/export/TabularExportButtons'
 import { useLocations } from '@/features/locations/useLocations'
-import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/store/session-store'
 import { useUiStore } from '@/store/ui-store'
 
@@ -70,27 +68,11 @@ export function ComparisonSection() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-start justify-between gap-4">
-        <p className="max-w-[760px] text-sm text-muted-foreground">
-          Канонічне порівняння двох стандартних профілів ОПР. Кожен профіль оцінюється з власної
-          типової матриці попарних порівнянь, незалежно від правок у поточному сеансі, тож
-          результат відтворюваний. Ранжування зіставляються за коефіцієнтом рангової кореляції
-          Спірмена.
-        </p>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => refetch()}
-          disabled={isFetching}
-          className="shrink-0"
-        >
-          <RefreshCw
-            className={cn('mr-2 h-4 w-4', isFetching && 'animate-spin')}
-            aria-hidden="true"
-          />
-          Оновити
-        </Button>
-      </div>
+      <p className="max-w-[760px] text-sm text-muted-foreground">
+        Канонічне порівняння двох стандартних профілів ОПР. Кожен профіль оцінюється з власної
+        типової матриці попарних порівнянь, незалежно від правок у поточному сеансі, тож результат
+        відтворюваний. Ранжування зіставляються за коефіцієнтом рангової кореляції Спірмена.
+      </p>
 
       {isFetching && !data && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -100,9 +82,7 @@ export function ComparisonSection() {
       )}
 
       {isError && !isFetching && (
-        <p className="text-sm text-destructive">
-          Не вдалося порівняти профілі. Натисніть «Оновити», щоб повторити.
-        </p>
+        <p className="text-sm text-destructive">Не вдалося порівняти профілі.</p>
       )}
 
       {data && (
@@ -127,7 +107,7 @@ export function ComparisonSection() {
           </ChartCard>
 
           <div>
-            <h3 className="mb-2 text-sm font-semibold">Різниці рангів</h3>
+            <h3 className="mb-2 text-sm font-semibold">Зіставлення рангів за профілями</h3>
             <div className="overflow-hidden rounded-md border border-border">
               <DiffTable
                 differences={data.comparison.pairwiseDifferences}

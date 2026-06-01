@@ -1,6 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import MockAdapter from 'axios-mock-adapter'
 import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -80,26 +79,8 @@ describe('ComparisonSection', () => {
 
     expect(await screen.findByText('0.870')).toBeInTheDocument()
     expect(screen.getByTestId('grouped-bar-chart')).toBeInTheDocument()
-    expect(screen.getByText('Різниці рангів')).toBeInTheDocument()
+    expect(screen.getByText('Зіставлення рангів за профілями')).toBeInTheDocument()
     expect(screen.getByText('Муніципалітет')).toBeInTheDocument()
-    mock.restore()
-  })
-
-  it('re-runs the comparison when "Оновити" is clicked', async () => {
-    const mock = new MockAdapter(api)
-    mock.onGet('/locations').reply(200, LOCATIONS)
-    mock.onGet('/profiles/comparison').reply(200, COMPARISON_PAYLOAD)
-
-    useUiStore.getState().setActiveStep('comparison')
-    const user = userEvent.setup()
-    renderSection()
-
-    await screen.findByText('0.870')
-    await user.click(screen.getByRole('button', { name: /Оновити/ }))
-
-    await waitFor(() => {
-      expect(mock.history.get.filter((r) => r.url === '/profiles/comparison')).toHaveLength(2)
-    })
     mock.restore()
   })
 
