@@ -7,7 +7,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { rankTier } from '@/lib/rank-tier'
 
@@ -100,15 +99,6 @@ export function RankingTable({
     }
   }
 
-  const SortIcon = ({ active, dir }: { active: boolean; dir: SortDir }) => {
-    if (!active) return <ArrowUpDown className="ml-1 inline h-3 w-3 opacity-50" />
-    return dir === 'asc' ? (
-      <ArrowUp className="ml-1 inline h-3 w-3" />
-    ) : (
-      <ArrowDown className="ml-1 inline h-3 w-3" />
-    )
-  }
-
   return (
     <Table>
       <TableHeader>
@@ -120,7 +110,6 @@ export function RankingTable({
               onClick={() => toggleSort('rank')}
             >
               Ранг
-              <SortIcon active={sortKey === 'rank'} dir={sortDir} />
             </button>
           </TableHead>
           <TableHead>Локація</TableHead>
@@ -133,7 +122,6 @@ export function RankingTable({
               title="Коефіцієнт близькості C* — формула (1.14)"
             >
               C*
-              <SortIcon active={sortKey === 'closeness'} dir={sortDir} />
             </button>
           </TableHead>
           <TableHead title="Відстань до позитивного ідеалу — формула (1.13)">
