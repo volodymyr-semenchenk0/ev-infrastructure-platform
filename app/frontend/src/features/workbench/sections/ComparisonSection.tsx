@@ -108,6 +108,13 @@ export function ComparisonSection() {
 
           <div>
             <h3 className="mb-2 text-sm font-semibold">Зіставлення рангів за профілями</h3>
+            <p className="mb-3 max-w-[760px] text-sm text-muted-foreground">
+              Таблиця подає ранг кожної локації-кандидата у двох профілях ОПР і їх різницю Δ = Ранг
+              A − Ранг B. Відʼємне Δ (зелений) означає, що локацію вище оцінює профіль A –
+              муніципалітет, додатне (червоний) – профіль B – інвестор, нуль – позиції в обох
+              профілях збігаються. Це поелементна основа коефіцієнта рангової кореляції Спірмена:
+              чим більші різниці за модулем, тим нижча узгодженість двох ранжувань.
+            </p>
             <div className="overflow-hidden rounded-md border border-border">
               <DiffTable
                 differences={data.comparison.pairwiseDifferences}
