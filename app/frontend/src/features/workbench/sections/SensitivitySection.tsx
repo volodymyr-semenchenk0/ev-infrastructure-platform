@@ -228,7 +228,7 @@ export function SensitivitySection() {
           </ChartCard>
 
           <ChartCard
-            title="Інтервали рангів за C* (forest-plot)"
+            title="Інтервали рангів за C*"
             filenameBase={`${filenameBase}-forest`}
           >
             <RankingForestPlot
