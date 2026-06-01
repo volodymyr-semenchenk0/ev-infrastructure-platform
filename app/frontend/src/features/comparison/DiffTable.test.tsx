@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import { DiffTable } from './DiffTable'
-import type { PairwiseDifference } from './useComparison'
+import type { PairwiseDifference } from './useProfileComparison'
 
 const diffs: PairwiseDifference[] = [
   { locationId: 1, rankA: 1, rankB: 2, delta: -1 }, // B покращив → emerald
