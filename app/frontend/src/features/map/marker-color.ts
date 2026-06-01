@@ -1,3 +1,5 @@
+import { rankTier } from '@/lib/rank-tier'
+
 export const MARKER_COLORS = {
   top: '#10b981',
   mid: '#facc15',
@@ -8,9 +10,14 @@ export const MARKER_COLORS = {
 export type MarkerColor = (typeof MARKER_COLORS)[keyof typeof MARKER_COLORS]
 
 export function colorByRank(rank: number | null, total: number): MarkerColor {
-  if (rank == null || total <= 0) return MARKER_COLORS.neutral
-  const quartile = Math.ceil(total / 4)
-  if (rank <= quartile) return MARKER_COLORS.top
-  if (rank > total - quartile) return MARKER_COLORS.bottom
-  return MARKER_COLORS.mid
+  switch (rankTier(rank, total)) {
+    case 'top':
+      return MARKER_COLORS.top
+    case 'mid':
+      return MARKER_COLORS.mid
+    case 'bottom':
+      return MARKER_COLORS.bottom
+    default:
+      return MARKER_COLORS.neutral
+  }
 }
