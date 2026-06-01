@@ -70,7 +70,7 @@ export function ComparisonSection() {
     <div className="space-y-4">
       <div>
         <h3 className="mb-2 text-sm font-semibold">Порівняння профілів ОПР</h3>
-        <p className="max-w-[760px] text-sm text-muted-foreground">
+        <p className="max-w-[600px] text-sm text-muted-foreground">
           Канонічне порівняння двох стандартних профілів ОПР. Кожен профіль оцінюється з власної
           типової матриці попарних порівнянь, незалежно від правок у поточному сеансі, тож результат
           відтворюваний. Ранжування зіставляються за коефіцієнтом рангової кореляції Спірмена.
