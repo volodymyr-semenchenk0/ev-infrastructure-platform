@@ -254,8 +254,8 @@ export function SensitivitySection() {
           </ChartCard>
 
           <div>
-            <h3 className="mb-2 text-sm font-semibold">Матриця індексів прийнятності рангів</h3>
-            <p className="mb-3 max-w-[600px] text-sm text-muted-foreground">
+            <h3 className="mb-4 text-sm font-semibold">Матриця індексів прийнятності рангів</h3>
+            <p className="mb-2 max-w-[600px] text-sm text-muted-foreground">
               Індекс прийнятності рангів p_i(k) – частка прогонів Монте-Карло, у яких локація
               потрапила до k найкращих за випадкових збурень ваг критеріїв. Значення, близьке до
               100 %, свідчить про стійко високу позицію, близьке до 0 % – про нестабільну. Стовпці:
