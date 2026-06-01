@@ -114,6 +114,25 @@ CRITERIA: list[dict[str, str]] = [
 ]
 
 
+# 12 candidate locations across Kyiv districts as (name, district, address, lat, lon).
+# Coordinates are WGS-84; stored as SRID=4326 POINT(lon lat). The order fixes the row
+# order on a fresh seed so the synthetic decision matrix is reproducible.
+LOCATIONS: list[tuple[str, str, str, float, float]] = [
+    ("Шулявка", "Шевченківський", "вул. Борщагівська, 126", 50.4489, 30.4231),
+    ("Оболонь", "Оболонський", "просп. Оболонський, 15", 50.5012, 30.4967),
+    ("Відрадний", "Святошинський", "вул. Вітряні Гори, 7", 50.4678, 30.3801),
+    ("Позняки", "Дарницький", "вул. Колекторна, 40", 50.3985, 30.6124),
+    ("Голосіїво", "Голосіївський", "просп. Голосіївський, 132", 50.361624, 30.486073),
+    ("Деснянська", "Деснянський", "вул. Петра Запорожця, 22", 50.5189, 30.6012),
+    ("Харківське шосе", "Харківський", "Харківське шосе, 165", 50.400774, 30.653307),
+    ("Лівобережна", "Дніпровський", "вул. Сирецька, 54", 50.4312, 30.6278),
+    ("Бориспільська", "Дарницький", "вул. Бориспільська, 28", 50.403576, 30.684217),
+    ("Академмістечко", "Святошинський", "вул. Акад. Єфименка, 1", 50.462587, 30.35543),
+    ("Берестейська", "Шевченківський", "вул. Гетьмана, 44", 50.4534, 30.4124),
+    ("Троєщина", "Деснянський", "вул. Теліги, 89", 50.5234, 30.5689),
+]
+
+
 async def seed_reference_data(session: AsyncSession) -> None:
     """Idempotently load profiles and criteria.
 
@@ -130,6 +149,32 @@ async def seed_reference_data(session: AsyncSession) -> None:
     await session.execute(
         insert(Criterion).values(CRITERIA).on_conflict_do_nothing(index_elements=["code"])
     )
+
+
+async def seed_locations(session: AsyncSession) -> None:
+    """Idempotently load the 12 candidate locations.
+
+    geom is built as the EWKT string ``SRID=4326;POINT(lon lat)`` (same form the
+    API repository uses). Idempotency: skipped when the table already holds rows,
+    so locations added via the API are never duplicated. Must run before
+    seed_decision_matrix so the synthetic values attach to these rows.
+    """
+    existing_count: int = (
+        await session.execute(select(func.count()).select_from(Location))
+    ).scalar_one()
+    if existing_count > 0:
+        return
+
+    rows = [
+        {
+            "name": name,
+            "district": district,
+            "address": address,
+            "geom": f"SRID=4326;POINT({lon} {lat})",
+        }
+        for name, district, address, lat, lon in LOCATIONS
+    ]
+    await session.execute(insert(Location).values(rows))
 
 
 async def seed_decision_matrix(session: AsyncSession, rng_seed: int = 42) -> None:

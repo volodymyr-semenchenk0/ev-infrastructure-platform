@@ -10,11 +10,13 @@ No mocks are used.
 
 from __future__ import annotations
 
+import pytest
+from geoalchemy2.shape import to_shape
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db.models import Criterion, Profile
-from db.seed import seed_reference_data
+from db.models import Criterion, Location, Profile
+from db.seed import seed_locations, seed_reference_data
 
 # ---------------------------------------------------------------------------
 # Expected reference constants: 2 profiles, 9 criteria.
@@ -111,5 +113,45 @@ class TestSeedReferenceData:
         assert criterion_count == 9, (
             f"Idempotency broken: {criterion_count} criteria after 2 seed calls"
         )
+
+        await db_session.rollback()
+
+
+class TestSeedLocations:
+    """Tests for db/seed.py::seed_locations (12 candidate locations)."""
+
+    async def test_seed_creates_twelve_locations(self, db_session: AsyncSession) -> None:
+        await seed_locations(db_session)
+        await db_session.flush()
+
+        locations = (await db_session.execute(select(Location))).scalars().all()
+        assert len(locations) == 12, f"Expected 12 locations, got {len(locations)}"
+        assert "Харківське шосе" in {loc.name for loc in locations}
+
+        await db_session.rollback()
+
+    async def test_seed_stores_wgs84_coordinates(self, db_session: AsyncSession) -> None:
+        """Coordinates are stored as SRID=4326 POINT(lon lat) and read back as (lat, lon)."""
+        await seed_locations(db_session)
+        await db_session.flush()
+
+        by_name = {
+            loc.name: loc for loc in (await db_session.execute(select(Location))).scalars().all()
+        }
+        # shapely point: x is longitude, y is latitude.
+        akadem = to_shape(by_name["Академмістечко"].geom)
+        assert akadem.y == pytest.approx(50.462587, abs=1e-6)
+        assert akadem.x == pytest.approx(30.35543, abs=1e-6)
+
+        await db_session.rollback()
+
+    async def test_seed_is_idempotent(self, db_session: AsyncSession) -> None:
+        await seed_locations(db_session)
+        await db_session.flush()
+        await seed_locations(db_session)
+        await db_session.flush()
+
+        count = (await db_session.execute(select(func.count()).select_from(Location))).scalar_one()
+        assert count == 12, f"Idempotency broken: {count} locations after 2 seed calls"
 
         await db_session.rollback()
