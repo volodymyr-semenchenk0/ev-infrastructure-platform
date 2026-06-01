@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ArrowDown, ArrowUp, ArrowUpDown, Loader2, Play } from 'lucide-react'
+import { Loader2, Play } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -48,8 +48,8 @@ export function SensitivitySection() {
   const mutation = useSensitivity()
 
   // Stability table sort: by one of the p_i(k) columns, descending by default
-  // (most stable first). p_i(5) is the default since it is the widest top-k band.
-  const [sortK, setSortK] = useState<(typeof K_VALUES)[number]>(5)
+  // (most stable first). p_i(1) is the default — the rank-1 acceptability index.
+  const [sortK, setSortK] = useState<(typeof K_VALUES)[number]>(1)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
 
   const toggleSort = (k: (typeof K_VALUES)[number]) => {
@@ -83,8 +83,16 @@ export function SensitivitySection() {
         perK: perK as Record<string, number>,
       }))
       .sort((a, b) => {
-        const diff = (a.perK[key] ?? 0) - (b.perK[key] ?? 0)
-        return sortDir === 'asc' ? diff : -diff
+        const primary = (a.perK[key] ?? 0) - (b.perK[key] ?? 0)
+        if (primary !== 0) return sortDir === 'asc' ? primary : -primary
+        // Tie-break by the remaining columns, narrowest band first (1 → 3 → 5),
+        // always descending so the more consistently stable location wins.
+        for (const tk of K_VALUES) {
+          if (tk === sortK) continue
+          const d = (b.perK[String(tk)] ?? 0) - (a.perK[String(tk)] ?? 0)
+          if (d !== 0) return d
+        }
+        return 0
       })
   }, [sensitivity, sortK, sortDir])
 
@@ -260,15 +268,6 @@ export function SensitivitySection() {
                           onClick={() => toggleSort(k)}
                         >
                           p_i({k})
-                          {sortK === k ? (
-                            sortDir === 'asc' ? (
-                              <ArrowUp className="ml-1 inline h-3 w-3" />
-                            ) : (
-                              <ArrowDown className="ml-1 inline h-3 w-3" />
-                            )
-                          ) : (
-                            <ArrowUpDown className="ml-1 inline h-3 w-3 opacity-50" />
-                          )}
                         </button>
                       </TableHead>
                     ))}
