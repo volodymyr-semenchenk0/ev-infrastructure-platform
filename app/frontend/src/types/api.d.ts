@@ -21,6 +21,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/profiles/comparison": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Compare Profiles */
+        get: operations["compare_profiles_api_profiles_comparison_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/profiles/{profile_id}": {
         parameters: {
             query?: never;
@@ -392,6 +409,18 @@ export interface components {
             delta: number;
         };
         /**
+         * ProfileComparisonRead
+         * @description GET /api/profiles/comparison — both profile rankings plus their Spearman comparison.
+         *
+         *     Higher-order scenario from spec 2.1.1/2.3.4: each profile is evaluated from its
+         *     default pairwise matrix, so the comparison is reproducible regardless of session.
+         */
+        ProfileComparisonRead: {
+            profileA: components["schemas"]["ProfileRankingRead"];
+            profileB: components["schemas"]["ProfileRankingRead"];
+            comparison: components["schemas"]["ComparisonRead"];
+        };
+        /**
          * ProfileDetailRead
          * @description GET /api/profiles/{id} — profile with attached criteria and pairwise matrix.
          */
@@ -411,6 +440,20 @@ export interface components {
             criteria: components["schemas"]["CriterionWithWeight"][];
             /** Pairwisematrix */
             pairwiseMatrix?: components["schemas"]["FuzzyNumber"][][] | null;
+        };
+        /**
+         * ProfileRankingRead
+         * @description One profile and the ranking its default matrix produces (spec 2.3.4).
+         */
+        ProfileRankingRead: {
+            /** Id */
+            id: number;
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Ranking */
+            ranking: components["schemas"]["RankingItemRead"][];
         };
         /**
          * ProfileRead
@@ -527,6 +570,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProfileRead"][];
+                };
+            };
+        };
+    };
+    compare_profiles_api_profiles_comparison_get: {
+        parameters: {
+            query?: {
+                profile_a?: number | null;
+                profile_b?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileComparisonRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

@@ -14,6 +14,7 @@ from services import (
     EvaluationRepository,
     EvaluationService,
     LocationRepository,
+    ProfileComparisonService,
     ProfileRepository,
     SensitivityService,
 )
@@ -70,6 +71,12 @@ def get_sensitivity_service(
     session: AsyncSession = Depends(get_db),
 ) -> SensitivityService:
     return SensitivityService(session)
+
+
+def get_profile_comparison_service(
+    session: AsyncSession = Depends(get_db),
+) -> ProfileComparisonService:
+    return ProfileComparisonService(session)
 
 
 def get_comparison_service() -> ComparisonService:

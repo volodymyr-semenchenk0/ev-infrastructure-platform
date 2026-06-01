@@ -23,14 +23,14 @@ export function SpearmanBadge({ rho }: SpearmanBadgeProps) {
   return (
     <div
       className={cn(
-        'flex flex-col items-start gap-1 rounded-lg border px-6 py-4',
+        'flex w-full flex-col items-start gap-1 rounded-lg border px-6 py-4',
         bucketStyles(rho),
       )}
       role="status"
-      aria-label={`Spearman rank correlation ρ = ${formatted}`}
+      aria-label={`Коефіцієнт рангової кореляції Спірмена = ${formatted}`}
     >
-      <div className="text-xs uppercase tracking-wide opacity-80">
-        Spearman ρ
+      <div className="text-xs font-medium opacity-80">
+        Коефіцієнт рангової кореляції Спірмена
       </div>
       <div className="text-3xl font-semibold tabular-nums">{formatted}</div>
       <div className="text-sm opacity-80">{bucketLabel(rho)}</div>

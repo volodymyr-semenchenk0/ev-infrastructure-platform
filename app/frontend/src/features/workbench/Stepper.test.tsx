@@ -15,6 +15,13 @@ function makeSteps(overrides: Partial<Record<string, Partial<StepItem>>> = {}): 
       complete: false,
       disabled: true,
     },
+    {
+      id: 'comparison',
+      label: 'Порівняння профілів',
+      complete: false,
+      disabled: false,
+      detached: true,
+    },
   ]
   return base.map((s) => ({ ...s, ...overrides[s.id] }))
 }
@@ -61,11 +68,45 @@ describe('Stepper', () => {
     expect(onSelect).toHaveBeenCalledWith('weights')
   })
 
-  it('renders all four steps in one shared group', () => {
+  it('splits the wizard flow and the detached step into two separate cards', () => {
     render(<Stepper steps={makeSteps()} activeId="setup" onSelect={() => {}} />)
-    const group = screen.getByRole('group', { name: /Кроки розрахунку/ })
-    expect(within(group).getByRole('button', { name: /Профіль і матриця/ })).toBeInTheDocument()
-    expect(within(group).getByRole('button', { name: /Чутливість/ })).toBeInTheDocument()
+
+    const mainGroup = screen.getByRole('group', { name: /Основні кроки/ })
+    expect(within(mainGroup).getByRole('button', { name: /Профіль і матриця/ })).toBeInTheDocument()
+    expect(within(mainGroup).getByRole('button', { name: /Чутливість/ })).toBeInTheDocument()
+    // The comparison step is not part of the main card.
+    expect(
+      within(mainGroup).queryByRole('button', { name: /Порівняння профілів/ }),
+    ).not.toBeInTheDocument()
+
+    const analysisGroup = screen.getByRole('group', { name: /Окремий аналіз/ })
+    expect(
+      within(analysisGroup).getByRole('button', { name: /Порівняння профілів/ }),
+    ).toBeInTheDocument()
+  })
+
+  it('renders the detached comparison as a plain button without a step number', () => {
+    render(<Stepper steps={makeSteps()} activeId="setup" onSelect={() => {}} />)
+    const comparison = screen.getByRole('button', { name: /Порівняння профілів/ })
+    // It is an action button, not a numbered step — no "5" badge, no check icon.
+    expect(within(comparison).queryByText('5')).not.toBeInTheDocument()
+    expect(comparison.querySelector('svg.lucide-check')).not.toBeInTheDocument()
+  })
+
+  it('activates the comparison panel when its button is clicked', async () => {
+    const onSelect = vi.fn()
+    render(<Stepper steps={makeSteps()} activeId="setup" onSelect={onSelect} />)
+    await userEvent.click(screen.getByRole('button', { name: /Порівняння профілів/ }))
+    expect(onSelect).toHaveBeenCalledWith('comparison')
+  })
+
+  it('splits the two cards with a vertical divider', () => {
+    // Connectors inside a card are horizontal (w-10, h-px); the divider between
+    // the two cards is the only vertical (w-px) rule.
+    const { container } = render(
+      <Stepper steps={makeSteps()} activeId="setup" onSelect={() => {}} />,
+    )
+    expect(container.querySelector('span.w-px')).toBeInTheDocument()
   })
 
   it('shows a check icon for the sensitivity step once it is complete', () => {

@@ -86,8 +86,8 @@ export function WeightsSection() {
       </ChartCard>
 
       <div className="pt-4">
-        <h3 className="text-sm font-semibold">Ваги критеріїв (FAHP)</h3>
-        <p className="mt-1 max-w-[600px] text-sm text-muted-foreground">
+        <h3 className="mb-2 text-sm font-semibold">Ваги критеріїв (FAHP)</h3>
+        <p className="mb-4 max-w-[600px] text-sm text-muted-foreground">
           w_j — дефазифікована вага критерію (центроїд нечіткого трикутника), а l_j та u_j — нижня й
           верхня межі відповідного нечіткого числа. Рядки впорядковано за спаданням ваги.
         </p>

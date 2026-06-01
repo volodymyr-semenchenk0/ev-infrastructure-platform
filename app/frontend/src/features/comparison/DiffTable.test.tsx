@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 
 import { DiffTable } from './DiffTable'
-import type { PairwiseDifference } from './useComparison'
+import type { PairwiseDifference } from './useProfileComparison'
 
 const diffs: PairwiseDifference[] = [
   { locationId: 1, rankA: 1, rankB: 2, delta: -1 }, // B покращив → emerald
@@ -18,6 +17,22 @@ describe('DiffTable', () => {
   it('renders one row per pairwise difference', () => {
     render(<DiffTable differences={diffs} nameByLocationId={names} />)
     expect(screen.getAllByRole('row')).toHaveLength(diffs.length + 1) // +header
+  })
+
+  it('numbers the rows in input order via the leading # column', () => {
+    render(<DiffTable differences={diffs} nameByLocationId={names} />)
+    const bodyRows = screen.getAllByRole('row').slice(1) // drop the header row
+    const rowNumbers = bodyRows.map((r) => r.querySelector('td')?.textContent)
+    expect(rowNumbers).toEqual(['1', '2', '3', '4'])
+  })
+
+  it('renders descriptive, non-sortable column headers', () => {
+    render(<DiffTable differences={diffs} />)
+    expect(screen.getByText('Ранг за профілем A')).toBeInTheDocument()
+    expect(screen.getByText('Ранг за профілем B')).toBeInTheDocument()
+    expect(screen.getByText('Різниця рангів')).toBeInTheDocument()
+    // Headers are plain text, not sort buttons.
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
 
   it('displays the joined location name', () => {
@@ -40,13 +55,5 @@ describe('DiffTable', () => {
     const negative = deltaCells.find((c) => c.textContent === '-1')
     expect(negative).toBeTruthy()
     expect(negative?.className).toMatch(/emerald/)
-  })
-
-  it('sorts by delta when its header is clicked', async () => {
-    const user = userEvent.setup()
-    render(<DiffTable differences={diffs} />)
-    await user.click(screen.getByRole('button', { name: /Δ/ }))
-    const deltaCells = screen.getAllByTestId('delta-cell')
-    expect(deltaCells.map((c) => c.textContent)).toEqual(['-3', '-1', '0', '+3'])
   })
 })

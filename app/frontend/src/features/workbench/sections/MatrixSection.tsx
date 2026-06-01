@@ -180,8 +180,8 @@ export function MatrixSection() {
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-sm font-semibold">Нечітка матриця попарних порівнянь</h3>
-        <div className="mt-1 flex flex-col gap-6 md:flex-row md:items-start">
+        <h3 className="mb-2 text-sm font-semibold">Нечітка матриця попарних порівнянь</h3>
+        <div className="flex flex-col gap-6 md:flex-row md:items-start">
           <p className="max-w-[600px] text-sm text-muted-foreground">
             Значення в клітинці a_ij показує, наскільки критерій рядка важливіший за критерій
             колонки (читається «рядок відносно колонки»). Якщо число більше за 1 – критерій рядка
