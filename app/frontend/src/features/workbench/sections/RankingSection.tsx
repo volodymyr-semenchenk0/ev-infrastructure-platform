@@ -68,7 +68,7 @@ export function RankingSection() {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-sm font-semibold">Ранжування (TOPSIS)</h3>
+      <h3 className="text-sm font-semibold">Ранжування локацій</h3>
       <p className="max-w-[600px] text-sm text-muted-foreground">
         Локації впорядковано за спаданням коефіцієнта близькості C*. Колір рядка (і піна на карті)
         кодує відносну позицію в ранжуванні – верхню, середню чи нижню групу, а не абсолютну якість.
