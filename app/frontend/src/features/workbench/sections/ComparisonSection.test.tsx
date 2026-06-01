@@ -7,9 +7,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { api } from '@/lib/api'
 import { useSessionStore } from '@/store/session-store'
+import { useUiStore } from '@/store/ui-store'
 
 // Nivo's grouped bar chart renders an SVG jsdom cannot lay out. Stub it so the
-// section logic (button-driven query, badge, table) is tested in isolation.
+// section logic (auto-run, badge, table) is tested in isolation.
 vi.mock('@/features/comparison/GroupedBarChart', () => ({
   GroupedBarChart: () => <div data-testid="grouped-bar-chart" />,
 }))
@@ -51,28 +52,31 @@ function renderSection(node: ReactNode = <ComparisonSection />) {
 describe('ComparisonSection', () => {
   beforeEach(() => {
     useSessionStore.getState().resetSession()
+    useUiStore.getState().setActiveStep('setup')
   })
 
-  it('shows the run button and no result before the comparison is triggered', async () => {
-    const mock = new MockAdapter(api)
-    mock.onGet('/locations').reply(200, LOCATIONS)
-
-    renderSection()
-
-    expect(await screen.findByRole('button', { name: /Порівняти профілі/ })).toBeInTheDocument()
-    expect(screen.queryByText(/Spearman/)).not.toBeInTheDocument()
-    mock.restore()
-  })
-
-  it('runs the comparison and renders the badge, chart and difference table', async () => {
+  it('does not run the comparison until its step is opened', async () => {
     const mock = new MockAdapter(api)
     mock.onGet('/locations').reply(200, LOCATIONS)
     mock.onGet('/profiles/comparison').reply(200, COMPARISON_PAYLOAD)
 
-    const user = userEvent.setup()
     renderSection()
 
-    await user.click(await screen.findByRole('button', { name: /Порівняти профілі/ }))
+    // Wait for locations to settle, then assert the comparison endpoint stayed
+    // untouched and no result is shown while the step is inactive.
+    await screen.findByText(/Канонічне порівняння/)
+    expect(mock.history.get.some((r) => r.url === '/profiles/comparison')).toBe(false)
+    expect(screen.queryByText(/Spearman/)).not.toBeInTheDocument()
+    mock.restore()
+  })
+
+  it('runs the comparison automatically when the step is opened', async () => {
+    const mock = new MockAdapter(api)
+    mock.onGet('/locations').reply(200, LOCATIONS)
+    mock.onGet('/profiles/comparison').reply(200, COMPARISON_PAYLOAD)
+
+    useUiStore.getState().setActiveStep('comparison')
+    renderSection()
 
     expect(await screen.findByText('0.870')).toBeInTheDocument()
     expect(screen.getByTestId('grouped-bar-chart')).toBeInTheDocument()
@@ -81,19 +85,36 @@ describe('ComparisonSection', () => {
     mock.restore()
   })
 
+  it('re-runs the comparison when "Оновити" is clicked', async () => {
+    const mock = new MockAdapter(api)
+    mock.onGet('/locations').reply(200, LOCATIONS)
+    mock.onGet('/profiles/comparison').reply(200, COMPARISON_PAYLOAD)
+
+    useUiStore.getState().setActiveStep('comparison')
+    const user = userEvent.setup()
+    renderSection()
+
+    await screen.findByText('0.870')
+    await user.click(screen.getByRole('button', { name: /Оновити/ }))
+
+    await waitFor(() => {
+      expect(mock.history.get.filter((r) => r.url === '/profiles/comparison')).toHaveLength(2)
+    })
+    mock.restore()
+  })
+
   it('records an error on comparison failure', async () => {
     const mock = new MockAdapter(api)
     mock.onGet('/locations').reply(200, LOCATIONS)
     mock.onGet('/profiles/comparison').reply(500)
 
-    const user = userEvent.setup()
+    useUiStore.getState().setActiveStep('comparison')
     renderSection()
-
-    await user.click(await screen.findByRole('button', { name: /Порівняти профілі/ }))
 
     await waitFor(() => {
       expect(useSessionStore.getState().lastError?.source).toBe('comparison')
     })
+    expect(await screen.findByText(/Не вдалося порівняти профілі/)).toBeInTheDocument()
     mock.restore()
   })
 })
