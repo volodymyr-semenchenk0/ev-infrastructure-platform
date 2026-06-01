@@ -184,8 +184,8 @@ export function SensitivitySection() {
         </div>
 
         <p className="text-xs text-muted-foreground">
-          Зерно ГВЧ: <span className="font-mono">{DEFAULT_SEED}</span>
-          {' (фіксоване, відтворюваний результат)'}
+          Зерно генератора випадкових чисел: <span className="font-mono">{DEFAULT_SEED}</span>
+          {' (фіксоване – результат відтворюваний)'}
         </p>
       </div>
 
