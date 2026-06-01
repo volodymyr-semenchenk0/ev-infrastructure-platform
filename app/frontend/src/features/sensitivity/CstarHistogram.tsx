@@ -86,9 +86,6 @@ export function CstarHistogram({
         axisLeft={{
           tickSize: 0,
           tickPadding: 8,
-          legend: 'Частота',
-          legendOffset: -44,
-          legendPosition: 'middle',
         }}
         axisBottom={{
           tickSize: 0,
