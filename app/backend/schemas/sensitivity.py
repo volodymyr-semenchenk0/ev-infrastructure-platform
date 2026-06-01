@@ -26,14 +26,15 @@ class SensitivityRequest(CamelModel):
 class ConfidenceInterval(CamelModel):
     """95 % confidence interval for the closeness coefficient of one location.
 
-    Bounds are the 2.5/97.5 percentiles of the accumulated C* sample (2.3.3),
-    so the interval is generally asymmetric and `mean` does not equal the
-    midpoint. `mean` is the per-alternative average C* that orders the top-N
-    (Appendix A.9). Field names match Appendix A.9 (`mean`, `lower`, `upper`).
+    `cstar` is the deterministic closeness coefficient C_i* of the base TOPSIS
+    ranking (the interval centre), NOT a Monte Carlo average. The bounds are the
+    2.5/97.5 percentiles of the accumulated C* sample (2.3.3), so the interval is
+    generally asymmetric and `cstar` need not equal the midpoint. Field names
+    match Appendix A.9 (`location_id`, `cstar`, `lower`, `upper`).
     """
 
     location_id: int
-    mean: float
+    cstar: float
     lower: float
     upper: float
 
@@ -67,15 +68,16 @@ class SensitivityRead(CamelModel):
 
     `stability_matrix[location_id][k]` is the acceptability index p_i(k) per
     formula (1.17) for k in STABILITY_K_VALUES. `confidence_intervals` lists
-    the top-`TOP_N_FOR_CONFIDENCE_INTERVALS` alternatives ordered by mean C*
-    descending (Appendix A.9).
+    the top-`TOP_N_FOR_CONFIDENCE_INTERVALS` alternatives ordered by the
+    deterministic rank of the base ranking, not by Monte Carlo mean C*
+    (Appendix A.9).
 
     The last three fields back the sensitivity storyline charts and are
     recomputed on every request — they are NOT persisted (Appendix A.9 keeps
     only stability_matrix and confidence_intervals). `ranking_intervals` carries
-    the mean and 2.5/97.5 percentile band for ALL locations, ordered best to
-    worst (Step 2 forest-plot); `cstar_histogram` and `convergence` back Steps 1
-    and 3.
+    the deterministic C* and 2.5/97.5 percentile band for ALL locations, ordered
+    by deterministic rank best to worst (Step 2 forest-plot); `cstar_histogram`
+    and `convergence` back Steps 1 and 3.
     """
 
     stability_matrix: dict[int, dict[int, float]]

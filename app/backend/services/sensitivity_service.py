@@ -5,6 +5,7 @@ from __future__ import annotations
 import numpy as np
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from db.models import RankingItem
 from mcdm.monte_carlo import sensitivity_analysis
 from mcdm.topsis import topsis
 from schemas.sensitivity import (
@@ -67,7 +68,6 @@ class SensitivityService:
             k_values=STABILITY_K_VALUES,
         )
 
-        scores_mean = mc_result["scores_mean"]
         ci_lower = mc_result["ci_lower"]
         ci_upper = mc_result["ci_upper"]
         top_k_freq = mc_result["top_k_freq"]
@@ -78,32 +78,30 @@ class SensitivityService:
             for i in range(len(location_ids))
         }
 
-        # 95 % CI for the top-N alternatives by mean C* descending (Appendix A.9).
-        # Bounds are the 2.5/97.5 percentiles of the C* sample computed in the
-        # math core (subsection 2.3.3), not a normal approximation.
-        order_desc = np.argsort(scores_mean)[::-1].tolist()
-        top_indices = order_desc[:TOP_N_FOR_CONFIDENCE_INTERVALS]
-        cis = [
-            ConfidenceInterval(
-                location_id=location_ids[i],
-                mean=float(scores_mean[i]),
-                lower=float(ci_lower[i]),
-                upper=float(ci_upper[i]),
-            )
-            for i in top_indices
-        ]
+        # The deterministic base ranking is the sole key for selecting and
+        # ordering the confidence intervals (subsection 2.3.3): Monte Carlo only
+        # supplies the 2.5/97.5 percentile band, never a mean used for ranking.
+        # ci_lower/ci_upper are indexed like location_ids (decision-matrix column
+        # order from location_repo.list_ordered()), so map each ranking item to
+        # its array index. cstar is the deterministic C_i* of the base run; it
+        # centres the interval but need not be the midpoint of the percentile band.
+        idx_by_loc = {loc_id: i for i, loc_id in enumerate(location_ids)}
+        ordered = sorted(run.ranking, key=lambda item: item.rank)
 
-        # Return-only storyline payloads (not persisted). Step 2 forest-plot:
-        # mean + 2.5/97.5 percentile band for ALL locations, best-to-worst.
-        ranking_intervals = [
-            ConfidenceInterval(
-                location_id=location_ids[i],
-                mean=float(scores_mean[i]),
+        def _interval(item: RankingItem) -> ConfidenceInterval:
+            i = idx_by_loc[item.location_id]
+            return ConfidenceInterval(
+                location_id=item.location_id,
+                cstar=float(item.closeness_coefficient),
                 lower=float(ci_lower[i]),
                 upper=float(ci_upper[i]),
             )
-            for i in order_desc
-        ]
+
+        # Step 2 forest-plot (return-only): deterministic C* + percentile band for
+        # ALL locations, ordered by deterministic rank. The top-N slice
+        # (Appendix A.9) carries the persisted confidence intervals.
+        ranking_intervals = [_interval(item) for item in ordered]
+        cis = ranking_intervals[:TOP_N_FOR_CONFIDENCE_INTERVALS]
 
         # Step 1 histogram: per-location auto-zoomed bins, C* counts per location.
         hist_edges = mc_result["hist_bin_edges"]
