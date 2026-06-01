@@ -10,11 +10,10 @@ import { WeightsSection } from '@/features/workbench/sections/WeightsSection'
 import { useSessionStore } from '@/store/session-store'
 import { useUiStore, type StepId } from '@/store/ui-store'
 
-// Single workbench page driven by a 4-step wizard. Steps 1-3 (profile+matrix →
-// FAHP weights → TOPSIS ranking) are the mandatory connected flow; the
-// sensitivity step is detached and optional. All step panels stay mounted and
-// inactive ones are hidden, so switching steps never discards their state
-// (e.g. uncommitted matrix edits, sensitivity form inputs).
+// Single workbench page driven by a 4-step wizard: profile+matrix → FAHP
+// weights → TOPSIS ranking → Monte Carlo sensitivity. All step panels stay
+// mounted and inactive ones are hidden, so switching steps never discards their
+// state (e.g. uncommitted matrix edits, sensitivity form inputs).
 
 export function HomePage() {
   const activeStep = useUiStore((s) => s.activeStep)
@@ -23,6 +22,7 @@ export function HomePage() {
 
   const weights = useSessionStore((s) => s.weights)
   const ranking = useSessionStore((s) => s.ranking)
+  const sensitivity = useSessionStore((s) => s.sensitivity)
 
   // FAHP sets weights + evaluationId and holds the ranking; running ranking on
   // the weights step then fills `ranking`. So the weights step unlocks after
@@ -60,10 +60,9 @@ export function HomePage() {
     {
       id: 'sensitivity',
       label: 'Чутливість (МК)',
-      // Analytical step: never reaches a completed state, only unlocks.
-      complete: false,
+      // Marked complete once the Monte Carlo run has produced a result.
+      complete: sensitivity !== null,
       disabled: !enabled.sensitivity,
-      optional: true,
     },
   ]
 

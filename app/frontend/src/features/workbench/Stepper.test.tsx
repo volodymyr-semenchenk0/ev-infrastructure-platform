@@ -14,7 +14,6 @@ function makeSteps(overrides: Partial<Record<string, Partial<StepItem>>> = {}): 
       label: 'Чутливість (МК)',
       complete: false,
       disabled: true,
-      optional: true,
     },
   ]
   return base.map((s) => ({ ...s, ...overrides[s.id] }))
@@ -62,13 +61,19 @@ describe('Stepper', () => {
     expect(onSelect).toHaveBeenCalledWith('weights')
   })
 
-  it('renders the optional step in a separate container from the mandatory group', () => {
+  it('renders all four steps in one shared group', () => {
     render(<Stepper steps={makeSteps()} activeId="setup" onSelect={() => {}} />)
-    const mandatory = screen.getByRole('group', { name: /Обовʼязков/ })
-    const analytical = screen.getByRole('group', { name: /Аналітичн/ })
-    expect(within(mandatory).getByRole('button', { name: /Профіль і матриця/ })).toBeInTheDocument()
-    expect(within(analytical).getByRole('button', { name: /Чутливість/ })).toBeInTheDocument()
-    // The optional step is not inside the mandatory group.
-    expect(within(mandatory).queryByRole('button', { name: /Чутливість/ })).toBeNull()
+    const group = screen.getByRole('group', { name: /Кроки розрахунку/ })
+    expect(within(group).getByRole('button', { name: /Профіль і матриця/ })).toBeInTheDocument()
+    expect(within(group).getByRole('button', { name: /Чутливість/ })).toBeInTheDocument()
+  })
+
+  it('shows a check icon for the sensitivity step once it is complete', () => {
+    const steps = makeSteps({ sensitivity: { complete: true, disabled: false } })
+    render(<Stepper steps={steps} activeId="sensitivity" onSelect={() => {}} />)
+    const sensitivity = screen.getByRole('button', { name: /Чутливість/ })
+    // The completed step renders a check svg instead of its ordinal "4".
+    expect(within(sensitivity).queryByText('4')).not.toBeInTheDocument()
+    expect(sensitivity.querySelector('svg.lucide-check')).toBeInTheDocument()
   })
 })

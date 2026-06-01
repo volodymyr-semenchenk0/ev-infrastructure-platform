@@ -12,9 +12,6 @@ export interface StepItem {
   complete: boolean
   // Not yet reachable: prerequisite step incomplete or its data invalid.
   disabled: boolean
-  // The detached step (sensitivity). Rendered in its own container beside the
-  // mandatory group so it reads as separate from the 1-3 flow.
-  optional?: boolean
 }
 
 interface StepperProps {
@@ -23,58 +20,29 @@ interface StepperProps {
   onSelect: (id: StepId) => void
 }
 
-// Step navigation. The mandatory steps (1-3) share one centered group that
-// spans most of the width; a divider separates the optional step, which fills
-// the remaining space. State lives in the caller (ui-store), so this is a
-// controlled presentational component.
+// Step navigation. All steps (1-4) share one centered group with connectors.
+// State lives in the caller (ui-store), so this is a controlled presentational
+// component.
 export function Stepper({ steps, activeId, onSelect }: StepperProps) {
-  const mandatory = steps.filter((s) => !s.optional)
-  const optional = steps.filter((s) => s.optional)
-  // Ordinal across the full sequence (setup=1 … sensitivity=4), independent of
-  // which group a step is rendered in.
-  const numberOf = (id: StepId) => steps.findIndex((s) => s.id === id) + 1
-
   return (
     <nav aria-label="Кроки розрахунку">
-      <div className="flex items-stretch gap-3 py-1">
-        <div
-          role="group"
-          aria-label="Обовʼязкові кроки"
-          className="flex w-4/5 items-center justify-center gap-2 rounded-lg border bg-card p-3"
-        >
-          {mandatory.map((step, index) => (
-            <Fragment key={step.id}>
-              {index > 0 && (
-                <span aria-hidden="true" className="h-px w-10 shrink-0 bg-border" />
-              )}
-              <StepButton
-                step={step}
-                number={numberOf(step.id)}
-                active={step.id === activeId}
-                onSelect={onSelect}
-              />
-            </Fragment>
-          ))}
-        </div>
-
-        {optional.length > 0 && (
-          <span aria-hidden="true" className="w-px self-stretch bg-border" />
-        )}
-
-        {optional.map((step) => (
-          <div
-            key={step.id}
-            role="group"
-            aria-label="Аналітичний крок"
-            className="flex flex-1 items-center justify-center rounded-lg border bg-card p-3"
-          >
+      <div
+        role="group"
+        aria-label="Кроки розрахунку"
+        className="flex items-center justify-center gap-2 rounded-lg border bg-card p-3"
+      >
+        {steps.map((step, index) => (
+          <Fragment key={step.id}>
+            {index > 0 && (
+              <span aria-hidden="true" className="h-px w-10 shrink-0 bg-border" />
+            )}
             <StepButton
               step={step}
-              number={numberOf(step.id)}
+              number={index + 1}
               active={step.id === activeId}
               onSelect={onSelect}
             />
-          </div>
+          </Fragment>
         ))}
       </div>
     </nav>
