@@ -5,6 +5,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { toast } from '@/components/ui/use-toast'
 import { ChartCard } from '@/features/export/ChartCard'
 import { TabularExportButtons } from '@/features/export/TabularExportButtons'
@@ -237,34 +245,36 @@ export function SensitivitySection() {
           </ChartCard>
 
           <div>
-            <h3 className="mb-2 text-sm font-semibold">Матриця стабільності p_i(k) (таблиця)</h3>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left text-muted-foreground">
-                  <th className="py-2 pr-3 font-medium">Локація</th>
-                  {K_VALUES.map((k) => (
-                    <th key={k} className="py-2 pr-3 text-right font-medium">
-                      p_i({k})
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {sortedStability.map(({ locationId, perK }) => {
-                  const label = nameByLocationId[locationId] ?? `#${locationId}`
-                  return (
-                    <tr key={locationId} className="border-b last:border-b-0">
-                      <td className="py-2 pr-3">{label}</td>
-                      {K_VALUES.map((k) => (
-                        <td key={k} className="py-2 pr-3 text-right font-mono tabular-nums">
-                          {((perK[String(k)] ?? 0) * 100).toFixed(1)}%
-                        </td>
-                      ))}
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+            <h3 className="mb-2 text-sm font-semibold">Матриця стабільності</h3>
+            <div className="overflow-hidden rounded-md border border-border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Локація</TableHead>
+                    {K_VALUES.map((k) => (
+                      <TableHead key={k} className="text-right">
+                        p_i({k})
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sortedStability.map(({ locationId, perK }) => {
+                    const label = nameByLocationId[locationId] ?? `#${locationId}`
+                    return (
+                      <TableRow key={locationId}>
+                        <TableCell>{label}</TableCell>
+                        {K_VALUES.map((k) => (
+                          <TableCell key={k} className="text-right font-mono tabular-nums">
+                            {((perK[String(k)] ?? 0) * 100).toFixed(1)}%
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </div>
       )}
