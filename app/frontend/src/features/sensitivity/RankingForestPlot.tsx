@@ -5,13 +5,13 @@ import { getNivoTheme } from '@/lib/nivo-theme'
 import type { ConfidenceInterval } from './useSensitivity'
 
 interface RankingForestPlotProps {
-  // All locations, already ordered by mean C* descending (API contract).
+  // All locations, already ordered by deterministic rank (API contract).
   rankingIntervals: ConfidenceInterval[]
   nameByLocationId?: Record<number, string>
 }
 
 interface ForestDatum {
-  x: number // mean C*
+  x: number // deterministic C*
   y: number // row index, 0 = best
   lower: number
   upper: number
@@ -30,7 +30,7 @@ export function RankingForestPlot({ rankingIntervals, nameByLocationId }: Rankin
     {
       id: 'ranking',
       data: rankingIntervals.map<ForestDatum>((r, i) => ({
-        x: r.mean,
+        x: r.cstar,
         y: i,
         lower: r.lower,
         upper: r.upper,
@@ -101,7 +101,7 @@ export function RankingForestPlot({ rankingIntervals, nameByLocationId }: Rankin
             }}
           >
             <strong>{node.data.name}</strong>
-            <div>C̄* = {node.data.x.toFixed(4)}</div>
+            <div>C* = {node.data.x.toFixed(4)}</div>
             <div>
               95 % ДІ = [{node.data.lower.toFixed(4)}; {node.data.upper.toFixed(4)}]
             </div>

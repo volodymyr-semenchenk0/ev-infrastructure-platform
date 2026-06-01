@@ -11,7 +11,7 @@ const MAX_SERIES = 5
 
 interface ConvergenceChartProps {
   convergence: SensitivityResponse['convergence']
-  // Used only to pick and order the top-N locations by mean C*.
+  // Used only to pick and order the top-N locations by deterministic rank.
   rankingIntervals: ConfidenceInterval[]
   nameByLocationId?: Record<number, string>
 }
