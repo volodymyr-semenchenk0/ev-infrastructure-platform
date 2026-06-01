@@ -89,7 +89,7 @@ describe('SensitivitySection', () => {
     expect(screen.getByTestId('cstar-histogram')).toBeInTheDocument()
     expect(screen.getByTestId('forest-plot')).toBeInTheDocument()
     expect(screen.getByTestId('convergence-chart')).toBeInTheDocument()
-    expect(screen.getByText(/Матриця стабільності p_i\(k\) \(таблиця\)/)).toBeInTheDocument()
+    expect(screen.getByText('Матриця індексів прийнятності рангів')).toBeInTheDocument()
     mock.restore()
   })
 

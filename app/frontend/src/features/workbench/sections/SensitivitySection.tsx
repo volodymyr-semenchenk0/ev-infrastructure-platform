@@ -5,6 +5,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { toast } from '@/components/ui/use-toast'
 import { ChartCard } from '@/features/export/ChartCard'
 import { TabularExportButtons } from '@/features/export/TabularExportButtons'
@@ -39,6 +47,20 @@ export function SensitivitySection() {
   const form = useSensitivityForm()
   const mutation = useSensitivity()
 
+  // Stability table sort: by one of the p_i(k) columns, descending by default
+  // (most stable first). p_i(1) is the default — the rank-1 acceptability index.
+  const [sortK, setSortK] = useState<(typeof K_VALUES)[number]>(1)
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
+
+  const toggleSort = (k: (typeof K_VALUES)[number]) => {
+    if (k === sortK) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortK(k)
+      setSortDir('desc')
+    }
+  }
+
   // Which location's C* histogram to show. The selector lives in the chart
   // card header; null means "fall back to the top-ranked location".
   const [histLocationId, setHistLocationId] = useState<number | null>(null)
@@ -54,13 +76,25 @@ export function SensitivitySection() {
 
   const sortedStability = useMemo(() => {
     if (!sensitivity) return []
+    const key = String(sortK)
     return Object.entries(sensitivity.stabilityMatrix)
       .map(([idStr, perK]) => ({
         locationId: Number(idStr),
         perK: perK as Record<string, number>,
       }))
-      .sort((a, b) => (b.perK['1'] ?? 0) - (a.perK['1'] ?? 0))
-  }, [sensitivity])
+      .sort((a, b) => {
+        const primary = (a.perK[key] ?? 0) - (b.perK[key] ?? 0)
+        if (primary !== 0) return sortDir === 'asc' ? primary : -primary
+        // Tie-break by the remaining columns, narrowest band first (1 → 3 → 5),
+        // always descending so the more consistently stable location wins.
+        for (const tk of K_VALUES) {
+          if (tk === sortK) continue
+          const d = (b.perK[String(tk)] ?? 0) - (a.perK[String(tk)] ?? 0)
+          if (d !== 0) return d
+        }
+        return 0
+      })
+  }, [sensitivity, sortK, sortDir])
 
   const stabilityCsv = useMemo(() => {
     if (!sensitivity) return [] as ReadonlyArray<ReadonlyArray<string | number>>
@@ -171,23 +205,6 @@ export function SensitivitySection() {
 
       {sensitivity && (
         <div className="space-y-6 border-t pt-4">
-          <div className="flex justify-end">
-            <TabularExportButtons
-              csvRows={stabilityCsv}
-              jsonData={{
-                evaluationId,
-                params: {
-                  iterations: form.iterations,
-                  perturbation: form.perturbation,
-                },
-                seed: DEFAULT_SEED,
-                stabilityMatrix: sensitivity.stabilityMatrix,
-                confidenceIntervals: sensitivity.confidenceIntervals,
-              }}
-              filenameBase={filenameBase}
-            />
-          </div>
-
           <ChartCard
             title="Гістограма розподілу C*"
             filenameBase={`${filenameBase}-histogram`}
@@ -219,7 +236,7 @@ export function SensitivitySection() {
           </ChartCard>
 
           <ChartCard
-            title="Інтервали рангів за C* (forest-plot)"
+            title="Інтервали рангів за C*"
             filenameBase={`${filenameBase}-forest`}
           >
             <RankingForestPlot
@@ -237,34 +254,64 @@ export function SensitivitySection() {
           </ChartCard>
 
           <div>
-            <h3 className="mb-2 text-sm font-semibold">Матриця стабільності p_i(k) (таблиця)</h3>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left text-muted-foreground">
-                  <th className="py-2 pr-3 font-medium">Локація</th>
-                  {K_VALUES.map((k) => (
-                    <th key={k} className="py-2 pr-3 text-right font-medium">
-                      p_i({k})
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {sortedStability.map(({ locationId, perK }) => {
-                  const label = nameByLocationId[locationId] ?? `#${locationId}`
-                  return (
-                    <tr key={locationId} className="border-b last:border-b-0">
-                      <td className="py-2 pr-3">{label}</td>
-                      {K_VALUES.map((k) => (
-                        <td key={k} className="py-2 pr-3 text-right font-mono tabular-nums">
-                          {((perK[String(k)] ?? 0) * 100).toFixed(1)}%
-                        </td>
-                      ))}
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+            <h3 className="mb-2 text-sm font-semibold">Матриця індексів прийнятності рангів</h3>
+            <p className="mb-3 max-w-[600px] text-sm text-muted-foreground">
+              Індекс прийнятності рангів p_i(k) – частка прогонів Монте-Карло, у яких локація
+              потрапила до k найкращих за випадкових збурень ваг критеріїв. Значення, близьке до
+              100 %, свідчить про стійко високу позицію, близьке до 0 % – про нестабільну. Стовпці:
+              k = 1 – перше місце, k = 3 і k = 5 – входження до трьох і пʼяти найкращих.
+            </p>
+            <div className="overflow-hidden rounded-md border border-border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Локація</TableHead>
+                    {K_VALUES.map((k) => (
+                      <TableHead key={k} className="text-right">
+                        <button
+                          type="button"
+                          className="-mx-2 inline-flex items-center rounded px-2 py-1 hover:bg-accent"
+                          onClick={() => toggleSort(k)}
+                        >
+                          p_i({k})
+                        </button>
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sortedStability.map(({ locationId, perK }) => {
+                    const label = nameByLocationId[locationId] ?? `#${locationId}`
+                    return (
+                      <TableRow key={locationId}>
+                        <TableCell>{label}</TableCell>
+                        {K_VALUES.map((k) => (
+                          <TableCell key={k} className="text-right font-mono tabular-nums">
+                            {((perK[String(k)] ?? 0) * 100).toFixed(1)}%
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+            <div className="mt-3 flex justify-start">
+              <TabularExportButtons
+                csvRows={stabilityCsv}
+                jsonData={{
+                  evaluationId,
+                  params: {
+                    iterations: form.iterations,
+                    perturbation: form.perturbation,
+                  },
+                  seed: DEFAULT_SEED,
+                  stabilityMatrix: sensitivity.stabilityMatrix,
+                  confidenceIntervals: sensitivity.confidenceIntervals,
+                }}
+                filenameBase={filenameBase}
+              />
+            </div>
           </div>
         </div>
       )}

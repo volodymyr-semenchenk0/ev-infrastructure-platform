@@ -28,7 +28,7 @@ export function CstarHistogram({
   const edges = histogram.edgesByLocation[String(selectedLocationId)] ?? []
   const counts = histogram.countsByLocation[String(selectedLocationId)] ?? []
   const data: BinDatum[] = edges.slice(0, -1).map((edge, i) => ({
-    bin: edge.toFixed(3),
+    bin: edge.toFixed(4),
     count: counts[i] ?? 0,
   }))
 
@@ -86,9 +86,6 @@ export function CstarHistogram({
         axisLeft={{
           tickSize: 0,
           tickPadding: 8,
-          legend: 'Частота',
-          legendOffset: -44,
-          legendPosition: 'middle',
         }}
         axisBottom={{
           tickSize: 0,

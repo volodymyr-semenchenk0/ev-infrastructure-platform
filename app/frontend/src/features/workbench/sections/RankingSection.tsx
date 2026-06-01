@@ -68,7 +68,14 @@ export function RankingSection() {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-sm font-semibold">Ранжування (TOPSIS)</h3>
+      <h3 className="text-sm font-semibold">Ранжування локацій</h3>
+      <p className="max-w-[600px] text-sm text-muted-foreground">
+        Локації впорядковано за спаданням коефіцієнта близькості C*. Колір рядка (і піна на карті)
+        кодує відносну позицію в ранжуванні – верхню, середню чи нижню групу, а не абсолютну якість.
+        Позначка ≈ біля C* вказує на сусідні ранги з практично нерозрізнюваними значеннями. S+ –
+        відстань локації до позитивно-ідеального розвʼязку, S- – до негативно-ідеального; що менше S+
+        і більше S-, то вищий C*.
+      </p>
       <RankingMapEmbed />
       <div className="overflow-hidden rounded-md border border-border">
         <RankingTable
