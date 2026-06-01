@@ -6,6 +6,8 @@ import { DiffTable } from '@/features/comparison/DiffTable'
 import { GroupedBarChart } from '@/features/comparison/GroupedBarChart'
 import { SpearmanBadge } from '@/features/comparison/SpearmanBadge'
 import { useProfileComparison } from '@/features/comparison/useProfileComparison'
+import { ChartCard } from '@/features/export/ChartCard'
+import { TabularExportButtons } from '@/features/export/TabularExportButtons'
 import { useLocations } from '@/features/locations/useLocations'
 import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/store/session-store'
@@ -49,6 +51,22 @@ export function ComparisonSection() {
       })) ?? [],
     [data],
   )
+
+  const csvRows = useMemo<ReadonlyArray<ReadonlyArray<string | number>>>(() => {
+    if (!data) return []
+    return [
+      ['location_id', 'name', 'rank_a', 'rank_b', 'delta'],
+      ...data.comparison.pairwiseDifferences.map((d) => [
+        d.locationId,
+        nameByLocationId[d.locationId] ?? `#${d.locationId}`,
+        d.rankA,
+        d.rankB,
+        d.delta,
+      ]),
+    ]
+  }, [data, nameByLocationId])
+
+  const filenameBase = 'profile-comparison'
 
   return (
     <div className="space-y-4">
@@ -101,17 +119,41 @@ export function ComparisonSection() {
             </div>
           </div>
 
-          <div>
-            <h3 className="mb-2 text-sm font-semibold">Ранги локацій за профілями</h3>
+          <ChartCard
+            title="Ранги локацій за профілями"
+            filenameBase={`${filenameBase}-ranks`}
+          >
             <GroupedBarChart rankings={rankings} nameByLocationId={nameByLocationId} />
-          </div>
+          </ChartCard>
 
           <div>
             <h3 className="mb-2 text-sm font-semibold">Різниці рангів</h3>
-            <DiffTable
-              differences={data.comparison.pairwiseDifferences}
-              nameByLocationId={nameByLocationId}
-            />
+            <div className="overflow-hidden rounded-md border border-border">
+              <DiffTable
+                differences={data.comparison.pairwiseDifferences}
+                nameByLocationId={nameByLocationId}
+              />
+            </div>
+            <div className="mt-3 flex justify-start">
+              <TabularExportButtons
+                csvRows={csvRows}
+                jsonData={{
+                  profileA: {
+                    id: data.profileA.id,
+                    code: data.profileA.code,
+                    name: data.profileA.name,
+                  },
+                  profileB: {
+                    id: data.profileB.id,
+                    code: data.profileB.code,
+                    name: data.profileB.name,
+                  },
+                  spearmanRho: data.comparison.spearmanRho,
+                  pairwiseDifferences: data.comparison.pairwiseDifferences,
+                }}
+                filenameBase={filenameBase}
+              />
+            </div>
           </div>
         </div>
       )}
