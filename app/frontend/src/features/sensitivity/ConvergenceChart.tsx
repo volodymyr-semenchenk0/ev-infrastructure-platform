@@ -105,9 +105,6 @@ export function ConvergenceChart({
         axisLeft={{
           tickSize: 4,
           tickPadding: 6,
-          legend: 'Середнє C*',
-          legendPosition: 'middle',
-          legendOffset: -48,
           format: (v) => Number(v).toFixed(3),
         }}
         layers={['grid', 'markers', 'axes', 'areas', 'lines', 'mesh', HoverDot, EndLabels]}
