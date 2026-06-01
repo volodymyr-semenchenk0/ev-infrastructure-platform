@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/table'
 import { cn } from '@/lib/utils'
 
-import type { PairwiseDifference } from './useComparison'
+import type { PairwiseDifference } from './useProfileComparison'
 
 type SortKey = 'rankA' | 'rankB' | 'delta'
 type SortDir = 'asc' | 'desc'

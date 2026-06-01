@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, type ReactNode } from 'react'
 
 import { FullscreenMapOverlay } from '@/features/workbench/FullscreenMapOverlay'
 import { Stepper, type StepItem } from '@/features/workbench/Stepper'
+import { ComparisonSection } from '@/features/workbench/sections/ComparisonSection'
 import { MatrixSection } from '@/features/workbench/sections/MatrixSection'
 import { ProfileSection } from '@/features/workbench/sections/ProfileSection'
 import { RankingSection } from '@/features/workbench/sections/RankingSection'
@@ -10,10 +11,11 @@ import { WeightsSection } from '@/features/workbench/sections/WeightsSection'
 import { useSessionStore } from '@/store/session-store'
 import { useUiStore, type StepId } from '@/store/ui-store'
 
-// Single workbench page driven by a 4-step wizard: profile+matrix → FAHP
-// weights → TOPSIS ranking → Monte Carlo sensitivity. All step panels stay
-// mounted and inactive ones are hidden, so switching steps never discards their
-// state (e.g. uncommitted matrix edits, sensitivity form inputs).
+// Single workbench page driven by a 5-step wizard: profile+matrix → FAHP
+// weights → TOPSIS ranking → Monte Carlo sensitivity → profile comparison. All
+// step panels stay mounted and inactive ones are hidden, so switching steps
+// never discards their state (e.g. uncommitted matrix edits, sensitivity form
+// inputs). Sensitivity and comparison are detached analytical steps.
 
 export function HomePage() {
   const activeStep = useUiStore((s) => s.activeStep)
@@ -34,6 +36,9 @@ export function HomePage() {
       weights: weights !== null,
       ranking: ranking !== null,
       sensitivity: ranking !== null,
+      // Detached analytical step over the two standard profiles' default
+      // matrices; independent of the current session, so always reachable.
+      comparison: true,
     }),
     [weights, ranking],
   )
@@ -63,6 +68,16 @@ export function HomePage() {
       // Marked complete once the Monte Carlo run has produced a result.
       complete: sensitivity !== null,
       disabled: !enabled.sensitivity,
+    },
+    {
+      id: 'comparison',
+      label: 'Порівняння профілів',
+      // Analytical button-driven step: never auto-marked complete; its result
+      // lives in the query cache, not the session store.
+      complete: false,
+      disabled: !enabled.comparison,
+      // Higher-order scenario, set apart from the wizard flow by a divider.
+      detached: true,
     },
   ]
 
@@ -117,6 +132,9 @@ export function HomePage() {
           label="Аналіз чутливості (Монте-Карло)"
         >
           <SensitivitySection />
+        </StepPanel>
+        <StepPanel id="comparison" activeStep={activeStep} label="Порівняння профілів ОПР">
+          <ComparisonSection />
         </StepPanel>
       </div>
       {mapFullscreen && <FullscreenMapOverlay />}

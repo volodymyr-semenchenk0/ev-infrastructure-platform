@@ -1,8 +1,9 @@
 import { create } from 'zustand'
 
-// The workbench is a 4-step wizard. Steps 1-3 (setup → weights → ranking)
-// are the mandatory connected flow; sensitivity is a detached optional step.
-export type StepId = 'setup' | 'weights' | 'ranking' | 'sensitivity'
+// The workbench is a 5-step wizard. Steps 1-3 (setup → weights → ranking) are
+// the mandatory connected flow; sensitivity and comparison are detached
+// analytical steps, each reachable on its own.
+export type StepId = 'setup' | 'weights' | 'ranking' | 'sensitivity' | 'comparison'
 
 interface UiState {
   activeStep: StepId

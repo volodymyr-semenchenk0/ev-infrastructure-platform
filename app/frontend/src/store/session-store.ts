@@ -14,7 +14,7 @@ export interface SessionError {
   message: string
   // Optional source tag — handy for routing toasts back to the originating
   // accordion section in tasks 6-10.
-  source?: 'matrix' | 'fahp' | 'topsis' | 'sensitivity' | 'unknown'
+  source?: 'matrix' | 'fahp' | 'topsis' | 'sensitivity' | 'comparison' | 'unknown'
 }
 
 export interface SensitivityParams {
