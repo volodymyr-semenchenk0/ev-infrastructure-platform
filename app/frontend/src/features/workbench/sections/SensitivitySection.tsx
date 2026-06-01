@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Loader2, Play } from 'lucide-react'
+import { ArrowDown, ArrowUp, ArrowUpDown, Loader2, Play } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -47,6 +47,20 @@ export function SensitivitySection() {
   const form = useSensitivityForm()
   const mutation = useSensitivity()
 
+  // Stability table sort: by one of the p_i(k) columns, descending by default
+  // (most stable first). p_i(5) is the default since it is the widest top-k band.
+  const [sortK, setSortK] = useState<(typeof K_VALUES)[number]>(5)
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
+
+  const toggleSort = (k: (typeof K_VALUES)[number]) => {
+    if (k === sortK) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortK(k)
+      setSortDir('desc')
+    }
+  }
+
   // Which location's C* histogram to show. The selector lives in the chart
   // card header; null means "fall back to the top-ranked location".
   const [histLocationId, setHistLocationId] = useState<number | null>(null)
@@ -62,13 +76,17 @@ export function SensitivitySection() {
 
   const sortedStability = useMemo(() => {
     if (!sensitivity) return []
+    const key = String(sortK)
     return Object.entries(sensitivity.stabilityMatrix)
       .map(([idStr, perK]) => ({
         locationId: Number(idStr),
         perK: perK as Record<string, number>,
       }))
-      .sort((a, b) => (b.perK['1'] ?? 0) - (a.perK['1'] ?? 0))
-  }, [sensitivity])
+      .sort((a, b) => {
+        const diff = (a.perK[key] ?? 0) - (b.perK[key] ?? 0)
+        return sortDir === 'asc' ? diff : -diff
+      })
+  }, [sensitivity, sortK, sortDir])
 
   const stabilityCsv = useMemo(() => {
     if (!sensitivity) return [] as ReadonlyArray<ReadonlyArray<string | number>>
@@ -236,7 +254,22 @@ export function SensitivitySection() {
                     <TableHead>Локація</TableHead>
                     {K_VALUES.map((k) => (
                       <TableHead key={k} className="text-right">
-                        p_i({k})
+                        <button
+                          type="button"
+                          className="-mx-2 inline-flex items-center rounded px-2 py-1 hover:bg-accent"
+                          onClick={() => toggleSort(k)}
+                        >
+                          p_i({k})
+                          {sortK === k ? (
+                            sortDir === 'asc' ? (
+                              <ArrowUp className="ml-1 inline h-3 w-3" />
+                            ) : (
+                              <ArrowDown className="ml-1 inline h-3 w-3" />
+                            )
+                          ) : (
+                            <ArrowUpDown className="ml-1 inline h-3 w-3 opacity-50" />
+                          )}
+                        </button>
                       </TableHead>
                     ))}
                   </TableRow>
