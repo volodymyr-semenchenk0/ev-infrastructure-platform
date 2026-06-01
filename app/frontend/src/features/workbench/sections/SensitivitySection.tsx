@@ -246,7 +246,7 @@ export function SensitivitySection() {
           </ChartCard>
 
           <div>
-            <h3 className="mb-2 text-sm font-semibold">Матриця стабільності</h3>
+            <h3 className="mb-2 text-sm font-semibold">Матриця індексів прийнятності рангів</h3>
             <div className="overflow-hidden rounded-md border border-border">
               <Table>
                 <TableHeader>
