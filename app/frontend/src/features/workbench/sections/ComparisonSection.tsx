@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react'
-import { Loader2 } from 'lucide-react'
+import { HelpCircle, Loader2 } from 'lucide-react'
 
 import { DiffTable } from '@/features/comparison/DiffTable'
 import { GroupedBarChart } from '@/features/comparison/GroupedBarChart'
@@ -90,14 +90,20 @@ export function ComparisonSection() {
 
       {data && (
         <div className="space-y-6 border-t pt-4">
-          <div className="flex flex-wrap items-start gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <SpearmanBadge rho={data.comparison.spearmanRho} />
-            <div className="grid gap-1 text-sm">
-              <div>
-                <span className="font-medium">Профіль A:</span> {data.profileA.name}
-              </div>
-              <div>
-                <span className="font-medium">Профіль B:</span> {data.profileB.name}
+            <div className="rounded-lg border bg-muted/50 p-4">
+              <h4 className="mb-2 flex items-center gap-2 text-sm font-medium">
+                <HelpCircle className="h-4 w-4" aria-hidden="true" />
+                Профілі
+              </h4>
+              <div className="grid gap-1 text-sm">
+                <div>
+                  <span className="font-medium">Профіль A:</span> {data.profileA.name}
+                </div>
+                <div>
+                  <span className="font-medium">Профіль B:</span> {data.profileB.name}
+                </div>
               </div>
             </div>
           </div>
