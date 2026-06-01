@@ -69,7 +69,7 @@ export function RankingSection() {
   return (
     <div className="space-y-4">
       <h3 className="mb-2 text-sm font-semibold">Ранжування локацій</h3>
-      <p className="mb-2 max-w-[600px] text-sm text-muted-foreground">
+      <p className="mb-4 max-w-[600px] text-sm text-muted-foreground">
         Локації впорядковано за спаданням коефіцієнта близькості C*. Колір рядка (і піна на карті)
         кодує відносну позицію в ранжуванні – верхню, середню чи нижню групу, а не абсолютну якість.
         Позначка ≈ біля C* вказує на сусідні ранги з практично нерозрізнюваними значеннями. S+ –

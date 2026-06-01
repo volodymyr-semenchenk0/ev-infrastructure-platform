@@ -108,7 +108,7 @@ export function ComparisonSection() {
 
           <div>
             <h3 className="mb-2 text-sm font-semibold">Зіставлення рангів за профілями</h3>
-            <p className="mb-2 max-w-[600px] text-sm text-muted-foreground">
+            <p className="mb-4 max-w-[600px] text-sm text-muted-foreground">
               Таблиця подає ранг кожної локації-кандидата у двох профілях ОПР і їх різницю Δ = Ранг
               A − Ранг B. Відʼємне Δ (зелений) означає, що локацію вище оцінює профіль A –
               муніципалітет, додатне (червоний) – профіль B – інвестор, нуль – позиції в обох
