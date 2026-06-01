@@ -1,6 +1,3 @@
-import { useMemo, useState } from 'react'
-import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react'
-
 import {
   Table,
   TableBody,
@@ -12,9 +9,6 @@ import {
 import { cn } from '@/lib/utils'
 
 import type { PairwiseDifference } from './useProfileComparison'
-
-type SortKey = 'rankA' | 'rankB' | 'delta'
-type SortDir = 'asc' | 'desc'
 
 interface DiffTableProps {
   differences: PairwiseDifference[]
@@ -33,79 +27,27 @@ function formatDelta(delta: number): string {
 }
 
 export function DiffTable({ differences, nameByLocationId }: DiffTableProps) {
-  const [sortKey, setSortKey] = useState<SortKey>('rankA')
-  const [sortDir, setSortDir] = useState<SortDir>('asc')
-
-  const sorted = useMemo(() => {
-    const copy = [...differences]
-    copy.sort((a, b) => {
-      const diff = a[sortKey] - b[sortKey]
-      return sortDir === 'asc' ? diff : -diff
-    })
-    return copy
-  }, [differences, sortKey, sortDir])
-
-  const toggleSort = (key: SortKey) => {
-    if (key === sortKey) {
-      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
-    } else {
-      setSortKey(key)
-      setSortDir('asc')
-    }
-  }
-
-  const SortIcon = ({ active, dir }: { active: boolean; dir: SortDir }) => {
-    if (!active) return <ArrowUpDown className="ml-1 inline h-3 w-3 opacity-50" />
-    return dir === 'asc' ? (
-      <ArrowUp className="ml-1 inline h-3 w-3" />
-    ) : (
-      <ArrowDown className="ml-1 inline h-3 w-3" />
-    )
-  }
-
   return (
     <Table>
       <TableHeader>
         <TableRow>
+          <TableHead className="w-12">#</TableHead>
           <TableHead>Локація</TableHead>
-          <TableHead className="w-24">
-            <button
-              type="button"
-              className="-mx-2 inline-flex items-center rounded px-2 py-1 hover:bg-accent"
-              onClick={() => toggleSort('rankA')}
-            >
-              Ранг A
-              <SortIcon active={sortKey === 'rankA'} dir={sortDir} />
-            </button>
-          </TableHead>
-          <TableHead className="w-24">
-            <button
-              type="button"
-              className="-mx-2 inline-flex items-center rounded px-2 py-1 hover:bg-accent"
-              onClick={() => toggleSort('rankB')}
-            >
-              Ранг B
-              <SortIcon active={sortKey === 'rankB'} dir={sortDir} />
-            </button>
-          </TableHead>
-          <TableHead className="w-24" title="Δ = rankA − rankB (від'ємне — B краще)">
-            <button
-              type="button"
-              className="-mx-2 inline-flex items-center rounded px-2 py-1 hover:bg-accent"
-              onClick={() => toggleSort('delta')}
-            >
-              Δ
-              <SortIcon active={sortKey === 'delta'} dir={sortDir} />
-            </button>
+          <TableHead className="w-44">Ранг за профілем A</TableHead>
+          <TableHead className="w-44">Ранг за профілем B</TableHead>
+          <TableHead
+            className="w-36"
+            title="Різниця рангів за профілями A і B. Відʼємне значення означає, що профіль B оцінює локацію вище"
+          >
+            Різниця рангів
           </TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {sorted.map((row) => (
+        {differences.map((row, index) => (
           <TableRow key={row.locationId}>
-            <TableCell>
-              {nameByLocationId?.[row.locationId] ?? `#${row.locationId}`}
-            </TableCell>
+            <TableCell className="font-mono text-muted-foreground">{index + 1}</TableCell>
+            <TableCell>{nameByLocationId?.[row.locationId] ?? `#${row.locationId}`}</TableCell>
             <TableCell className="font-mono">{row.rankA}</TableCell>
             <TableCell className="font-mono">{row.rankB}</TableCell>
             <TableCell
