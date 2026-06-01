@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/table'
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { rankTier } from '@/lib/rank-tier'
 
 export interface RankingRow {
   locationId: number
@@ -32,10 +33,41 @@ interface RankingTableProps {
   onRowClick?: (locationId: number) => void
 }
 
-function rankBgClass(rank: number, total: number): string {
-  if (rank <= 3) return 'bg-green-50 dark:bg-green-950/30'
-  if (rank > total - 4) return 'bg-red-50 dark:bg-red-950/30'
-  return ''
+// Light row tints — same quartile tier as the map pins (colorByRank) but far
+// less saturated so the table stays readable.
+function rankTierBgClass(rank: number, total: number): string {
+  switch (rankTier(rank, total)) {
+    case 'top':
+      return 'bg-green-50 dark:bg-green-950/20'
+    case 'mid':
+      return 'bg-amber-50 dark:bg-amber-950/20'
+    case 'bottom':
+      return 'bg-red-50 dark:bg-red-950/20'
+    default:
+      return ''
+  }
+}
+
+// A pair of adjacent ranks whose C* differ by less than this fraction of the
+// C* spread is flagged as practically indistinguishable.
+const NEAR_TIE_REL_EPS = 0.02
+
+// Location ids whose C* is within NEAR_TIE_REL_EPS of an adjacent rank.
+function findNearTies(rows: RankingRow[]): Set<number> {
+  const tied = new Set<number>()
+  if (rows.length < 2) return tied
+  const byRank = [...rows].sort((a, b) => a.rank - b.rank)
+  const values = byRank.map((r) => r.closeness)
+  const range = Math.max(...values) - Math.min(...values)
+  if (range <= 0) return tied
+  const eps = NEAR_TIE_REL_EPS * range
+  for (let i = 0; i < byRank.length - 1; i++) {
+    if (Math.abs(byRank[i].closeness - byRank[i + 1].closeness) < eps) {
+      tied.add(byRank[i].locationId)
+      tied.add(byRank[i + 1].locationId)
+    }
+  }
+  return tied
 }
 
 export function RankingTable({
@@ -45,6 +77,8 @@ export function RankingTable({
 }: RankingTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>('rank')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
+
+  const tiedIds = useMemo(() => findNearTies(rows), [rows])
 
   const sorted = useMemo(() => {
     const copy = [...rows]
@@ -131,7 +165,7 @@ export function RankingTable({
                   : undefined
               }
               className={cn(
-                rankBgClass(row.rank, rows.length),
+                rankTierBgClass(row.rank, rows.length),
                 interactive && 'cursor-pointer hover:bg-accent/40',
                 isSelected && 'outline outline-2 -outline-offset-1 outline-primary',
               )}
@@ -141,9 +175,22 @@ export function RankingTable({
               </TableCell>
               <TableCell>{row.name}</TableCell>
               <TableCell className="text-muted-foreground">
-                {row.district ?? '—'}
+                {row.district ?? '–'}
               </TableCell>
-              <TableCell className="font-mono">{row.closeness.toFixed(4)}</TableCell>
+              <TableCell className="font-mono">
+                <span className="inline-flex items-center gap-1">
+                  {row.closeness.toFixed(4)}
+                  {tiedIds.has(row.locationId) && (
+                    <span
+                      className="cursor-help text-amber-600 dark:text-amber-400"
+                      title="C* практично нерозрізнюваний із сусіднім рангом (різниця менша за 2 % діапазону C*)"
+                      aria-label="практично нерозрізнюваний ранг"
+                    >
+                      ≈
+                    </span>
+                  )}
+                </span>
+              </TableCell>
               <TableCell className="font-mono text-muted-foreground">
                 {row.sPlus.toFixed(4)}
               </TableCell>
