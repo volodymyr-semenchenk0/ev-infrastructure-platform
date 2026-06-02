@@ -14,6 +14,7 @@ in the matrix editor.
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from typing import Protocol
 
 from schemas.evaluation import FuzzyNumber
@@ -117,7 +118,7 @@ class _CriterionLike(Protocol):
 
 def build_default_pairwise_matrix(
     profile_code: str,
-    criteria: list[_CriterionLike],
+    criteria: Sequence[_CriterionLike],
 ) -> list[list[FuzzyNumber]] | None:
     """Build the n×n default Ã for `profile_code` ordered by `criteria`.
 
