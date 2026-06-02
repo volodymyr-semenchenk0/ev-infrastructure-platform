@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 600" font-family="DejaVu Sans, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#000"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1000" height="600" fill="#ffffff"/>
+
+  <!-- Зовнішня рамка -->
+  <rect x="15" y="15" width="970" height="570" fill="none" stroke="#000" stroke-width="2"/>
+
+  <!-- Шапка -->
+  <text x="35" y="56" font-size="22" fill="#000">Назва системи</text>
+  <text x="965" y="56" font-size="20" fill="#000" text-anchor="end">Перемикач ролі (ОПР / Адміністратор)</text>
+  <line x1="15" y1="80" x2="985" y2="80" stroke="#000" stroke-width="2"/>
+
+  <!-- Покроковий індикатор -->
+  <text x="35" y="108" font-size="15" fill="#000">Покроковий індикатор</text>
+
+  <!-- Крок 1 -->
+  <rect x="35" y="120" width="150" height="58" rx="10" fill="none" stroke="#000" stroke-width="1.5"/>
+  <text x="110" y="145" font-size="14" fill="#000" text-anchor="middle">1. Профіль</text>
+  <text x="110" y="164" font-size="14" fill="#000" text-anchor="middle">і матриця</text>
+  <!-- Крок 2 -->
+  <rect x="205" y="120" width="150" height="58" rx="10" fill="none" stroke="#000" stroke-width="1.5"/>
+  <text x="280" y="145" font-size="14" fill="#000" text-anchor="middle">2. Ваги</text>
+  <text x="280" y="164" font-size="14" fill="#000" text-anchor="middle">(FAHP)</text>
+  <!-- Крок 3 -->
+  <rect x="375" y="120" width="150" height="58" rx="10" fill="none" stroke="#000" stroke-width="1.5"/>
+  <text x="450" y="145" font-size="14" fill="#000" text-anchor="middle">3. Ранжування</text>
+  <text x="450" y="164" font-size="14" fill="#000" text-anchor="middle">(TOPSIS)</text>
+  <!-- Крок 4 -->
+  <rect x="545" y="120" width="150" height="58" rx="10" fill="none" stroke="#000" stroke-width="1.5"/>
+  <text x="620" y="145" font-size="14" fill="#000" text-anchor="middle">4. Чутливість</text>
+  <text x="620" y="164" font-size="14" fill="#000" text-anchor="middle">(Монте-Карло)</text>
+
+  <!-- Стрілки переходів -->
+  <line x1="186" y1="149" x2="203" y2="149" stroke="#000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="356" y1="149" x2="373" y2="149" stroke="#000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="526" y1="149" x2="543" y2="149" stroke="#000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Роздільник обов'язкових кроків і окремого аналізу -->
+  <line x1="722" y1="120" x2="722" y2="178" stroke="#000" stroke-width="1" stroke-dasharray="4 4"/>
+
+  <!-- Окремий крок -->
+  <rect x="745" y="120" width="220" height="58" rx="10" fill="none" stroke="#000" stroke-width="1.5"/>
+  <text x="855" y="145" font-size="14" fill="#000" text-anchor="middle">5. Порівняння профілів</text>
+  <text x="855" y="164" font-size="14" fill="#000" text-anchor="middle">(окремий крок)</text>
+
+  <!-- Робоча область -->
+  <rect x="35" y="205" width="930" height="355" fill="none" stroke="#000" stroke-width="1.5"/>
+  <text x="500" y="385" font-size="20" fill="#000" text-anchor="middle">Робоча область активного кроку</text>
+</svg>
