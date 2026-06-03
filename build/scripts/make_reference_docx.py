@@ -1,168 +1,348 @@
+#!/usr/bin/env python3
 """
-Produce build/reference.docx for pandoc.
+Generate reference.docx for pandoc with coursework-compliant styles.
 
-CRITICAL: must base on pandoc's DEFAULT reference doc, not a fresh document.
-Why: pandoc uses pStyle "Compact" inside table cells and tblStyle "Table" for
-tables. If those styles are missing, tables collapse to a single column.
+Starts from pandoc's built-in reference.docx (ensures Table/Compact styles
+exist so tables do not collapse in Word), then patches typography and layout.
 
-Generate pandoc's default and patch it:
-  pandoc -o /tmp/ref_base.docx --print-default-data-file=reference.docx
+Usage (from repo root):
+    REPO_ROOT=<path> OUT=<path> python3 build/scripts/make_reference_docx.py
 """
-import zipfile, shutil, re, os, subprocess, sys
+import os
+import subprocess
+import tempfile
+from pathlib import Path
 
-OUT = os.environ.get("OUT", "build/reference.docx")
-BASE = "/tmp/_pandoc_ref_base.docx"
+from docx import Document
+from docx.shared import Mm, Twips
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.style import WD_STYLE_TYPE
+from docx.oxml.ns import qn
+from docx.oxml import OxmlElement
 
-# Get pandoc default reference
-subprocess.run(["pandoc", "--print-default-data-file=reference.docx"],
-               stdout=open(BASE, "wb"), check=True)
+ROOT = Path(os.environ.get("REPO_ROOT", Path(__file__).parent.parent.parent))
+OUT  = Path(os.environ.get("OUT",       ROOT / "build" / "reference.docx"))
 
-with zipfile.ZipFile(BASE) as z:
-    styles = z.open("word/styles.xml").read().decode()
-    doc_xml = z.open("word/document.xml").read().decode()
+# ── Typography constants ─────────────────────────────────────────────────────
+FONT      = "Times New Roman Cyr"
+BODY_PT   = 14
+TABLE_PT  = 12
 
-# Patch styles ---------------------------------------------------------------
+# Geometry helpers (all Word measurements in twips: 1 in = 1440 twips)
+_MM = 1440 / 25.4
 
-# Normal: Times New Roman 14pt, 1.5 spacing, justify, indent 1.27cm (720 twips)
-NORMAL_NEW = '''<w:style w:type="paragraph" w:default="1" w:styleId="Normal">
-    <w:name w:val="Normal"/>
-    <w:qFormat/>
-    <w:pPr>
-      <w:spacing w:line="360" w:lineRule="auto"/>
-      <w:ind w:firstLine="720"/>
-      <w:jc w:val="both"/>
-    </w:pPr>
-    <w:rPr>
-      <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/>
-      <w:sz w:val="28"/>
-      <w:szCs w:val="28"/>
-    </w:rPr>
-  </w:style>'''
-styles = re.sub(r'<w:style w:type="paragraph" w:default="1" w:styleId="Normal">.*?</w:style>',
-                NORMAL_NEW, styles, count=1, flags=re.DOTALL)
+def _mm(v: float) -> int:  return int(round(v * _MM))
+def _pt(v: float) -> int:  return int(v * 20)   # twentieths-of-a-point (spacing)
+def _hp(v: float) -> int:  return int(v * 2)    # half-points (font sz)
 
-# Compact (used by pandoc for table cells): no extra spacing, no first-line indent
-COMPACT_NEW = '''<w:style w:type="paragraph" w:customStyle="1" w:styleId="Compact">
-    <w:name w:val="Compact"/>
-    <w:basedOn w:val="Normal"/>
-    <w:qFormat/>
-    <w:pPr>
-      <w:spacing w:before="0" w:after="0" w:line="240" w:lineRule="auto"/>
-      <w:ind w:firstLine="0"/>
-      <w:jc w:val="left"/>
-    </w:pPr>
-    <w:rPr>
-      <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/>
-      <w:sz w:val="24"/>
-    </w:rPr>
-  </w:style>'''
-styles = re.sub(r'<w:style w:type="paragraph" w:customStyle="1" w:styleId="Compact">.*?</w:style>',
-                COMPACT_NEW, styles, count=1, flags=re.DOTALL)
+# Page A4 + margins
+PAGE_W = _mm(210)   # 11906
+PAGE_H = _mm(297)   # 16838
+MAR_L  = _mm(25)    # 1417
+MAR_R  = _mm(15)    #  850
+MAR_T  = _mm(20)    # 1134
+MAR_B  = _mm(20)    # 1134
 
-# Table style — borders all around + insideH/V
-TABLE_NEW = '''<w:style w:type="table" w:default="1" w:styleId="Table">
-    <w:name w:val="Table"/>
-    <w:basedOn w:val="TableNormal"/>
-    <w:qFormat/>
-    <w:tblPr>
-      <w:tblInd w:w="0" w:type="dxa"/>
-      <w:tblBorders>
-        <w:top w:val="single" w:sz="4" w:space="0" w:color="000000"/>
-        <w:left w:val="single" w:sz="4" w:space="0" w:color="000000"/>
-        <w:bottom w:val="single" w:sz="4" w:space="0" w:color="000000"/>
-        <w:right w:val="single" w:sz="4" w:space="0" w:color="000000"/>
-        <w:insideH w:val="single" w:sz="4" w:space="0" w:color="000000"/>
-        <w:insideV w:val="single" w:sz="4" w:space="0" w:color="000000"/>
-      </w:tblBorders>
-      <w:tblCellMar>
-        <w:top w:w="60" w:type="dxa"/>
-        <w:left w:w="108" w:type="dxa"/>
-        <w:bottom w:w="60" w:type="dxa"/>
-        <w:right w:w="108" w:type="dxa"/>
-      </w:tblCellMar>
-    </w:tblPr>
-  </w:style>'''
-styles = re.sub(r'<w:style w:type="table" w:default="1" w:styleId="Table">.*?</w:style>',
-                TABLE_NEW, styles, count=1, flags=re.DOTALL)
+# Paragraph indent 1.25 cm
+INDENT = _mm(1.25)  # 709
 
-# Headings — per methodology: H1 uppercase centered, H2/H3 normal case with indent
-HEADING1_NEW = '''<w:style w:type="paragraph" w:styleId="Heading1">
-    <w:name w:val="Heading 1"/>
-    <w:basedOn w:val="Normal"/>
-    <w:next w:val="Normal"/>
-    <w:qFormat/>
-    <w:pPr>
-      <w:spacing w:before="240" w:after="240" w:line="360" w:lineRule="auto"/>
-      <w:ind w:firstLine="0"/>
-      <w:jc w:val="center"/>
-      <w:outlineLvl w:val="0"/>
-    </w:pPr>
-    <w:rPr>
-      <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/>
-      <w:b/><w:caps/><w:sz w:val="28"/>
-    </w:rPr>
-  </w:style>'''
-HEADING2_NEW = '''<w:style w:type="paragraph" w:styleId="Heading2">
-    <w:name w:val="Heading 2"/>
-    <w:basedOn w:val="Normal"/>
-    <w:next w:val="Normal"/>
-    <w:qFormat/>
-    <w:pPr>
-      <w:spacing w:before="180" w:after="120" w:line="360" w:lineRule="auto"/>
-      <w:ind w:firstLine="720"/>
-      <w:jc w:val="left"/>
-      <w:outlineLvl w:val="1"/>
-    </w:pPr>
-    <w:rPr>
-      <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/>
-      <w:b/><w:sz w:val="28"/>
-    </w:rPr>
-  </w:style>'''
-HEADING3_NEW = '''<w:style w:type="paragraph" w:styleId="Heading3">
-    <w:name w:val="Heading 3"/>
-    <w:basedOn w:val="Normal"/>
-    <w:next w:val="Normal"/>
-    <w:qFormat/>
-    <w:pPr>
-      <w:spacing w:before="120" w:after="60" w:line="360" w:lineRule="auto"/>
-      <w:ind w:firstLine="720"/>
-      <w:jc w:val="left"/>
-      <w:outlineLvl w:val="2"/>
-    </w:pPr>
-    <w:rPr>
-      <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/>
-      <w:b/><w:sz w:val="28"/>
-    </w:rPr>
-  </w:style>'''
+# Line spacing
+LINE15 = 360  # 1.5× (auto)
+LINE10 = 240  # 1.0× (single)
 
-def upsert(s, sid, new):
-    pat = re.compile(rf'<w:style[^>]*w:styleId="{sid}"[^>]*>.*?</w:style>', re.DOTALL)
-    return pat.sub(new, s) if pat.search(s) else s.replace("</w:styles>", new + "\n</w:styles>")
+# ── Low-level XML helpers ────────────────────────────────────────────────────
 
-styles = upsert(styles, "Heading1", HEADING1_NEW)
-styles = upsert(styles, "Heading2", HEADING2_NEW)
-styles = upsert(styles, "Heading3", HEADING3_NEW)
+def _find(el, tag: str):
+    return el.find(qn(tag))
 
-# Page setup: A4 = 11906 × 16838 twips; margins per methodology
-# top=20mm=1134, right=15mm=850, bottom=20mm=1134, left=25mm=1417
-SECT_NEW = ('<w:sectPr>'
-            '<w:pgSz w:w="11906" w:h="16838"/>'
-            '<w:pgMar w:top="1134" w:right="850" w:bottom="1134" w:left="1417" '
-            'w:header="708" w:footer="708" w:gutter="0"/>'
-            '<w:cols w:space="708"/>'
-            '<w:docGrid w:linePitch="360"/>'
-            '</w:sectPr>')
-doc_xml = re.sub(r'<w:sectPr>.*?</w:sectPr>', SECT_NEW, doc_xml, flags=re.DOTALL)
 
-# Save patched docx
-os.makedirs(os.path.dirname(OUT), exist_ok=True)
-with zipfile.ZipFile(BASE) as zin, zipfile.ZipFile(OUT, 'w', zipfile.ZIP_DEFLATED) as zout:
-    for item in zin.infolist():
-        if item.filename == "word/styles.xml":
-            zout.writestr(item, styles)
-        elif item.filename == "word/document.xml":
-            zout.writestr(item, doc_xml)
-        else:
-            zout.writestr(item, zin.read(item.filename))
+def _ensure(el, tag: str):
+    child = _find(el, tag)
+    if child is None:
+        child = OxmlElement(tag)
+        el.append(child)
+    return child
 
-print(f"reference.docx saved: {OUT}  ({os.path.getsize(OUT)} bytes)")
+
+def _set(el, tag: str, **attrs):
+    """Ensure child tag exists and set all w:-namespaced attributes."""
+    child = _ensure(el, tag)
+    for k, v in attrs.items():
+        child.set(qn(k), str(v))
+    return child
+
+
+def _clear(el, tag: str):
+    for c in list(el.findall(qn(tag))):
+        el.remove(c)
+
+
+def _pPr(style_el):
+    pPr = _find(style_el, "w:pPr")
+    if pPr is None:
+        pPr = OxmlElement("w:pPr")
+        style_el.insert(0, pPr)
+    return pPr
+
+
+def _rPr(style_el):
+    rPr = _find(style_el, "w:rPr")
+    if rPr is None:
+        rPr = OxmlElement("w:rPr")
+        style_el.append(rPr)
+    return rPr
+
+
+# ── Style property setters ───────────────────────────────────────────────────
+
+def set_font(style_el, size_pt: int, bold=False, caps=False):
+    rPr = _rPr(style_el)
+    _set(rPr, "w:rFonts", **{
+        "w:ascii": FONT, "w:hAnsi": FONT,
+        "w:cs": FONT,    "w:eastAsia": FONT,
+    })
+    _set(rPr, "w:sz",   **{"w:val": str(_hp(size_pt))})
+    _set(rPr, "w:szCs", **{"w:val": str(_hp(size_pt))})
+    if bold:
+        _ensure(rPr, "w:b")
+        _ensure(rPr, "w:bCs")
+    else:
+        _clear(rPr, "w:b")
+        _clear(rPr, "w:bCs")
+    if caps:
+        _ensure(rPr, "w:caps")
+    else:
+        _clear(rPr, "w:caps")
+    # Remove formatting that should not be in body text
+    for tag in ("w:i", "w:iCs", "w:u", "w:strike", "w:color", "w:highlight"):
+        _clear(rPr, tag)
+
+
+def set_para(style_el,
+             align="both",
+             first_line=INDENT,
+             line=LINE15,
+             before=0,
+             after=0,
+             page_break=False,
+             keep_next=False):
+    pPr = _pPr(style_el)
+
+    _set(pPr, "w:jc", **{"w:val": align})
+
+    ind = _ensure(pPr, "w:ind")
+    ind.set(qn("w:left"), "0")
+    ind.attrib.pop(qn("w:hanging"), None)
+    ind.attrib.pop(qn("w:right"), None)
+    if first_line and first_line > 0:
+        ind.set(qn("w:firstLine"), str(first_line))
+    else:
+        ind.set(qn("w:firstLine"), "0")
+
+    sp = _ensure(pPr, "w:spacing")
+    sp.set(qn("w:before"),    str(before))
+    sp.set(qn("w:after"),     str(after))
+    sp.set(qn("w:line"),      str(line))
+    sp.set(qn("w:lineRule"),  "auto")
+    sp.attrib.pop(qn("w:beforeAutospacing"), None)
+    sp.attrib.pop(qn("w:afterAutospacing"),  None)
+
+    if page_break:
+        _ensure(pPr, "w:pageBreakBefore")
+    else:
+        _clear(pPr, "w:pageBreakBefore")
+
+    if keep_next:
+        _ensure(pPr, "w:keepNext")
+    else:
+        _clear(pPr, "w:keepNext")
+
+    _clear(pPr, "w:contextualSpacing")
+
+
+# ── Style accessor ───────────────────────────────────────────────────────────
+
+def _style(doc, name: str):
+    """Return existing style or add new paragraph style."""
+    for s in doc.styles:
+        if s.name == name:
+            return s
+    return doc.styles.add_style(name, WD_STYLE_TYPE.PARAGRAPH)
+
+
+# ── Per-style patches ────────────────────────────────────────────────────────
+
+def patch_normal(doc):
+    s = _style(doc, "Normal")
+    set_font(s.element, BODY_PT)
+    set_para(s.element, align="both", first_line=INDENT,
+             line=LINE15, before=0, after=0)
+
+
+def patch_heading1(doc):
+    """Chapter headings: UPPERCASE, centered, bold, page break before."""
+    s = _style(doc, "Heading 1")
+    set_font(s.element, BODY_PT, bold=True, caps=True)
+    set_para(s.element, align="center", first_line=0,
+             line=LINE15, before=0, after=_pt(12),
+             page_break=True, keep_next=True)
+
+
+def patch_heading2(doc):
+    """Subsection headings: bold, page break before, 36/24 pt spacing."""
+    s = _style(doc, "Heading 2")
+    set_font(s.element, BODY_PT, bold=True)
+    set_para(s.element, align="both", first_line=INDENT,
+             line=LINE15, before=_pt(36), after=_pt(24),
+             page_break=True, keep_next=True)
+
+
+def patch_heading3(doc):
+    """Point headings: bold, no page break, 24/12 pt spacing."""
+    s = _style(doc, "Heading 3")
+    set_font(s.element, BODY_PT, bold=True)
+    set_para(s.element, align="both", first_line=INDENT,
+             line=LINE15, before=_pt(24), after=_pt(12),
+             page_break=False, keep_next=True)
+
+
+def patch_compact(doc):
+    """
+    'Compact' is the style pandoc uses for table-cell paragraphs.
+    Without it table cells collapse to one column in Word/LibreOffice.
+    12 pt, single spacing, no first-line indent.
+    """
+    s = _style(doc, "Compact")
+    set_font(s.element, TABLE_PT)
+    set_para(s.element, align="both", first_line=0,
+             line=LINE10, before=0, after=0)
+
+
+def patch_table_paragraph(doc):
+    """Alternate table-cell style used in some pandoc versions."""
+    s = _style(doc, "Table Paragraph")
+    set_font(s.element, TABLE_PT)
+    set_para(s.element, align="both", first_line=0,
+             line=LINE10, before=0, after=0)
+
+
+def patch_caption(doc):
+    """
+    'Caption' style: used via {custom-style="Caption"} for figure captions.
+    Centered, no first-line indent, 14 pt, blank line above and below.
+    """
+    s = _style(doc, "Caption")
+    set_font(s.element, BODY_PT)
+    set_para(s.element, align="center", first_line=0,
+             line=LINE15, before=_pt(6), after=_pt(6))
+
+
+def add_custom_styles(doc):
+    """
+    Styles referenced via {custom-style="..."} in preprocessed markdown.
+
+    Figure        – image container: centered, no indent, blank line before.
+    TableCaption  – table caption above table: no indent, blank line before.
+    """
+    fig = _style(doc, "Figure")
+    set_font(fig.element, BODY_PT)
+    set_para(fig.element, align="center", first_line=0,
+             line=LINE15, before=_pt(6), after=0)
+
+    tc = _style(doc, "TableCaption")
+    set_font(tc.element, BODY_PT)
+    set_para(tc.element, align="both", first_line=0,
+             line=LINE15, before=_pt(6), after=0)
+
+
+# ── Page geometry ────────────────────────────────────────────────────────────
+
+def patch_page_setup(doc):
+    for section in doc.sections:
+        section.page_width     = Twips(PAGE_W)
+        section.page_height    = Twips(PAGE_H)
+        section.left_margin    = Twips(MAR_L)
+        section.right_margin   = Twips(MAR_R)
+        section.top_margin     = Twips(MAR_T)
+        section.bottom_margin  = Twips(MAR_B)
+        section.header_distance = Mm(10)
+        section.footer_distance = Mm(10)
+
+
+# ── Page number header ───────────────────────────────────────────────────────
+
+def add_page_number_header(doc):
+    """Right-aligned PAGE field in the header of every section."""
+    for section in doc.sections:
+        header = section.header
+
+        # Clear existing header content
+        for para in header.paragraphs:
+            para.clear()
+
+        para = header.paragraphs[0] if header.paragraphs else header.add_paragraph()
+        para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+
+        run = para.add_run()
+        r = run._r
+
+        def fld_char(kind: str):
+            e = OxmlElement("w:fldChar")
+            e.set(qn("w:fldCharType"), kind)
+            return e
+
+        instr = OxmlElement("w:instrText")
+        instr.set(qn("xml:space"), "preserve")
+        instr.text = " PAGE "
+
+        r.append(fld_char("begin"))
+        r.append(instr)
+        r.append(fld_char("separate"))
+        r.append(fld_char("end"))
+
+        # Apply font to the run
+        rPr = OxmlElement("w:rPr")
+        _set(rPr, "w:rFonts", **{"w:ascii": FONT, "w:hAnsi": FONT, "w:cs": FONT})
+        _set(rPr, "w:sz",   **{"w:val": str(_hp(BODY_PT))})
+        _set(rPr, "w:szCs", **{"w:val": str(_hp(BODY_PT))})
+        r.insert(0, rPr)
+
+
+# ── Entry point ──────────────────────────────────────────────────────────────
+
+def main():
+    print("Fetching pandoc built-in reference.docx...")
+    proc = subprocess.run(
+        ["pandoc", "--print-default-data-file", "reference.docx"],
+        capture_output=True, check=True,
+    )
+    with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as f:
+        f.write(proc.stdout)
+        tmp = Path(f.name)
+
+    doc = Document(str(tmp))
+    tmp.unlink(missing_ok=True)
+
+    print("Setting page geometry (A4, margins 25/15/20/20 mm)...")
+    patch_page_setup(doc)
+
+    print("Patching paragraph styles...")
+    patch_normal(doc)
+    patch_heading1(doc)
+    patch_heading2(doc)
+    patch_heading3(doc)
+    patch_compact(doc)
+    patch_table_paragraph(doc)
+    patch_caption(doc)
+    add_custom_styles(doc)
+
+    print("Adding page-number header...")
+    add_page_number_header(doc)
+
+    OUT.parent.mkdir(parents=True, exist_ok=True)
+    doc.save(str(OUT))
+    print(f"Saved: {OUT}")
+
+
+if __name__ == "__main__":
+    main()

@@ -36,9 +36,11 @@ echo "[3/4] Build master.md..."
 REPO_ROOT="$ROOT" python3 "$BUILD/scripts/build_master_md.py"
 
 echo "[4/4] pandoc master.md → $OUT_NAME ..."
+# -implicit_figures: disable auto-captioning from alt text; captions are
+# explicit paragraphs styled via custom-style="Caption" fenced divs.
 pandoc "$BUILD/master.md" \
     --reference-doc="$BUILD/reference.docx" \
-    -f markdown+tex_math_dollars+tex_math_single_backslash \
+    -f "markdown+tex_math_dollars+tex_math_single_backslash-implicit_figures" \
     -t docx \
     -o "$BUILD/$OUT_NAME"
 
