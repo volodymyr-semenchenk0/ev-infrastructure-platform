@@ -28,10 +28,13 @@ jobs:
       - name: Type-check math core (mypy --strict)
         run: mypy mcdm/ --strict
 
-      # pytest spins up a PostGIS container via testcontainers; the
-      # ubuntu-latest runner ships a working Docker daemon.
-      - name: Tests (pytest)
-        run: pytest
+      - name: Unit tests (mcdm)
+        run: pytest mcdm/tests/ -v
+
+      # Integration tests spin up a PostGIS container via testcontainers;
+      # ubuntu-latest ships a working Docker daemon.
+      - name: Integration tests
+        run: pytest tests/ -v
 
   frontend:
     runs-on: ubuntu-latest
