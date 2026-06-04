@@ -1,38 +1,31 @@
-# СППР – Вибір локацій EV-зарядних станцій
+# EV Infrastructure Platform
 
-Система підтримки прийняття рішень (СППР) для вибору оптимальних локацій
-електрозарядних станцій у Києві. Методи: FAHP + TOPSIS + Monte Carlo.
+Decision support system for selecting optimal EV charging station locations.
+Methods: FAHP + TOPSIS + Monte Carlo simulation.
 
-Курсова робота, спеціальність 124 «Системний аналіз», ЧНУ, 2026.
-
-## Швидкий старт
+## Quick start
 
 ```bash
 cp .env.example .env
 docker compose up --build
 ```
 
-| Сервіс | URL |
+| Service | URL |
 |--------|-----|
 | Backend API | http://localhost:8000 |
 | Swagger UI | http://localhost:8000/api/docs |
 | Frontend | http://localhost:5173 |
 | PostgreSQL | localhost:5432 |
 
-## Після клонування
+## Without Docker
 
 ```bash
 make install          # pip + npm + pre-commit hooks
+make dev-backend      # uvicorn main:app --reload  →  :8000
+make dev-frontend     # npm run dev                →  :5173
 ```
 
-## Без Docker
-
-```bash
-make dev-backend   # uvicorn main:app --reload  →  :8000
-make dev-frontend  # npm run dev                →  :5173
-```
-
-## Тести
+## Tests
 
 ```bash
 make all           # lint + typecheck + pytest
@@ -41,30 +34,23 @@ make lint          # ruff check
 make typecheck     # mypy mcdm/ --strict
 ```
 
-## Структура проекту
+## Project structure
 
 ```
 app/
 ├── backend/
-│   ├── mcdm/      # FAHP, TOPSIS, Monte Carlo (ізольований пакет)
-│   ├── api/       # FastAPI роутери
-│   ├── core/      # pydantic-settings, конфігурація
-│   ├── db/        # SQLAlchemy + GeoAlchemy2, Alembic
-│   ├── schemas/   # Pydantic DTO
-│   └── services/  # бізнес-логіка
-└── frontend/      # React 18 + Vite + MapLibre GL + Tailwind
-docs/              # документація курсової роботи (Розділи 1–3)
+│   ├── mcdm/      # FAHP, TOPSIS, Monte Carlo (isolated math core)
+│   ├── api/       # FastAPI routers
+│   ├── core/      # pydantic-settings, configuration
+│   ├── db/        # SQLAlchemy + GeoAlchemy2, Alembic migrations
+│   ├── schemas/   # Pydantic DTOs
+│   └── services/  # business logic
+└── frontend/      # React 18 + Vite + MapLibre GL + Tailwind CSS
 ```
 
-## Claude Code Skills
+## Stack
 
-Робочі скіли тепер постачаються плагінами Claude Code, а не `npx skills`.
-Увімкнені плагіни зафіксовано в `.claude/settings.json` (`enabledPlugins` +
-`extraKnownMarketplaces`, тож набір їде разом із репо):
-`superpowers`, `frontend-design`, `code-review`, `code-simplifier`, `context7`,
-`claude-md-management` (усі з marketplace `claude-plugins-official`). Встановлення —
-через `/plugin` у самому Claude Code; вони лежать у глобальному кеші
-`~/.claude/plugins/`, а не в репозиторії.
-
-Проєктні скіли (`engineering-*`, `coursework-*`) — реальні каталоги в
-`.claude/skills/` і зберігаються в git.
+Backend: Python 3.11, FastAPI, SQLAlchemy 2, GeoAlchemy2, asyncpg, Alembic
+Math: numpy, pandas, scipy, pymcdm
+Frontend: React 18, TypeScript 5, Vite, MapLibre GL, Zustand, TanStack Query
+DB: PostgreSQL 16 + PostGIS
