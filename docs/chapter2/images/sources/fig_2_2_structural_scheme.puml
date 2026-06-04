@@ -1,5 +1,6 @@
 @startuml
 ' Рис. 2.2. Структурна схема системи: трирівнева клієнт-серверна архітектура
+left to right direction
 skinparam shadowing false
 skinparam defaultFontName "Times New Roman"
 skinparam defaultFontSize 12
@@ -25,22 +26,22 @@ rectangle "Презентаційний рівень" as L1 {
 
 rectangle "Рівень бізнес-логіки" as L2 {
     rectangle "Компонент завантаження\nвхідних даних" as Loader
+    rectangle "Сервіс оркестрації" as Orch
     rectangle "Обчислювальне ядро" as Core {
         rectangle "Обчислення ваг\nкритеріїв (FAHP)" as M1
         rectangle "Ранжування\nлокацій (TOPSIS)" as M2
         rectangle "Аналіз чутливості\n(Монте-Карло)" as M3
     }
-    rectangle "Сервіс оркестрації" as Orch
 }
 
 rectangle "Рівень даних" as L3 {
     database "Сховище даних" as DB
 }
 
-EXT --> Loader : локації-кандидати
-Client --> Orch : запити та результати
-Orch --> Core : виклик з даними, результати
-Orch --> DB : читання даних, запис результатів
-Loader --> DB : запис завантажених даних
+EXT --> Loader
+Client --> Orch
+Orch --> Core
+Orch --> DB
+Loader --> DB
 
 @enduml

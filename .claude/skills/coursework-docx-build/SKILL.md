@@ -105,7 +105,11 @@ inline PlantUML source as a fenced code block. The build script strips
 ### 5. Pandoc-style `[@key]` citations need numeric conversion
 
 The MD files use Pandoc citation syntax `[@chang_applications_1996]`. The
-methodology requires `[N]` (number only) or `[N, p]` (number + page).
+methodology requires numeric citations. Format rules (з методички):
+- `,` — відділяє номер джерела від сторінки (або діапазону сторінок)
+- `;` — розділяє різні джерела всередині дужок
+- Приклад: `[16, 44; 18, 7-13]` — стор. 44 у джерелі №16, стор. 7–13 у джерелі №18
+- Без сторінки: `[N]`; кілька без сторінок: `[N1; N2]`
 Conversion is done by `build_master_md.py` using
 `outputs/coursework_build/citations_map.json` (mapping bibtex key → appearance
 number) and `page_lookups.json` (verified page numbers for SPECIFIC citations).

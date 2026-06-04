@@ -77,8 +77,10 @@ Applies preprocessing:
 - **`\tag{N.N}`:** strip and collect numbers; re-attach after each `$$` block
   as a right-aligned span.
 - **Math fixes:** `\!` → space, `\,` → space, `\mathbb{X}` → `\mathbf{X}`.
-- **Citations:** convert `[@key]` and `[@k1; @k2]` to `[N]` / `[N, p]` /
-  `[N1; N2]`.
+- **Citations:** convert `[@key]` and `[@k1; @k2]` to numeric form.
+  Format (з методички): `,` — відділяє джерело від сторінки/діапазону;
+  `;` — між різними джерелами. Приклад: `[16, 44; 18, 7-13]` — стор. 44
+  у джерелі №16, стор. 7–13 у джерелі №18. Без сторінки: `[N]` або `[N1; N2]`.
 - **Quotes:** alternate straight `"..."` → «...» outside of code blocks.
 
 ### 4. pandoc step

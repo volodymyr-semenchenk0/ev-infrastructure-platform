@@ -1,47 +1,64 @@
-<svg viewBox="0 0 1070 590" xmlns="http://www.w3.org/2000/svg">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1605 885">
 <defs>
-<marker id="arrow" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="9" refX="9" refY="3.5" orient="auto"><path d="M0,0 L9,3.5 L0,7 Z" fill="#333333"/></marker>
-<marker id="arrowP" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="9" refX="9" refY="3.5" orient="auto"><path d="M0,0 L9,3.5 L0,7 Z" fill="#6a2f9c"/></marker>
+<marker id="arrow" markerUnits="userSpaceOnUse" markerWidth="16.5" markerHeight="13.5" refX="13.5" refY="5.25" orient="auto"><path d="M0,0 L9,5.25 L0,10.5 Z" fill="#333333" /></marker>
+<marker id="arrowP" markerUnits="userSpaceOnUse" markerWidth="16.5" markerHeight="13.5" refX="13.5" refY="5.25" orient="auto"><path d="M0,0 L9,5.25 L0,10.5 Z" fill="#333333" /></marker>
 </defs>
-<rect width="1070" height="590" fill="white"/>
-<rect x="372" y="38" width="356" height="522" rx="12" fill="#fbfbfc" stroke="#5b6470" stroke-width="1.6" stroke-dasharray="6,5"/>
-<text x="550" y="58" font-family="Times New Roman, serif" font-size="13" fill="#44505c" text-anchor="middle" font-style="normal">Обчислювальна процедура FAHP–TOPSIS–MC</text>
-<line x1="396" y1="68" x2="704" y2="68" stroke="#d2d6db" stroke-width="1"/>
-<rect x="410" y="84" width="280" height="90" rx="7" fill="#f0f0f0" stroke="#4d4d4d" stroke-width="1.5"/>
-<text x="550" y="119" font-family="Times New Roman, serif" font-size="12.5" fill="#1a1a1a" text-anchor="middle" font-style="normal">FAHP – зважування критеріїв</text>
-<text x="550" y="142" font-family="Times New Roman, serif" font-size="11" fill="#555555" text-anchor="middle" font-style="normal">метод Баклі, формули (1.3)–(1.9)</text>
-<rect x="410" y="224" width="280" height="90" rx="7" fill="#f0f0f0" stroke="#4d4d4d" stroke-width="1.5"/>
-<text x="550" y="259" font-family="Times New Roman, serif" font-size="12.5" fill="#1a1a1a" text-anchor="middle" font-style="normal">TOPSIS – ранжування альтернатив</text>
-<text x="550" y="282" font-family="Times New Roman, serif" font-size="11" fill="#555555" text-anchor="middle" font-style="normal">формули (1.10)–(1.14)</text>
-<rect x="410" y="364" width="280" height="180" rx="7" fill="#f0f0f0" stroke="#4d4d4d" stroke-width="1.5"/>
-<text x="550" y="390" font-family="Times New Roman, serif" font-size="12.5" fill="#1a1a1a" text-anchor="middle" font-style="normal">Монте-Карло – аналіз чутливості</text>
-<text x="550" y="409" font-family="Times New Roman, serif" font-size="11" fill="#555555" text-anchor="middle" font-style="normal">формули (1.15)–(1.17)</text>
-<rect x="432" y="420" width="236" height="112" rx="9" fill="#f3eef8" stroke="#6a2f9c" stroke-width="1.4" stroke-dasharray="5,4"/>
-<text x="474.1" y="438" font-family="Times New Roman, serif" font-size="11.5" fill="#6a2f9c" text-anchor="start"><tspan dy="0.00" font-size="11.50">Внутрішній цикл за </tspan><tspan dy="0.00" font-size="11.50" font-style="italic">t</tspan><tspan dy="0.00" font-size="11.50"> = 1, …, </tspan><tspan dy="0.00" font-size="11.50" font-style="italic">N</tspan></text>
-<rect x="470" y="452" width="160" height="44" rx="6" fill="#e4d8ef" stroke="#6a2f9c" stroke-width="1.4"/>
-<text x="550" y="479" font-family="Times New Roman, serif" font-size="11" fill="#1a1a1a" text-anchor="middle" font-style="normal">Повторний запуск TOPSIS</text>
-<path d="M630,484 L651,484 L651,464 L631,464" fill="none" stroke="#6a2f9c" stroke-width="1.6" marker-end="url(#arrowP)"/>
-<text x="531.9" y="520" font-family="Times New Roman, serif" font-size="10" fill="#6a2f9c" text-anchor="start"><tspan dy="0.00" font-size="10.00" font-style="italic">t</tspan><tspan dy="0.00" font-size="10.00"> ← </tspan><tspan dy="0.00" font-size="10.00" font-style="italic">t</tspan><tspan dy="0.00" font-size="10.00"> + 1</tspan></text>
-<line x1="550" y1="174" x2="550" y2="224" stroke="#333333" stroke-width="1.7" marker-end="url(#arrow)"/>
-<text x="562" y="204" font-family="Times New Roman, serif" font-size="11" fill="#1a1a1a" text-anchor="start"><tspan dy="0.00" font-size="11.00">вектор ваг </tspan><tspan dy="0.00" font-size="11.00" font-style="italic">W</tspan></text>
-<line x1="550" y1="314" x2="550" y2="364" stroke="#333333" stroke-width="1.7" marker-end="url(#arrow)"/>
-<text x="562" y="344" font-family="Times New Roman, serif" font-size="11" fill="#1a1a1a" text-anchor="start" font-style="normal">рангова функція TOPSIS</text>
-<rect x="40" y="77" width="270" height="104" rx="8" fill="#e8eef6" stroke="#1f4e79" stroke-width="1.7"/>
-<text x="175.0" y="110" font-family="Times New Roman, serif" font-size="11.5" fill="#1a1a1a" text-anchor="middle" font-style="normal">Експертні попарні</text>
-<text x="175.0" y="130" font-family="Times New Roman, serif" font-size="11.5" fill="#1a1a1a" text-anchor="middle" font-style="normal">порівняння критеріїв</text>
-<text x="175.0" y="150" font-family="Times New Roman, serif" font-size="11.5" fill="#1a1a1a" text-anchor="middle" font-style="normal">за нечіткою шкалою Сааті</text>
-<rect x="40" y="229" width="270" height="80" rx="8" fill="#e8eef6" stroke="#1f4e79" stroke-width="1.7"/>
-<text x="129.7" y="263" font-family="Times New Roman, serif" font-size="11.5" fill="#1a1a1a" text-anchor="start"><tspan dy="0.00" font-size="11.50">Матриця рішень </tspan><tspan dy="0.00" font-size="11.50" font-style="italic">X</tspan></text>
-<text x="175.0" y="285" font-family="Times New Roman, serif" font-size="11" fill="#555555" text-anchor="middle" font-style="normal">(локації × критерії)</text>
-<line x1="310" y1="129.0" x2="410" y2="129.0" stroke="#333333" stroke-width="1.7" marker-end="url(#arrow)"/>
-<line x1="310" y1="269.0" x2="410" y2="269.0" stroke="#333333" stroke-width="1.7" marker-end="url(#arrow)"/>
-<rect x="790" y="223" width="240" height="92" rx="8" fill="#e5f0e8" stroke="#2e7d32" stroke-width="1.7"/>
-<text x="910.0" y="261" font-family="Times New Roman, serif" font-size="11.5" fill="#1a1a1a" text-anchor="middle" font-style="normal">Ранжування локацій</text>
-<text x="836.7" y="283" font-family="Times New Roman, serif" font-size="11.5" fill="#1a1a1a" text-anchor="start"><tspan dy="0.00" font-size="11.50">за коефіцієнтом близькості </tspan><tspan dy="0.00" font-size="11.50" font-style="italic">C</tspan><tspan dy="-4.20" font-size="8.20">*</tspan></text>
-<rect x="790" y="404" width="240" height="100" rx="8" fill="#e5f0e8" stroke="#2e7d32" stroke-width="1.7"/>
-<text x="910.0" y="444" font-family="Times New Roman, serif" font-size="11.5" fill="#1a1a1a" text-anchor="middle" font-style="normal">Індекси прийнятності рангів</text>
-<text x="870.8" y="466" font-family="Times New Roman, serif" font-size="11.5" fill="#1a1a1a" text-anchor="start"><tspan dy="0.00" font-size="11.50" font-style="italic">p</tspan><tspan dy="3.40" font-size="8.20" font-style="italic">i</tspan><tspan dy="-3.40" font-size="11.50">(</tspan><tspan dy="0.00" font-size="11.50" font-style="italic">k</tspan><tspan dy="0.00" font-size="11.50">),   </tspan><tspan dy="0.00" font-size="11.50" font-style="italic">k</tspan><tspan dy="0.00" font-size="11.50"> = 1, 3, 5</tspan></text>
-<text x="910.0" y="487" font-family="Times New Roman, serif" font-size="10" fill="#555555" text-anchor="middle" font-style="normal">(групи з 1, 3, 5 найкращих)</text>
-<line x1="690" y1="269.0" x2="790" y2="269.0" stroke="#333333" stroke-width="1.7" marker-end="url(#arrow)"/>
-<line x1="690" y1="454.0" x2="790" y2="454.0" stroke="#333333" stroke-width="1.7" marker-end="url(#arrow)"/>
+<rect width="1605" height="885" fill="white"/>
+
+<!-- outer dashed container -->
+<rect x="558" y="57" width="534" height="783" rx="18" fill="#ffffff" stroke="#5b6470" stroke-width="2.4" stroke-dasharray="9,7.5"/>
+
+<!-- FAHP box -->
+<rect x="615" y="126" width="420" height="135" rx="10.5" fill="#ffffff" stroke="#4d4d4d" stroke-width="2.25"/>
+<text x="825" y="203" font-family="Times New Roman, serif" font-size="25" fill="#1a1a1a" text-anchor="middle">FAHP &#8211; зважування критеріїв</text>
+
+<!-- TOPSIS box (2 lines) -->
+<rect x="615" y="336" width="420" height="135" rx="10.5" fill="#ffffff" stroke="#4d4d4d" stroke-width="2.25"/>
+<text x="825" y="379" font-family="Times New Roman, serif" font-size="25" fill="#1a1a1a" text-anchor="middle">TOPSIS &#8211; ранжування</text>
+<text x="825" y="412" font-family="Times New Roman, serif" font-size="25" fill="#1a1a1a" text-anchor="middle">альтернатив</text>
+
+<!-- MC box (2 lines) -->
+<rect x="615" y="546" width="420" height="270" rx="10.5" fill="#ffffff" stroke="#4d4d4d" stroke-width="2.25"/>
+<text x="825" y="577" font-family="Times New Roman, serif" font-size="25" fill="#1a1a1a" text-anchor="middle">Монте-Карло &#8211;</text>
+<text x="825" y="610" font-family="Times New Roman, serif" font-size="25" fill="#1a1a1a" text-anchor="middle">аналіз чутливості</text>
+
+<!-- inner loop dashed -->
+<rect x="648" y="630" width="354" height="168" rx="13.5" fill="#ffffff" stroke="#888888" stroke-width="2.1" stroke-dasharray="7.5,6"/>
+<text x="825" y="657" font-family="Times New Roman, serif" font-size="20" fill="#333333" text-anchor="middle">Внутрішній цикл за t = 1, ..., N</text>
+<rect x="705" y="678" width="240" height="66" rx="9" fill="#ffffff" stroke="#888888" stroke-width="2.1"/>
+<text x="825" y="718.5" font-family="Times New Roman, serif" font-size="18" fill="#1a1a1a" text-anchor="middle">Повторний запуск TOPSIS</text>
+<path d="M945,726 L976.5,726 L976.5,696 L946.5,696" fill="none" stroke="#888888" stroke-width="2.4" marker-end="url(#arrowP)"/>
+<text x="800" y="780" font-family="Times New Roman, serif" font-size="19" fill="#333333" text-anchor="middle">t &#8592; t + 1</text>
+
+<!-- inter-box arrows and labels -->
+<line x1="825" y1="261" x2="825" y2="336" stroke="#333333" stroke-width="2.55" marker-end="url(#arrow)"/>
+<text x="843" y="306" font-family="Times New Roman, serif" font-size="21" fill="#1a1a1a" text-anchor="start">вектор ваг W</text>
+<line x1="825" y1="471" x2="825" y2="546" stroke="#333333" stroke-width="2.55" marker-end="url(#arrow)"/>
+<text x="843" y="516" font-family="Times New Roman, serif" font-size="21" fill="#1a1a1a" text-anchor="start">рангова функція TOPSIS</text>
+
+<!-- left input boxes -->
+<rect x="60" y="115.5" width="405" height="156" rx="12" fill="#ffffff" stroke="#888888" stroke-width="2.55"/>
+<text x="262.5" y="165" font-family="Times New Roman, serif" font-size="23" fill="#1a1a1a" text-anchor="middle">Експертні попарні</text>
+<text x="262.5" y="196" font-family="Times New Roman, serif" font-size="23" fill="#1a1a1a" text-anchor="middle">порівняння критеріїв</text>
+<text x="262.5" y="227" font-family="Times New Roman, serif" font-size="23" fill="#1a1a1a" text-anchor="middle">за нечіткою шкалою Сааті</text>
+
+<rect x="60" y="343.5" width="405" height="120" rx="12" fill="#ffffff" stroke="#888888" stroke-width="2.55"/>
+<text x="262.5" y="394" font-family="Times New Roman, serif" font-size="23" fill="#1a1a1a" text-anchor="middle">Матриця рішень X</text>
+<text x="262.5" y="428" font-family="Times New Roman, serif" font-size="21" fill="#555555" text-anchor="middle">(локації &#215; критерії)</text>
+
+<line x1="465" y1="193.5" x2="615" y2="193.5" stroke="#333333" stroke-width="2.55" marker-end="url(#arrow)"/>
+<line x1="465" y1="403.5" x2="615" y2="403.5" stroke="#333333" stroke-width="2.55" marker-end="url(#arrow)"/>
+
+<!-- right output box 1 (2 lines) -->
+<rect x="1185" y="334.5" width="360" height="138" rx="12" fill="#ffffff" stroke="#888888" stroke-width="2.55"/>
+<text x="1365" y="388" font-family="Times New Roman, serif" font-size="23" fill="#1a1a1a" text-anchor="middle">Ранжування локацій за</text>
+<text x="1365" y="421" font-family="Times New Roman, serif" font-size="23" fill="#1a1a1a" text-anchor="middle">коефіцієнтом близькості C*</text>
+
+<!-- right output box 2 (title only) -->
+<rect x="1185" y="606" width="360" height="150" rx="12" fill="#ffffff" stroke="#888888" stroke-width="2.55"/>
+<text x="1365" y="681" font-family="Times New Roman, serif" font-size="23" fill="#1a1a1a" text-anchor="middle">Індекси прийнятності рангів</text>
+
+<!-- output arrows -->
+<line x1="1035" y1="403.5" x2="1185" y2="403.5" stroke="#333333" stroke-width="2.55" marker-end="url(#arrow)"/>
+<line x1="1035" y1="681" x2="1185" y2="681" stroke="#333333" stroke-width="2.55" marker-end="url(#arrow)"/>
 </svg>
