@@ -6,38 +6,11 @@
 .LSOverride
 
 # ─────────────────────────────────────────────
-# Джерельні PDF та HTML (81 МБ, лише для читання)
-# Відновлюються вручну із Zotero / посилань у .bib
+# Coursework report — text, images, sources, build tools
+# Kept locally / in Google Drive, not in this repo
 # ─────────────────────────────────────────────
-docs/sources/files/
-
-# ─────────────────────────────────────────────
-# Зкомпільовані Word-документи (build artifacts)
-# Відновлюються через: bash build/scripts/build_docx.sh
-# Виняток: reference.docx — шаблон стилів для pandoc (12 КБ)
-# ─────────────────────────────────────────────
-build/*.docx
-!build/reference.docx
-
-# ─────────────────────────────────────────────
-# Тимчасові резервні копії master.md
-# ─────────────────────────────────────────────
-build/master_backup_*.md
-
-# ─────────────────────────────────────────────
-# PNG-діаграми Розділу 2 — генеруються з .puml
-# Відновлюються через: bash build/render_plantuml.sh
-# Виняток: вихідні .puml файли — зберігаємо
-# ─────────────────────────────────────────────
-docs/chapter2/images/*.png
-
-# ─────────────────────────────────────────────
-# Build-артефакти (JSON-мапи цитувань, аудит тощо)
-# Відновлюються скриптом build_master_md.py
-# ─────────────────────────────────────────────
-outputs/
-build/master.md
-build/citations_map.json
+docs/
+build/
 
 # ─────────────────────────────────────────────
 # Python
@@ -50,7 +23,7 @@ venv/
 *.egg-info/
 
 # ─────────────────────────────────────────────
-# Редактори
+# Editors
 # ─────────────────────────────────────────────
 .vscode/
 .idea/
@@ -59,8 +32,8 @@ venv/
 *~
 
 # ─────────────────────────────────────────────
-# Skills runtime (відновлюється через: make install-skills)
-# skills-lock.json комітити – це lockfile
+# Skills runtime (restored via: make install-skills)
+# skills-lock.json is a lockfile — commit it
 # ─────────────────────────────────────────────
 .agents/
 
@@ -81,12 +54,12 @@ app/frontend/playwright-report/
 app/frontend/test-results/
 
 # ─────────────────────────────────────────────
-# Секрети – ніколи не комітити
+# Secrets — never commit
 # ─────────────────────────────────────────────
 .env
 
 # ─────────────────────────────────────────────
-# Python-застосунок (app/backend)
+# Python app (app/backend)
 # ─────────────────────────────────────────────
 app/backend/.venv/
 app/backend/.mypy_cache/
@@ -96,12 +69,12 @@ app/backend/.coverage
 app/backend/htmlcov/
 
 # ─────────────────────────────────────────────
-# Різне
+# Misc
 # ─────────────────────────────────────────────
 *.log
 *.tmp
-build/tools/
+outputs/
 
-# Google Drive sync artifacts (тимчасові теки синхронізації docs/)
+# Google Drive sync artifacts
 .tmp.driveupload/
 .tmp.drivedownload/
