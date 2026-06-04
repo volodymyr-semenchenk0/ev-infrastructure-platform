@@ -1,0 +1,60 @@
+# Render Infrastructure as Code
+# Docs: https://render.com/docs/infrastructure-as-code
+#
+# Service: FastAPI backend (Web Service, Docker runtime).
+# Database and frontend are external (Supabase + Vercel).
+#
+# Usage:
+#   1. Push this file to the repo root (already done).
+#   2. In Render dashboard → New → Blueprint → select this repo.
+#   3. Set the secret env vars listed below in Render dashboard
+#      (DATABASE_URL, CORS_ORIGINS) — they are not stored here.
+
+services:
+  - type: web
+    name: ev-charging-dss-api
+    runtime: docker
+    # Render builds from the Dockerfile located in app/backend/.
+    dockerfilePath: ./app/backend/Dockerfile
+    # Build context must be the backend directory so COPY . . picks up all source.
+    dockerContext: ./app/backend
+
+    # Render free plan: Frankfurt region, single instance.
+    region: frankfurt
+    plan: free
+
+    # Render injects $PORT at runtime. We override the Dockerfile CMD here
+    # so uvicorn binds to whatever port Render assigns (typically 10000).
+    # The Dockerfile CMD is kept as-is for local docker-compose (port 8000).
+    dockerCommand: uvicorn main:app --host 0.0.0.0 --port $PORT --workers 1
+
+    # Render checks this path to decide whether the service is healthy.
+    # Free plan does not support custom healthcheck intervals, but the path
+    # must match the FastAPI route defined in main.py.
+    healthCheckPath: /health
+
+    # Environment variables.
+    # Values marked sync: false must be set manually in the Render dashboard
+    # (they are secrets that should not live in this file).
+    envVars:
+      - key: DATABASE_URL
+        # asyncpg connection string to Supabase.
+        # Format: postgresql+asyncpg://postgres:<password>@<host>:5432/postgres
+        sync: false
+
+      - key: CORS_ORIGINS
+        # Comma-separated list of allowed frontend origins.
+        # Example: https://ev-charging-dss.vercel.app,https://*.vercel.app
+        sync: false
+
+      - key: SUPABASE_URL
+        sync: false
+
+      - key: SUPABASE_KEY
+        sync: false
+
+      - key: PYTHONUNBUFFERED
+        value: "1"
+
+      - key: PYTHONPATH
+        value: /app
