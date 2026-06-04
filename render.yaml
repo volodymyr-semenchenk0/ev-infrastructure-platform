@@ -23,10 +23,13 @@ services:
     region: frankfurt
     plan: free
 
-    # Render injects $PORT at runtime. We override the Dockerfile CMD here
-    # so uvicorn binds to whatever port Render assigns (typically 10000).
+    # Render injects $PORT at runtime. We override the Dockerfile CMD here so
+    # uvicorn binds to whatever port Render assigns (typically 10000). Before
+    # starting, apply Alembic migrations and seed reference data — both are
+    # idempotent, so re-running on every boot is safe. Migrations and seed run
+    # from Render because local networks may block outbound Postgres ports.
     # The Dockerfile CMD is kept as-is for local docker-compose (port 8000).
-    dockerCommand: uvicorn main:app --host 0.0.0.0 --port $PORT --workers 1
+    dockerCommand: sh -c "alembic upgrade head && python -m db.seed_cli && exec uvicorn main:app --host 0.0.0.0 --port $PORT --workers 1"
 
     # Render checks this path to decide whether the service is healthy.
     # Free plan does not support custom healthcheck intervals, but the path
