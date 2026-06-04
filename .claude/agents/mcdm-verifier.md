@@ -18,7 +18,7 @@ model: sonnet
 ## Алгоритм перевірки
 
 1. **Огляд змін**
-   - `git status` + `git diff master...HEAD -- app/backend/mcdm/`
+   - `git status` + `git diff main...HEAD -- app/backend/mcdm/`
    - Які функції/класи додано чи змінено? Які формули вони реалізують?
 
 2. **Запуск тестів (джерело еталонних чисел)**

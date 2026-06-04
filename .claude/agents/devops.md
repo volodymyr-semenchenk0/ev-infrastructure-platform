@@ -101,7 +101,7 @@ curl http://localhost:5173            # повинно дати HTML
 
 - Ніколи не комітити `.env`, `*.pem`, `credentials.json`
 - Не використовувати `git add -A` без `git status` перевірки
-- `git push --force` лише з явним дозволом, ніколи у `master`
+- `git push --force` лише з явним дозволом, ніколи у `main`
 - `--no-verify` не використовувати взагалі
 
 ## Заборонене
