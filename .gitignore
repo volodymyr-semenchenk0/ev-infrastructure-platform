@@ -36,6 +36,8 @@ docs/chapter2/images/*.png
 # Відновлюються скриптом build_master_md.py
 # ─────────────────────────────────────────────
 outputs/
+build/master.md
+build/citations_map.json
 
 # ─────────────────────────────────────────────
 # Python
@@ -68,7 +70,9 @@ venv/
 node_modules/
 app/frontend/dist/
 app/frontend/*.tsbuildinfo
-app/backend/.coverage
+app/frontend/coverage/
+app/frontend/.env.local
+app/frontend/.env.*.local
 
 # ─────────────────────────────────────────────
 # Playwright e2e artifacts
@@ -88,6 +92,8 @@ app/backend/.venv/
 app/backend/.mypy_cache/
 app/backend/.ruff_cache/
 app/backend/.pytest_cache/
+app/backend/.coverage
+app/backend/htmlcov/
 
 # ─────────────────────────────────────────────
 # Різне
