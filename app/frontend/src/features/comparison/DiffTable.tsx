@@ -28,7 +28,7 @@ function formatDelta(delta: number): string {
 
 export function DiffTable({ differences, nameByLocationId }: DiffTableProps) {
   return (
-    <Table>
+    <Table className="min-w-[440px]">
       <TableHeader>
         <TableRow>
           <TableHead className="w-12">#</TableHead>
