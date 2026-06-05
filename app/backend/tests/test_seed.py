@@ -12,11 +12,17 @@ from __future__ import annotations
 
 import pytest
 from geoalchemy2.shape import to_shape
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db.models import Criterion, Location, Profile
-from db.seed import seed_locations, seed_reference_data
+from db.models import Criterion, CriterionValue, Location, Profile
+from db.seed import (
+    _read_fixture,
+    seed_decision_matrix,
+    seed_locations,
+    seed_reference_data,
+)
 
 # ---------------------------------------------------------------------------
 # Expected reference constants: 2 profiles, 9 criteria.
@@ -154,4 +160,196 @@ class TestSeedLocations:
         count = (await db_session.execute(select(func.count()).select_from(Location))).scalar_one()
         assert count == 12, f"Idempotency broken: {count} locations after 2 seed calls"
 
+        await db_session.rollback()
+
+
+class TestSeedDecisionMatrix:
+    """Tests for db/seed.py::seed_decision_matrix (CSV fixture, upsert by name/code)."""
+
+    async def _seed_all(self, db_session: AsyncSession) -> None:
+        await seed_reference_data(db_session)
+        await seed_locations(db_session)
+        await db_session.flush()
+        await seed_decision_matrix(db_session)
+        await db_session.flush()
+
+    async def test_matrix_matches_fixture_exactly(self, db_session: AsyncSession) -> None:
+        """All 108 cells equal the committed fixture, keyed by (name, code)."""
+        await self._seed_all(db_session)
+
+        rows = (
+            await db_session.execute(
+                select(Location.name, Criterion.code, CriterionValue.value)
+                .join(Location, Location.id == CriterionValue.location_id)
+                .join(Criterion, Criterion.id == CriterionValue.criterion_id)
+            )
+        ).all()
+
+        actual = {(name, code): float(value) for name, code, value in rows}
+        expected = {(n, c): v for n, c, v in _read_fixture()}
+
+        assert len(actual) == 108, f"Expected 108 cells, got {len(actual)}"
+        assert actual == expected
+        await db_session.rollback()
+
+    async def test_resolves_by_code_not_position(self, db_session: AsyncSession) -> None:
+        """Re-inserting a criterion (so its id jumps out of code order) must not
+        misalign values — resolution is by code/name, not by id position."""
+        await seed_reference_data(db_session)
+        await seed_locations(db_session)
+        await db_session.flush()
+
+        sat = (
+            await db_session.execute(select(Criterion).where(Criterion.code == "Sat_dist"))
+        ).scalar_one()
+        await db_session.delete(sat)
+        await db_session.flush()
+        await db_session.execute(
+            insert(Criterion).values(
+                code="Sat_dist",
+                name="Відстань до найближчої наявної станції",
+                unit="km",
+                optimization_type="max",
+                scale="ratio",
+            )
+        )
+        await db_session.flush()
+
+        await seed_decision_matrix(db_session)
+        await db_session.flush()
+
+        expected = {(n, c): v for n, c, v in _read_fixture()}
+        sat_id = (
+            await db_session.execute(select(Criterion.id).where(Criterion.code == "Sat_dist"))
+        ).scalar_one()
+        rows = (
+            await db_session.execute(
+                select(Location.name, CriterionValue.value)
+                .join(Location, Location.id == CriterionValue.location_id)
+                .where(CriterionValue.criterion_id == sat_id)
+            )
+        ).all()
+        actual_sat = {name: float(v) for name, v in rows}
+        expected_sat = {n: v for (n, c), v in expected.items() if c == "Sat_dist"}
+        assert actual_sat == expected_sat
+        await db_session.rollback()
+
+    async def test_rerun_corrects_drifted_value(self, db_session: AsyncSession) -> None:
+        """A wrong value in the DB is overwritten back to the fixture on re-run."""
+        await self._seed_all(db_session)
+
+        gol_id = (
+            await db_session.execute(select(Location.id).where(Location.name == "Голосіїво"))
+        ).scalar_one()
+        pop_id = (
+            await db_session.execute(select(Criterion.id).where(Criterion.code == "Pop_dens"))
+        ).scalar_one()
+        await db_session.execute(
+            update(CriterionValue)
+            .where(
+                CriterionValue.location_id == gol_id,
+                CriterionValue.criterion_id == pop_id,
+            )
+            .values(value=1.0)
+        )
+        await db_session.flush()
+
+        await seed_decision_matrix(db_session)
+        await db_session.flush()
+
+        value = (
+            await db_session.execute(
+                select(CriterionValue.value).where(
+                    CriterionValue.location_id == gol_id,
+                    CriterionValue.criterion_id == pop_id,
+                )
+            )
+        ).scalar_one()
+        expected = {(n, c): v for n, c, v in _read_fixture()}
+        assert float(value) == expected[("Голосіїво", "Pop_dens")]
+        await db_session.rollback()
+
+    async def test_rerun_keeps_108_rows(self, db_session: AsyncSession) -> None:
+        """Running the matrix seed twice keeps exactly 108 rows (composite PK)."""
+        await self._seed_all(db_session)
+        await seed_decision_matrix(db_session)
+        await db_session.flush()
+
+        count = (
+            await db_session.execute(select(func.count()).select_from(CriterionValue))
+        ).scalar_one()
+        assert count == 108
+        await db_session.rollback()
+
+    async def test_unknown_criterion_raises(
+        self, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """If the fixture names a criterion code absent from the DB, abort.
+
+        An unknown criterion code means the fixture is misconfigured (criteria are
+        fixed reference data, always all 9). Missing locations are intentionally
+        skipped — they are a variable working set.
+        """
+        await seed_reference_data(db_session)
+        await seed_locations(db_session)
+        await db_session.flush()
+
+        monkeypatch.setattr(
+            "db.seed._read_fixture",
+            lambda: [("Голосіїво", "NO_SUCH_CRITERION", 1.0)],
+        )
+
+        with pytest.raises(ValueError, match="unknown criteria"):
+            await seed_decision_matrix(db_session)
+        # ValueError raised before any SQL executes; rollback kept for symmetry, it is a no-op.
+        await db_session.rollback()
+
+    async def test_missing_location_is_skipped_not_raised(self, db_session: AsyncSession) -> None:
+        """A partial location set seeds only the present locations' rows, no error."""
+        await seed_reference_data(db_session)
+        # Insert only 3 of the 12 canonical locations.
+        await db_session.execute(
+            insert(Location).values(
+                [
+                    {
+                        "name": "Шулявка",
+                        "district": "Шевченківський",
+                        "address": "вул. Борщагівська, 126",
+                        "geom": "SRID=4326;POINT(30.4231 50.4489)",
+                    },
+                    {
+                        "name": "Оболонь",
+                        "district": "Оболонський",
+                        "address": "просп. Оболонський, 15",
+                        "geom": "SRID=4326;POINT(30.4967 50.5012)",
+                    },
+                    {
+                        "name": "Позняки",
+                        "district": "Дарницький",
+                        "address": "вул. Колекторна, 40",
+                        "geom": "SRID=4326;POINT(30.6124 50.3985)",
+                    },
+                ]
+            )
+        )
+        await db_session.flush()
+
+        await seed_decision_matrix(db_session)  # must not raise
+        await db_session.flush()
+
+        count = (
+            await db_session.execute(select(func.count()).select_from(CriterionValue))
+        ).scalar_one()
+        assert count == 27  # 3 locations x 9 criteria
+
+        expected = {(n, c): v for n, c, v in _read_fixture()}
+        rows = (
+            await db_session.execute(
+                select(Location.name, Criterion.code, CriterionValue.value)
+                .join(Location, Location.id == CriterionValue.location_id)
+                .join(Criterion, Criterion.id == CriterionValue.criterion_id)
+            )
+        ).all()
+        for name, code, value in rows:
+            assert float(value) == expected[(name, code)]
         await db_session.rollback()

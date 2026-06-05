@@ -7,9 +7,10 @@
 
 from __future__ import annotations
 
+import csv
+from pathlib import Path
 from typing import TYPE_CHECKING
 
-import numpy as np
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 
@@ -18,18 +19,7 @@ from db.models import Criterion, CriterionValue, Location, Profile
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
 
-# Synthetic placeholder ranges — replace with finalised analysis values later.
-CRITERION_RANGES: dict[str, tuple[float, float]] = {
-    "Pop_dens": (1000.0, 8000.0),  # persons/km²
-    "Traffic": (5000.0, 60000.0),  # vehicles/day
-    "Grid_cap": (100.0, 800.0),  # kW
-    "Dist_sub": (0.1, 3.5),  # km
-    "Land_cost": (3.0, 9.0),  # score 1–10
-    "Parking": (5.0, 50.0),  # places
-    "Income": (3.0, 8.0),  # score 1–10
-    "Green": (5.0, 60.0),  # %
-    "Sat_dist": (0.2, 5.0),  # km to nearest existing station
-}
+_FIXTURE_PATH = Path(__file__).parent / "data" / "decision_matrix.csv"
 
 
 # 2 decision-maker profiles
@@ -116,7 +106,7 @@ CRITERIA: list[dict[str, str]] = [
 
 # 12 candidate locations across Kyiv districts as (name, district, address, lat, lon).
 # Coordinates are WGS-84; stored as SRID=4326 POINT(lon lat). The order fixes the row
-# order on a fresh seed so the synthetic decision matrix is reproducible.
+# order on a fresh seed so the CSV fixture is reproducible.
 LOCATIONS: list[tuple[str, str, str, float, float]] = [
     ("Шулявка", "Шевченківський", "вул. Борщагівська, 126", 50.4489, 30.4231),
     ("Оболонь", "Оболонський", "просп. Оболонський, 15", 50.5012, 30.4967),
@@ -157,7 +147,7 @@ async def seed_locations(session: AsyncSession) -> None:
     geom is built as the EWKT string ``SRID=4326;POINT(lon lat)`` (same form the
     API repository uses). Idempotency: skipped when the table already holds rows,
     so locations added via the API are never duplicated. Must run before
-    seed_decision_matrix so the synthetic values attach to these rows.
+    seed_decision_matrix so the fixture values attach to these rows.
     """
     existing_count: int = (
         await session.execute(select(func.count()).select_from(Location))
@@ -177,41 +167,67 @@ async def seed_locations(session: AsyncSession) -> None:
     await session.execute(insert(Location).values(rows))
 
 
-async def seed_decision_matrix(session: AsyncSession, rng_seed: int = 42) -> None:
-    """Idempotently populate location_criterion_values with synthetic data.
+def _read_fixture() -> list[tuple[str, str, float]]:
+    """Read the canonical decision matrix from data/decision_matrix.csv.
 
-    Generates 9 criterion values for each location currently in the DB using
-    uniform sampling within per-criterion ranges.  Called after seed_reference_data
-    and after locations have been added, so that criteria and locations already exist.
-
-    rng_seed allows reproducible generation; change only when refreshing the
-    synthetic dataset intentionally.
+    Returns (location_name, criterion_code, value) triples. Raises if the file
+    is missing or empty so a misconfigured deploy fails loudly rather than
+    seeding a partial matrix.
     """
-    existing_count: int = (
-        await session.execute(select(func.count()).select_from(CriterionValue))
-    ).scalar_one()
-    if existing_count > 0:
-        # Table already populated; do nothing (idempotency guard).
-        return
-
-    criteria = (await session.execute(select(Criterion).order_by(Criterion.id))).scalars().all()
-    locations = (await session.execute(select(Location).order_by(Location.id))).scalars().all()
-
-    rng = np.random.default_rng(rng_seed)
-
-    rows: list[dict[str, object]] = []
-    for loc in locations:
-        for crit in criteria:
-            lo, hi = CRITERION_RANGES[crit.code]
-            raw = rng.uniform(lo, hi)
-            rows.append(
-                {
-                    "location_id": loc.id,
-                    "criterion_id": crit.id,
-                    "value": round(float(raw), 4),
-                }
-            )
-
+    with _FIXTURE_PATH.open(encoding="utf-8") as fh:
+        rows = [
+            (r["location_name"], r["criterion_code"], float(r["value"])) for r in csv.DictReader(fh)
+        ]
     if not rows:
+        raise ValueError(f"decision_matrix fixture is empty: {_FIXTURE_PATH}")
+    return rows
+
+
+async def seed_decision_matrix(session: AsyncSession) -> None:
+    """Load the canonical decision matrix from the committed CSV fixture.
+
+    Each fixture row (location_name, criterion_code, value) is resolved to ids by
+    name/code — not positionally — so the matrix is identical across environments
+    regardless of auto-increment id ordering. Rows are upserted into
+    criterion_values, so a re-run on a populated DB converges existing values to
+    the fixture (self-heal on every deploy). Must run after seed_reference_data
+    so criteria already exist. Fixture rows for locations absent from the DB are
+    skipped — locations are a working set that may be partial (integration tests,
+    city-subset analysis); see module docstring.
+    """
+    fixture = _read_fixture()
+
+    name_to_id = {
+        name: id_ for name, id_ in (await session.execute(select(Location.name, Location.id))).all()
+    }
+    code_to_id = {
+        code: id_
+        for code, id_ in (await session.execute(select(Criterion.code, Criterion.id))).all()
+    }
+
+    # Criteria are fixed reference data: every code in the fixture must resolve,
+    # otherwise the fixture is misconfigured and we abort.
+    unknown_codes = sorted({code for _, code, _ in fixture if code not in code_to_id})
+    if unknown_codes:
+        raise ValueError(f"decision_matrix fixture references unknown criteria: {unknown_codes}")
+
+    # Locations are a working set that may be partial (integration tests, or a
+    # city-subset analysis — see module docstring). Fixture rows for locations
+    # absent from the DB are skipped rather than treated as an error; on a full
+    # deploy seed_locations inserts all canonical locations, so the whole matrix
+    # loads. Criteria above are already validated, so code_to_id[code] is safe.
+    values: list[dict[str, object]] = [
+        {"location_id": name_to_id[name], "criterion_id": code_to_id[code], "value": value}
+        for name, code, value in fixture
+        if name in name_to_id
+    ]
+    if not values:
         return
-    await session.execute(insert(CriterionValue).values(rows))
+
+    stmt = insert(CriterionValue).values(values)
+    await session.execute(
+        stmt.on_conflict_do_update(
+            index_elements=["location_id", "criterion_id"],
+            set_={"value": stmt.excluded.value},
+        )
+    )
