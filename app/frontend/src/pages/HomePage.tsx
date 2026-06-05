@@ -110,7 +110,7 @@ export function HomePage() {
   }, [activeStep, enabled, setActiveStep])
 
   return (
-    <div className="flex-1 overflow-auto">
+    <div>
       <div className="mx-auto max-w-[1200px] space-y-6 p-6 md:p-8">
         <Stepper steps={steps} activeId={activeStep} onSelect={setActiveStep} />
 
