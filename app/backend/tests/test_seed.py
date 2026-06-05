@@ -281,10 +281,15 @@ class TestSeedDecisionMatrix:
         assert count == 108
         await db_session.rollback()
 
-    async def test_unknown_key_raises(
+    async def test_unknown_criterion_raises(
         self, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """If the fixture names a location/criterion absent from the DB, abort."""
+        """If the fixture names a criterion code absent from the DB, abort.
+
+        An unknown criterion code means the fixture is misconfigured (criteria are
+        fixed reference data, always all 9). Missing locations are intentionally
+        skipped — they are a variable working set.
+        """
         await seed_reference_data(db_session)
         await seed_locations(db_session)
         await db_session.flush()
@@ -294,7 +299,57 @@ class TestSeedDecisionMatrix:
             lambda: [("Голосіїво", "NO_SUCH_CRITERION", 1.0)],
         )
 
-        with pytest.raises(ValueError, match="unknown locations/criteria"):
+        with pytest.raises(ValueError, match="unknown criteria"):
             await seed_decision_matrix(db_session)
         # ValueError raised before any SQL executes; rollback kept for symmetry, it is a no-op.
+        await db_session.rollback()
+
+    async def test_missing_location_is_skipped_not_raised(self, db_session: AsyncSession) -> None:
+        """A partial location set seeds only the present locations' rows, no error."""
+        await seed_reference_data(db_session)
+        # Insert only 3 of the 12 canonical locations.
+        await db_session.execute(
+            insert(Location).values(
+                [
+                    {
+                        "name": "Шулявка",
+                        "district": "Шевченківський",
+                        "address": "вул. Борщагівська, 126",
+                        "geom": "SRID=4326;POINT(30.4231 50.4489)",
+                    },
+                    {
+                        "name": "Оболонь",
+                        "district": "Оболонський",
+                        "address": "просп. Оболонський, 15",
+                        "geom": "SRID=4326;POINT(30.4967 50.5012)",
+                    },
+                    {
+                        "name": "Позняки",
+                        "district": "Дарницький",
+                        "address": "вул. Колекторна, 40",
+                        "geom": "SRID=4326;POINT(30.6124 50.3985)",
+                    },
+                ]
+            )
+        )
+        await db_session.flush()
+
+        await seed_decision_matrix(db_session)  # must not raise
+        await db_session.flush()
+
+        count = (
+            await db_session.execute(select(func.count()).select_from(CriterionValue))
+        ).scalar_one()
+        assert count == 27  # 3 locations x 9 criteria
+
+        expected = {(n, c): v for n, c, v in _read_fixture()}
+        rows = (
+            await db_session.execute(
+                select(Location.name, Criterion.code, CriterionValue.value)
+                .join(Location, Location.id == CriterionValue.location_id)
+                .join(Criterion, Criterion.id == CriterionValue.criterion_id)
+            )
+        ).all()
+        for name, code, value in rows:
+            assert float(value) == expected[(name, code)]
         await db_session.rollback()

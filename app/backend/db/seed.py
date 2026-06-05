@@ -191,7 +191,9 @@ async def seed_decision_matrix(session: AsyncSession) -> None:
     regardless of auto-increment id ordering. Rows are upserted into
     criterion_values, so a re-run on a populated DB converges existing values to
     the fixture (self-heal on every deploy). Must run after seed_reference_data
-    and seed_locations so criteria and locations already exist.
+    so criteria already exist. Fixture rows for locations absent from the DB are
+    skipped — locations are a working set that may be partial (integration tests,
+    city-subset analysis); see module docstring.
     """
     fixture = _read_fixture()
 
@@ -203,24 +205,22 @@ async def seed_decision_matrix(session: AsyncSession) -> None:
         for code, id_ in (await session.execute(select(Criterion.code, Criterion.id))).all()
     }
 
-    values: list[dict[str, object]] = []
-    missing: list[str] = []
-    for loc_name, crit_code, value in fixture:
-        loc_id = name_to_id.get(loc_name)
-        crit_id = code_to_id.get(crit_code)
-        if loc_id is None:
-            missing.append(f"location:{loc_name!r}")
-            continue
-        if crit_id is None:
-            missing.append(f"criterion:{crit_code!r} (location {loc_name!r})")
-            continue
-        values.append({"location_id": loc_id, "criterion_id": crit_id, "value": value})
+    # Criteria are fixed reference data: every code in the fixture must resolve,
+    # otherwise the fixture is misconfigured and we abort.
+    unknown_codes = sorted({code for _, code, _ in fixture if code not in code_to_id})
+    if unknown_codes:
+        raise ValueError(f"decision_matrix fixture references unknown criteria: {unknown_codes}")
 
-    if missing:
-        raise ValueError(
-            f"decision_matrix fixture references unknown locations/criteria: {missing}"
-        )
-
+    # Locations are a working set that may be partial (integration tests, or a
+    # city-subset analysis — see module docstring). Fixture rows for locations
+    # absent from the DB are skipped rather than treated as an error; on a full
+    # deploy seed_locations inserts all canonical locations, so the whole matrix
+    # loads. Criteria above are already validated, so code_to_id[code] is safe.
+    values: list[dict[str, object]] = [
+        {"location_id": name_to_id[name], "criterion_id": code_to_id[code], "value": value}
+        for name, code, value in fixture
+        if name in name_to_id
+    ]
     if not values:
         return
 
