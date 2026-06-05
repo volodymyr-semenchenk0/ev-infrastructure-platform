@@ -222,19 +222,16 @@ class TestSeedDecisionMatrix:
         sat_id = (
             await db_session.execute(select(Criterion.id).where(Criterion.code == "Sat_dist"))
         ).scalar_one()
-        gol_id = (
-            await db_session.execute(select(Location.id).where(Location.name == "Голосіїво"))
-        ).scalar_one()
-        value = (
+        rows = (
             await db_session.execute(
-                select(CriterionValue.value).where(
-                    CriterionValue.location_id == gol_id,
-                    CriterionValue.criterion_id == sat_id,
-                )
+                select(Location.name, CriterionValue.value)
+                .join(Location, Location.id == CriterionValue.location_id)
+                .where(CriterionValue.criterion_id == sat_id)
             )
-        ).scalar_one()
-
-        assert float(value) == expected[("Голосіїво", "Sat_dist")]
+        ).all()
+        actual_sat = {name: float(v) for name, v in rows}
+        expected_sat = {n: v for (n, c), v in expected.items() if c == "Sat_dist"}
+        assert actual_sat == expected_sat
         await db_session.rollback()
 
     async def test_rerun_corrects_drifted_value(self, db_session: AsyncSession) -> None:
@@ -299,4 +296,5 @@ class TestSeedDecisionMatrix:
 
         with pytest.raises(ValueError, match="unknown locations/criteria"):
             await seed_decision_matrix(db_session)
+        # ValueError raised before any SQL executes; rollback kept for symmetry, it is a no-op.
         await db_session.rollback()

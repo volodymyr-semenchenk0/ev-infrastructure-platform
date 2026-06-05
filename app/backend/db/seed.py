@@ -106,7 +106,7 @@ CRITERIA: list[dict[str, str]] = [
 
 # 12 candidate locations across Kyiv districts as (name, district, address, lat, lon).
 # Coordinates are WGS-84; stored as SRID=4326 POINT(lon lat). The order fixes the row
-# order on a fresh seed so the synthetic decision matrix is reproducible.
+# order on a fresh seed so the CSV fixture is reproducible.
 LOCATIONS: list[tuple[str, str, str, float, float]] = [
     ("Шулявка", "Шевченківський", "вул. Борщагівська, 126", 50.4489, 30.4231),
     ("Оболонь", "Оболонський", "просп. Оболонський, 15", 50.5012, 30.4967),
@@ -147,7 +147,7 @@ async def seed_locations(session: AsyncSession) -> None:
     geom is built as the EWKT string ``SRID=4326;POINT(lon lat)`` (same form the
     API repository uses). Idempotency: skipped when the table already holds rows,
     so locations added via the API are never duplicated. Must run before
-    seed_decision_matrix so the synthetic values attach to these rows.
+    seed_decision_matrix so the fixture values attach to these rows.
     """
     existing_count: int = (
         await session.execute(select(func.count()).select_from(Location))
@@ -208,8 +208,11 @@ async def seed_decision_matrix(session: AsyncSession) -> None:
     for loc_name, crit_code, value in fixture:
         loc_id = name_to_id.get(loc_name)
         crit_id = code_to_id.get(crit_code)
-        if loc_id is None or crit_id is None:
-            missing.append(f"{loc_name}/{crit_code}")
+        if loc_id is None:
+            missing.append(f"location:{loc_name!r}")
+            continue
+        if crit_id is None:
+            missing.append(f"criterion:{crit_code!r} (location {loc_name!r})")
             continue
         values.append({"location_id": loc_id, "criterion_id": crit_id, "value": value})
 
@@ -217,6 +220,9 @@ async def seed_decision_matrix(session: AsyncSession) -> None:
         raise ValueError(
             f"decision_matrix fixture references unknown locations/criteria: {missing}"
         )
+
+    if not values:
+        return
 
     stmt = insert(CriterionValue).values(values)
     await session.execute(
