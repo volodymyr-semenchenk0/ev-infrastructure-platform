@@ -100,7 +100,7 @@ export function RankingTable({
   }
 
   return (
-    <Table>
+    <Table className="min-w-[540px]">
       <TableHeader>
         <TableRow>
           <TableHead className="w-16">

@@ -94,7 +94,8 @@ export function WeightsSection() {
       </div>
 
       <div className="overflow-hidden rounded-md border border-border">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[480px] text-sm">
           <thead className="bg-muted/50">
             <tr className="border-b text-left text-muted-foreground">
               <th className="px-4 py-2 font-medium">#</th>
@@ -136,6 +137,7 @@ export function WeightsSection() {
             </tr>
           </tfoot>
         </table>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">

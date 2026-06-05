@@ -262,7 +262,7 @@ export function SensitivitySection() {
               k = 1 – перше місце, k = 3 і k = 5 – входження до трьох і пʼяти найкращих.
             </p>
             <div className="overflow-hidden rounded-md border border-border">
-              <Table>
+              <Table className="min-w-[380px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Локація</TableHead>
