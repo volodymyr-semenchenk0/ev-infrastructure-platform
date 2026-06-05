@@ -225,7 +225,7 @@ Tooling: ruff, mypy --strict, pytest + pytest-asyncio, httpx, pre-commit, ESLint
 
 - Математика – формули й алгоритми FAHP, TOPSIS, чутливості та Монте-Карло в `app/backend/mcdm/`; еталонні числові тести – `app/backend/mcdm/tests/`. FAHP реалізовано методом Buckley (геометричне середнє + центроїд)
 - Оркестрація – `app/backend/api` (роутери), `services` (бізнес-логіка), `schemas` (DTO); жодної математики поза `mcdm/`
-- Дані – `app/backend/db`: ORM-моделі в `db/models/`, міграції в `db/migrations/`, довідкові дані – `db/seed.py` + `db/defaults.py`; опис логічної схеми – `db/README.md`
+- Дані – `app/backend/db`: ORM-моделі в `db/models/`, міграції в `db/migrations/`, довідкові дані – `db/seed.py` + `db/defaults.py`; канонічна матриця рішень – закомічена фікстура `db/data/decision_matrix.csv` (резолв за назвою локації/кодом критерію, upsert у `seed_decision_matrix` → однакова на всіх середовищах, self-heal на деплої); опис логічної схеми – `db/README.md`
 - Веб-інтерфейс – `app/frontend/src/` (фічі, Zustand-стори, UI-компоненти, e2e-тести)
 - Текст курсової – `docs/chapter1` (теоретичний аналіз + математичний апарат у 1.2), `docs/chapter2` (проектування системи); Розділ 3 (експеримент) ще не створено
 - Структура й вимоги до тексту – `docs/СТРУКТУРА_КУРСОВОЇ.md` і `docs/ВИМОГИ_ОФОРМЛЕННЯ_ДОКУМЕНТА.md` (звірятися обов'язково при роботі з текстом)
