@@ -1,4 +1,3 @@
-import { Fragment } from 'react'
 import { Check } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -7,7 +6,7 @@ import type { StepId } from '@/store/ui-store'
 
 export interface StepItem {
   id: StepId
-  // Short label shown to the right of the step circle.
+  // Short label shown to the right of the circle on mobile, below it on md+.
   label: string
   // Show a filled check instead of the number once the step's work is done.
   complete: boolean
@@ -32,9 +31,9 @@ interface NumberedStep {
 // Step navigation. The mandatory wizard flow (plus the sensitivity step) sits in
 // one card as numbered steps; any `detached` step (profile comparison) sits in
 // its own card as a plain button, since it is a higher-order action rather than
-// a sequence position. The two cards are split by a vertical divider. State
-// lives in the caller (ui-store), so this is a controlled presentational
-// component.
+// a sequence position. The two cards are split by a vertical divider on md+;
+// on mobile the two cards stack vertically. State lives in the caller
+// (ui-store), so this is a controlled presentational component.
 export function Stepper({ steps, activeId, onSelect }: StepperProps) {
   const numbered: NumberedStep[] = steps.map((step, index) => ({ step, number: index + 1 }))
   const mainSteps = numbered.filter((n) => !n.step.detached)
@@ -42,19 +41,22 @@ export function Stepper({ steps, activeId, onSelect }: StepperProps) {
 
   return (
     <nav aria-label="Кроки розрахунку">
-      <div className="flex items-stretch gap-3">
+      {/* Stack vertically on mobile; side-by-side on md+. */}
+      <div className="flex flex-col gap-2 md:flex-row md:items-stretch md:gap-3">
         <StepGroup
           label="Основні кроки розрахунку"
           items={mainSteps}
           activeId={activeId}
           onSelect={onSelect}
-          // The mandatory flow fills the available width; the detached card keeps
-          // its natural size to the right of the divider.
+          // On md+ the mandatory flow fills the available width; the detached
+          // card keeps its natural size to the right of the divider.
           grow
         />
         {detachedSteps.length > 0 && (
           <>
-            <span aria-hidden="true" className="w-px shrink-0 self-stretch bg-border" />
+            {/* Vertical divider — hidden on mobile, kept in the DOM so existing
+                tests can query it by class. */}
+            <span aria-hidden="true" className="w-px shrink-0 self-stretch bg-border hidden md:block" />
             <div
               role="group"
               aria-label="Окремий аналіз"
@@ -69,9 +71,7 @@ export function Stepper({ steps, activeId, onSelect }: StepperProps) {
                   disabled={step.disabled}
                   aria-current={step.id === activeId ? 'step' : undefined}
                   onClick={() => onSelect(step.id)}
-                  // Fixed width so toggling the active variant (which adds the
-                  // outline's 1px border) does not change the button's size.
-                  className="w-48"
+                  className="w-full md:w-auto md:min-w-[100px]"
                 >
                   {step.label}
                 </Button>
@@ -89,7 +89,7 @@ interface StepGroupProps {
   items: NumberedStep[]
   activeId: StepId
   onSelect: (id: StepId) => void
-  // Grow to fill the remaining row width instead of sizing to content.
+  // On md+ grow to fill the remaining row width instead of sizing to content.
   grow?: boolean
 }
 
@@ -99,20 +99,24 @@ function StepGroup({ label, items, activeId, onSelect, grow }: StepGroupProps) {
       role="group"
       aria-label={label}
       className={cn(
-        'flex items-center justify-center gap-2 rounded-lg border bg-card p-3',
-        grow && 'flex-1',
+        // Mobile: column; vertical connectors inside each StepButton handle the
+        // visual separation between steps — no gap or dividers needed here.
+        'flex flex-col rounded-lg border bg-card p-3',
+        // md+: horizontal row with connector lines between circles.
+        'md:flex-row md:items-stretch md:gap-0 md:min-[1366px]:items-center',
+        grow && 'md:flex-1',
       )}
     >
       {items.map(({ step, number }, index) => (
-        <Fragment key={step.id}>
-          {index > 0 && <span aria-hidden="true" className="h-px w-10 shrink-0 bg-border" />}
-          <StepButton
-            step={step}
-            number={number}
-            active={step.id === activeId}
-            onSelect={onSelect}
-          />
-        </Fragment>
+        <StepButton
+          key={step.id}
+          step={step}
+          number={number}
+          active={step.id === activeId}
+          onSelect={onSelect}
+          isFirst={index === 0}
+          isLast={index === items.length - 1}
+        />
       ))}
     </div>
   )
@@ -123,44 +127,81 @@ interface StepButtonProps {
   number: number
   active: boolean
   onSelect: (id: StepId) => void
+  isFirst: boolean
+  isLast: boolean
 }
 
-function StepButton({ step, number, active, onSelect }: StepButtonProps) {
+function StepButton({ step, number, active, onSelect, isFirst, isLast }: StepButtonProps) {
   return (
-    <button
-      type="button"
-      onClick={() => onSelect(step.id)}
-      disabled={step.disabled}
-      aria-current={active ? 'step' : undefined}
-      className={cn(
-        'flex shrink-0 items-center gap-2 rounded-md px-2 py-1 text-left',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-        step.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
-      )}
-    >
+    // Mobile: flex-row — the connector column sits on the left, label on the right.
+    // md+: flex-col — connector row with horizontal lines on top, label below.
+    <div className="flex w-full flex-row md:min-w-0 md:flex-1 md:flex-col md:items-center">
+      {/*
+        Shared connector + circle block.
+        Mobile  (flex-col parent): connectors grow vertically, forming a vertical
+          timeline line centred on the circle. The top connector of step N+1 and
+          the bottom connector of step N are adjacent flex items in the StepGroup
+          column, so they join into one continuous line between circles.
+        md+     (flex-row parent): connectors grow horizontally, forming the
+          standard horizontal connector lines left and right of the circle.
+        flex-1 on connectors automatically grows along whichever axis the parent
+        uses — no separate mobile/desktop variants needed for the flex direction.
+      */}
+      <div className="flex flex-col items-center gap-1 md:w-full md:flex-row md:gap-2">
+        <span
+          aria-hidden="true"
+          className={cn(
+            'flex-1 bg-border',
+            // Mobile: 1 px wide vertical line, at least 8 px tall.
+            'w-px min-h-[8px]',
+            // md+: 1 px tall horizontal line; reset the mobile min-height.
+            'md:h-px md:w-auto md:min-h-0',
+            isFirst && 'invisible',
+          )}
+        />
+        <button
+          type="button"
+          onClick={() => onSelect(step.id)}
+          disabled={step.disabled}
+          aria-current={active ? 'step' : undefined}
+          aria-label={step.label}
+          className={cn(
+            'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-sm font-semibold tabular-nums transition-colors',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+            step.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
+            step.complete
+              ? 'border-primary bg-primary text-primary-foreground'
+              : active
+                ? 'border-primary text-primary'
+                : 'border-border bg-background text-muted-foreground',
+          )}
+        >
+          {step.complete ? <Check className="h-4 w-4" aria-hidden="true" /> : number}
+        </button>
+        <span
+          aria-hidden="true"
+          className={cn(
+            'flex-1 bg-border',
+            // Mobile: 1 px wide vertical line, at least 8 px tall.
+            'w-px min-h-[8px]',
+            // md+: 1 px tall horizontal line; reset the mobile min-height.
+            'md:h-px md:w-auto md:min-h-0',
+            isLast && 'invisible',
+          )}
+        />
+      </div>
+      {/* Label: vertically centred beside the connector column on mobile;
+          below the connector row and centred horizontally on md+. */}
       <span
         className={cn(
-          'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-sm font-semibold tabular-nums transition-colors',
-          step.complete
-            ? 'border-primary bg-primary text-primary-foreground'
-            : active
-              ? 'border-primary text-primary'
-              : 'border-border bg-background text-muted-foreground',
-        )}
-      >
-        {step.complete ? <Check className="h-4 w-4" aria-hidden="true" /> : number}
-      </span>
-      <span
-        className={cn(
-          // Keep a constant font-weight across states so the label width — and
-          // thus the row layout — does not shift; signal the active step by
-          // colour only.
-          'whitespace-nowrap text-xs font-medium leading-tight',
+          'text-xs font-medium leading-tight',
+          'self-center pl-2 text-left',
+          'md:mt-1 md:pl-0 md:self-auto md:text-center',
           active ? 'text-foreground' : 'text-muted-foreground',
         )}
       >
         {step.label}
       </span>
-    </button>
+    </div>
   )
 }

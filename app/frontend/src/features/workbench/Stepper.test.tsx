@@ -101,8 +101,8 @@ describe('Stepper', () => {
   })
 
   it('splits the two cards with a vertical divider', () => {
-    // Connectors inside a card are horizontal (w-10, h-px); the divider between
-    // the two cards is the only vertical (w-px) rule.
+    // Connectors inside a card are spans with h-px and flex-1 inside StepButton;
+    // the divider between the two cards is the only vertical (w-px) rule.
     const { container } = render(
       <Stepper steps={makeSteps()} activeId="setup" onSelect={() => {}} />,
     )
