@@ -1,4 +1,3 @@
-import { Fragment } from 'react'
 import { Check } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -7,7 +6,7 @@ import type { StepId } from '@/store/ui-store'
 
 export interface StepItem {
   id: StepId
-  // Short label shown to the right of the step circle.
+  // Short label shown below the step circle.
   label: string
   // Show a filled check instead of the number once the step's work is done.
   complete: boolean
@@ -69,9 +68,8 @@ export function Stepper({ steps, activeId, onSelect }: StepperProps) {
                   disabled={step.disabled}
                   aria-current={step.id === activeId ? 'step' : undefined}
                   onClick={() => onSelect(step.id)}
-                  // Fixed width so toggling the active variant (which adds the
-                  // outline's 1px border) does not change the button's size.
-                  className="w-48"
+                  // min-w instead of fixed w-48 so the button can shrink on narrow screens.
+                  className="min-w-[100px]"
                 >
                   {step.label}
                 </Button>
@@ -99,20 +97,20 @@ function StepGroup({ label, items, activeId, onSelect, grow }: StepGroupProps) {
       role="group"
       aria-label={label}
       className={cn(
-        'flex items-center justify-center gap-2 rounded-lg border bg-card p-3',
+        'flex items-stretch rounded-lg border bg-card p-3 min-[1366px]:items-center',
         grow && 'flex-1',
       )}
     >
       {items.map(({ step, number }, index) => (
-        <Fragment key={step.id}>
-          {index > 0 && <span aria-hidden="true" className="h-px w-10 shrink-0 bg-border" />}
-          <StepButton
-            step={step}
-            number={number}
-            active={step.id === activeId}
-            onSelect={onSelect}
-          />
-        </Fragment>
+        <StepButton
+          key={step.id}
+          step={step}
+          number={number}
+          active={step.id === activeId}
+          onSelect={onSelect}
+          isFirst={index === 0}
+          isLast={index === items.length - 1}
+        />
       ))}
     </div>
   )
@@ -123,44 +121,49 @@ interface StepButtonProps {
   number: number
   active: boolean
   onSelect: (id: StepId) => void
+  isFirst: boolean
+  isLast: boolean
 }
 
-function StepButton({ step, number, active, onSelect }: StepButtonProps) {
+function StepButton({ step, number, active, onSelect, isFirst, isLast }: StepButtonProps) {
   return (
-    <button
-      type="button"
-      onClick={() => onSelect(step.id)}
-      disabled={step.disabled}
-      aria-current={active ? 'step' : undefined}
-      className={cn(
-        'flex shrink-0 items-center gap-2 rounded-md px-2 py-1 text-left',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-        step.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
-      )}
-    >
+    // Outer wrapper: not a button — a layout column so the label sits below the circle.
+    <div className="flex min-w-0 flex-1 flex-col items-center">
+      {/* Row: left connector | circle button | right connector */}
+      <div className="flex w-full items-center">
+        <span aria-hidden="true" className={cn('h-px flex-1 bg-border', isFirst && 'invisible')} />
+        <button
+          type="button"
+          onClick={() => onSelect(step.id)}
+          disabled={step.disabled}
+          aria-current={active ? 'step' : undefined}
+          aria-label={step.label}
+          className={cn(
+            'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-sm font-semibold tabular-nums transition-colors',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+            step.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
+            step.complete
+              ? 'border-primary bg-primary text-primary-foreground'
+              : active
+                ? 'border-primary text-primary'
+                : 'border-border bg-background text-muted-foreground',
+          )}
+        >
+          {step.complete ? <Check className="h-4 w-4" aria-hidden="true" /> : number}
+        </button>
+        <span aria-hidden="true" className={cn('h-px flex-1 bg-border', isLast && 'invisible')} />
+      </div>
+      {/* Label below the circle */}
       <span
         className={cn(
-          'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-sm font-semibold tabular-nums transition-colors',
-          step.complete
-            ? 'border-primary bg-primary text-primary-foreground'
-            : active
-              ? 'border-primary text-primary'
-              : 'border-border bg-background text-muted-foreground',
-        )}
-      >
-        {step.complete ? <Check className="h-4 w-4" aria-hidden="true" /> : number}
-      </span>
-      <span
-        className={cn(
-          // Keep a constant font-weight across states so the label width — and
-          // thus the row layout — does not shift; signal the active step by
-          // colour only.
-          'whitespace-nowrap text-xs font-medium leading-tight',
+          // Constant font-weight across states so the label width does not shift;
+          // signal the active step by colour only.
+          'mt-1 text-center text-xs font-medium leading-tight',
           active ? 'text-foreground' : 'text-muted-foreground',
         )}
       >
         {step.label}
       </span>
-    </button>
+    </div>
   )
 }
