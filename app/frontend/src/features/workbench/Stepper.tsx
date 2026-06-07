@@ -6,7 +6,7 @@ import type { StepId } from '@/store/ui-store'
 
 export interface StepItem {
   id: StepId
-  // Short label shown below the step circle.
+  // Short label shown to the right of the circle on mobile, below it on md+.
   label: string
   // Show a filled check instead of the number once the step's work is done.
   complete: boolean
@@ -31,9 +31,9 @@ interface NumberedStep {
 // Step navigation. The mandatory wizard flow (plus the sensitivity step) sits in
 // one card as numbered steps; any `detached` step (profile comparison) sits in
 // its own card as a plain button, since it is a higher-order action rather than
-// a sequence position. The two cards are split by a vertical divider. State
-// lives in the caller (ui-store), so this is a controlled presentational
-// component.
+// a sequence position. The two cards are split by a vertical divider on md+;
+// on mobile the two cards stack vertically. State lives in the caller
+// (ui-store), so this is a controlled presentational component.
 export function Stepper({ steps, activeId, onSelect }: StepperProps) {
   const numbered: NumberedStep[] = steps.map((step, index) => ({ step, number: index + 1 }))
   const mainSteps = numbered.filter((n) => !n.step.detached)
@@ -41,19 +41,22 @@ export function Stepper({ steps, activeId, onSelect }: StepperProps) {
 
   return (
     <nav aria-label="Кроки розрахунку">
-      <div className="flex items-stretch gap-3">
+      {/* Stack vertically on mobile; side-by-side on md+. */}
+      <div className="flex flex-col gap-2 md:flex-row md:items-stretch md:gap-3">
         <StepGroup
           label="Основні кроки розрахунку"
           items={mainSteps}
           activeId={activeId}
           onSelect={onSelect}
-          // The mandatory flow fills the available width; the detached card keeps
-          // its natural size to the right of the divider.
+          // On md+ the mandatory flow fills the available width; the detached
+          // card keeps its natural size to the right of the divider.
           grow
         />
         {detachedSteps.length > 0 && (
           <>
-            <span aria-hidden="true" className="w-px shrink-0 self-stretch bg-border" />
+            {/* Vertical divider — hidden on mobile (flex-col makes it 0-height),
+                kept in the DOM so existing tests can query it by class. */}
+            <span aria-hidden="true" className="w-px shrink-0 self-stretch bg-border hidden md:block" />
             <div
               role="group"
               aria-label="Окремий аналіз"
@@ -68,7 +71,6 @@ export function Stepper({ steps, activeId, onSelect }: StepperProps) {
                   disabled={step.disabled}
                   aria-current={step.id === activeId ? 'step' : undefined}
                   onClick={() => onSelect(step.id)}
-                  // min-w instead of fixed w-48 so the button can shrink on narrow screens.
                   className="min-w-[100px]"
                 >
                   {step.label}
@@ -87,7 +89,7 @@ interface StepGroupProps {
   items: NumberedStep[]
   activeId: StepId
   onSelect: (id: StepId) => void
-  // Grow to fill the remaining row width instead of sizing to content.
+  // On md+ grow to fill the remaining row width instead of sizing to content.
   grow?: boolean
 }
 
@@ -97,8 +99,11 @@ function StepGroup({ label, items, activeId, onSelect, grow }: StepGroupProps) {
       role="group"
       aria-label={label}
       className={cn(
-        'flex items-stretch rounded-lg border bg-card p-3 min-[1366px]:items-center',
-        grow && 'flex-1',
+        // Mobile: column of steps, each step is icon-left + text-right.
+        'flex flex-col gap-1 rounded-lg border bg-card p-3',
+        // md+: horizontal row with connector lines between circles.
+        'md:flex-row md:items-stretch md:gap-0 md:min-[1366px]:items-center',
+        grow && 'md:flex-1',
       )}
     >
       {items.map(({ step, number }, index) => (
@@ -127,11 +132,15 @@ interface StepButtonProps {
 
 function StepButton({ step, number, active, onSelect, isFirst, isLast }: StepButtonProps) {
   return (
-    // Outer wrapper: not a button — a layout column so the label sits below the circle.
-    <div className="flex min-w-0 flex-1 flex-col items-center">
-      {/* Row: left connector | circle button | right connector */}
-      <div className="flex w-full items-center">
-        <span aria-hidden="true" className={cn('h-px flex-1 bg-border', isFirst && 'invisible')} />
+    // Mobile: flex-row — circle on the left, label on the right.
+    // md+: flex-col — circle row with connectors on top, label below.
+    <div className="flex w-full flex-row items-center gap-2 md:min-w-0 md:flex-1 md:flex-col md:items-center md:gap-0">
+      {/* Circle row: connectors hidden on mobile, shown on md+. */}
+      <div className="flex items-center md:w-full">
+        <span
+          aria-hidden="true"
+          className={cn('h-px flex-1 bg-border hidden md:block', isFirst && 'md:invisible')}
+        />
         <button
           type="button"
           onClick={() => onSelect(step.id)}
@@ -151,14 +160,18 @@ function StepButton({ step, number, active, onSelect, isFirst, isLast }: StepBut
         >
           {step.complete ? <Check className="h-4 w-4" aria-hidden="true" /> : number}
         </button>
-        <span aria-hidden="true" className={cn('h-px flex-1 bg-border', isLast && 'invisible')} />
+        <span
+          aria-hidden="true"
+          className={cn('h-px flex-1 bg-border hidden md:block', isLast && 'md:invisible')}
+        />
       </div>
-      {/* Label below the circle */}
+      {/* Label: left-aligned on mobile, centred below the circle on md+. */}
       <span
         className={cn(
-          // Constant font-weight across states so the label width does not shift;
+          // Constant font-weight so label width does not shift between states;
           // signal the active step by colour only.
-          'mt-1 text-center text-xs font-medium leading-tight',
+          'text-xs font-medium leading-tight',
+          'text-left md:mt-1 md:text-center',
           active ? 'text-foreground' : 'text-muted-foreground',
         )}
       >
