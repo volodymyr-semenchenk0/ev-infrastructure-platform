@@ -99,10 +99,12 @@ function StepGroup({ label, items, activeId, onSelect, grow }: StepGroupProps) {
       role="group"
       aria-label={label}
       className={cn(
-        // Mobile: column of steps, each step is icon-left + text-right.
-        'flex flex-col gap-1 rounded-lg border bg-card p-3',
-        // md+: horizontal row with connector lines between circles.
-        'md:flex-row md:items-stretch md:gap-0 md:min-[1366px]:items-center',
+        // Mobile: column of steps with 1px separators between items.
+        // divide-y adds border-top to every child except the first; py-1 on
+        // each StepButton gives ~4px breathing room on both sides of the line.
+        'flex flex-col divide-y divide-border rounded-lg border bg-card p-3',
+        // md+: horizontal row — drop dividers, restore flex-row layout.
+        'md:flex-row md:items-stretch md:divide-y-0 md:gap-0 md:min-[1366px]:items-center',
         grow && 'md:flex-1',
       )}
     >
@@ -134,7 +136,9 @@ function StepButton({ step, number, active, onSelect, isFirst, isLast }: StepBut
   return (
     // Mobile: flex-row — circle on the left, label on the right.
     // md+: flex-col — circle row with connectors on top, label below.
-    <div className="flex w-full flex-row items-center gap-2 md:min-w-0 md:flex-1 md:flex-col md:items-center md:gap-0">
+    // py-1 on mobile adds 4px above/below; combined with the divide-y 1px
+    // separator this gives ~9px total visual gap between items.
+    <div className="flex w-full flex-row items-center gap-2 py-1 md:min-w-0 md:flex-1 md:flex-col md:items-center md:gap-0 md:py-0">
       {/* Circle row: connectors hidden on mobile, shown on md+. */}
       <div className="flex items-center md:w-full">
         <span
