@@ -147,7 +147,7 @@ function StepButton({ step, number, active, onSelect, isFirst, isLast }: StepBut
         flex-1 on connectors automatically grows along whichever axis the parent
         uses — no separate mobile/desktop variants needed for the flex direction.
       */}
-      <div className="flex flex-col items-center md:w-full md:flex-row">
+      <div className="flex flex-col items-center gap-1 md:w-full md:flex-row md:gap-0">
         <span
           aria-hidden="true"
           className={cn(
