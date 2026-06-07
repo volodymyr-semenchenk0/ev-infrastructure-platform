@@ -71,7 +71,7 @@ export function Stepper({ steps, activeId, onSelect }: StepperProps) {
                   disabled={step.disabled}
                   aria-current={step.id === activeId ? 'step' : undefined}
                   onClick={() => onSelect(step.id)}
-                  className="min-w-[100px]"
+                  className="w-full md:w-auto md:min-w-[100px]"
                 >
                   {step.label}
                 </Button>
