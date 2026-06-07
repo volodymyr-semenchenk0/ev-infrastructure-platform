@@ -54,8 +54,8 @@ export function Stepper({ steps, activeId, onSelect }: StepperProps) {
         />
         {detachedSteps.length > 0 && (
           <>
-            {/* Vertical divider — hidden on mobile (flex-col makes it 0-height),
-                kept in the DOM so existing tests can query it by class. */}
+            {/* Vertical divider — hidden on mobile, kept in the DOM so existing
+                tests can query it by class. */}
             <span aria-hidden="true" className="w-px shrink-0 self-stretch bg-border hidden md:block" />
             <div
               role="group"
@@ -99,12 +99,11 @@ function StepGroup({ label, items, activeId, onSelect, grow }: StepGroupProps) {
       role="group"
       aria-label={label}
       className={cn(
-        // Mobile: column of steps with 1px separators between items.
-        // divide-y adds border-top to every child except the first; py-1 on
-        // each StepButton gives ~4px breathing room on both sides of the line.
-        'flex flex-col divide-y divide-border rounded-lg border bg-card p-3',
-        // md+: horizontal row — drop dividers, restore flex-row layout.
-        'md:flex-row md:items-stretch md:divide-y-0 md:gap-0 md:min-[1366px]:items-center',
+        // Mobile: column; vertical connectors inside each StepButton handle the
+        // visual separation between steps — no gap or dividers needed here.
+        'flex flex-col rounded-lg border bg-card p-3',
+        // md+: horizontal row with connector lines between circles.
+        'md:flex-row md:items-stretch md:gap-0 md:min-[1366px]:items-center',
         grow && 'md:flex-1',
       )}
     >
@@ -134,16 +133,31 @@ interface StepButtonProps {
 
 function StepButton({ step, number, active, onSelect, isFirst, isLast }: StepButtonProps) {
   return (
-    // Mobile: flex-row — circle on the left, label on the right.
-    // md+: flex-col — circle row with connectors on top, label below.
-    // py-1 on mobile adds 4px above/below; combined with the divide-y 1px
-    // separator this gives ~9px total visual gap between items.
-    <div className="flex w-full flex-row items-center gap-2 py-1 md:min-w-0 md:flex-1 md:flex-col md:items-center md:gap-0 md:py-0">
-      {/* Circle row: connectors hidden on mobile, shown on md+. */}
-      <div className="flex items-center md:w-full">
+    // Mobile: flex-row — the connector column sits on the left, label on the right.
+    // md+: flex-col — connector row with horizontal lines on top, label below.
+    <div className="flex w-full flex-row md:min-w-0 md:flex-1 md:flex-col md:items-center">
+      {/*
+        Shared connector + circle block.
+        Mobile  (flex-col parent): connectors grow vertically, forming a vertical
+          timeline line centred on the circle. The top connector of step N+1 and
+          the bottom connector of step N are adjacent flex items in the StepGroup
+          column, so they join into one continuous line between circles.
+        md+     (flex-row parent): connectors grow horizontally, forming the
+          standard horizontal connector lines left and right of the circle.
+        flex-1 on connectors automatically grows along whichever axis the parent
+        uses — no separate mobile/desktop variants needed for the flex direction.
+      */}
+      <div className="flex flex-col items-center md:w-full md:flex-row">
         <span
           aria-hidden="true"
-          className={cn('h-px flex-1 bg-border hidden md:block', isFirst && 'md:invisible')}
+          className={cn(
+            'flex-1 bg-border',
+            // Mobile: 1 px wide vertical line, at least 8 px tall.
+            'w-px min-h-[8px]',
+            // md+: 1 px tall horizontal line; reset the mobile min-height.
+            'md:h-px md:w-auto md:min-h-0',
+            isFirst && 'invisible',
+          )}
         />
         <button
           type="button"
@@ -166,16 +180,23 @@ function StepButton({ step, number, active, onSelect, isFirst, isLast }: StepBut
         </button>
         <span
           aria-hidden="true"
-          className={cn('h-px flex-1 bg-border hidden md:block', isLast && 'md:invisible')}
+          className={cn(
+            'flex-1 bg-border',
+            // Mobile: 1 px wide vertical line, at least 8 px tall.
+            'w-px min-h-[8px]',
+            // md+: 1 px tall horizontal line; reset the mobile min-height.
+            'md:h-px md:w-auto md:min-h-0',
+            isLast && 'invisible',
+          )}
         />
       </div>
-      {/* Label: left-aligned on mobile, centred below the circle on md+. */}
+      {/* Label: vertically centred beside the connector column on mobile;
+          below the connector row and centred horizontally on md+. */}
       <span
         className={cn(
-          // Constant font-weight so label width does not shift between states;
-          // signal the active step by colour only.
           'text-xs font-medium leading-tight',
-          'text-left md:mt-1 md:text-center',
+          'self-center pl-2 text-left',
+          'md:mt-1 md:pl-0 md:self-auto md:text-center',
           active ? 'text-foreground' : 'text-muted-foreground',
         )}
       >
