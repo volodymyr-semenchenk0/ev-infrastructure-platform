@@ -8,9 +8,7 @@ from __future__ import annotations
 
 import numpy as np
 
-# Saaty Random Index table (n → RI) for CR computation.
-# Source: Saaty (1980), Table 4.2, values for n=1..15. Mirrors the frontend
-# RANDOM_INDEX table in features/calculate/consistency.ts.
+# Saaty (1980), Table 4.2; mirrors frontend features/calculate/consistency.ts RANDOM_INDEX.
 _RI: dict[int, float] = {
     1: 0.00,
     2: 0.00,
@@ -76,7 +74,6 @@ def fahp_weights(matrix: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     if cr > 0.1:
         raise ValueError(f"inconsistent matrix: CR={cr:.3f} > 0.10")
 
-    # Row geometric mean z_i = (prod_j a_ij)^(1/n), elementwise over (l, m, u).
     n = matrix.shape[0]
     z = np.prod(matrix, axis=1) ** (1.0 / n)  # (n, 3)
 
@@ -85,7 +82,6 @@ def fahp_weights(matrix: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     s_l, s_m, s_u = z.sum(axis=0)
     w = z * np.array([1.0 / s_u, 1.0 / s_m, 1.0 / s_l])  # (n, 3)
 
-    # Centroid defuzzification (l+m+u)/3, then normalise to sum 1.
     centroid = w.mean(axis=1)  # (n,)
     k = centroid.sum()
     weights: np.ndarray = centroid / k
