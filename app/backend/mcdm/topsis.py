@@ -29,25 +29,19 @@ def topsis_with_distances(
             s_pos   – евклідова відстань до позитивно-ідеальної точки;
             s_neg   – евклідова відстань до антиідеальної точки.
     """
-    # (1.10) vector normalization
     r = vector_normalize(decision_matrix)
-
-    # (1.11) weighted normalized matrix
     v = r * weights
 
-    # (1.12) ideal and anti-ideal solutions
     v_pos = np.where(types == 1, v.max(axis=0), v.min(axis=0))
     v_neg = np.where(types == 1, v.min(axis=0), v.max(axis=0))
 
-    # (1.13) Euclidean distances
     s_pos = np.sqrt(((v - v_pos) ** 2).sum(axis=1))
     s_neg = np.sqrt(((v - v_neg) ** 2).sum(axis=1))
 
-    # (1.14) closeness coefficient; guard against 0/0 (all alternatives identical)
     denom = s_pos + s_neg
+    # guard against 0/0 when all alternatives are identical
     scores = np.where(denom == 0.0, 0.5, s_neg / denom)
 
-    # ranking: descending scores → best first
     ranking = np.argsort(scores)[::-1]
     return scores, ranking, s_pos, s_neg
 

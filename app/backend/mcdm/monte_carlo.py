@@ -16,10 +16,7 @@ DEFAULT_K_VALUES: tuple[int, ...] = (1, 3, 5)
 CI_LOWER_PERCENTILE: float = 2.5
 CI_UPPER_PERCENTILE: float = 97.5
 
-# Step 1 chart (subsection 2.3.3 visualisation): number of histogram bins per
-# location. Bins are auto-zoomed to each alternative's own C* range so its
-# distribution fills the axis; axes are therefore not comparable across
-# locations, which is acceptable because the chart shows one location at a time.
+# bins auto-zoomed per alternative — axes are not comparable across alternatives.
 HISTOGRAM_BINS: int = 30
 
 
@@ -109,31 +106,25 @@ def sensitivity_analysis(
     n_crit = len(base_weights)
 
     scores_all = np.zeros((n_simulations, n_alt))
-    # rank_freq[rank_position, alt_idx] counts how often alt_idx landed at rank_position.
     rank_freq = np.zeros((n_alt, n_alt), dtype=np.intp)
 
     for _t in range(n_simulations):
-        # (1.15) uniform perturbation
         eps = rng.uniform(-delta, delta, size=n_crit)
         w_tilde = base_weights * (1.0 + eps)
-        # (1.16) renormalize to sum=1
         w_t = w_tilde / w_tilde.sum()
 
         scores, ranking = scorer(decision_matrix, w_t, types)
         scores_all[_t] = scores
 
-        # ranking[rank_pos] = alt_idx with that rank
         for rank_pos, alt_idx in enumerate(ranking.tolist()):
             rank_freq[rank_pos, alt_idx] += 1
 
-    # (1.17) cumulative top-k acceptability index: cumsum over exact-rank rows.
-    # cum_rank[r, i] = number of iterations alternative i achieved rank <= r+1.
+    # cum_rank[r, i] = iterations where alternative i achieved rank <= r+1 (0-indexed row).
     cum_rank = np.cumsum(rank_freq, axis=0)
     top_k_freq: dict[int, np.ndarray] = {
         k: cum_rank[min(k, n_alt) - 1, :].astype(np.float64) / n_simulations for k in k_values
     }
 
-    # (2.3.3) non-parametric 95 % confidence band from the empirical C* sample.
     ci_lower = np.percentile(scores_all, CI_LOWER_PERCENTILE, axis=0)
     ci_upper = np.percentile(scores_all, CI_UPPER_PERCENTILE, axis=0)
 
